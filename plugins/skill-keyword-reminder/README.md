@@ -16,9 +16,14 @@ IMPORTANT: don't forget to load linear-mcp-cli skill and relevant references in 
 
 1. User submits a prompt
 2. `UserPromptSubmit` hook triggers `scan_skills.py`
-3. Script scans `~/.claude/skills/*/SKILL.md` for `trigger-keywords` frontmatter
+3. Script scans for `SKILL.md` files with `trigger-keywords` frontmatter in:
+   - `~/.claude/skills/*/SKILL.md` (user-level skills)
+   - `$CLAUDE_PROJECT_DIR/.claude/skills/*/SKILL.md` if env var is set
+   - Otherwise, `.claude/skills/*/SKILL.md` walking up from cwd to home
 4. If any keyword matches the prompt, injects a reminder via `additionalContext`
 5. Claude sees the reminder and loads the appropriate skill
+
+Project-level skills take precedence over user-level skills with the same name.
 
 If a skill directory contains a `references/` subdirectory, the reminder also mentions to check references.
 
@@ -83,16 +88,10 @@ claude --plugin-dir /path/to/plugins/skill-keyword-reminder
 **Solution:**
 1. Verify the skill has `trigger-keywords` in its SKILL.md frontmatter
 2. Check the keyword is spelled correctly
-3. Ensure the SKILL.md is in `~/.claude/skills/<skill-name>/SKILL.md`
-4. Test the script manually: `echo '{"prompt":"test linear"}' | python3 scripts/scan_skills.py`
-
-### Testing with custom skills directory
-
-Set `SKILLS_DIR` environment variable:
-
-```bash
-SKILLS_DIR=/path/to/test/skills python3 scripts/scan_skills.py
-```
+3. Ensure the SKILL.md is in one of:
+   - `~/.claude/skills/<skill-name>/SKILL.md`
+   - `.claude/skills/<skill-name>/SKILL.md` (in project or parent directories)
+4. Test the script manually: `echo '{"prompt":"test linear","cwd":"/path/to/project"}' | python3 scripts/scan_skills.py`
 
 ## Author
 

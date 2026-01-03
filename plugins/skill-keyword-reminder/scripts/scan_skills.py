@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Scans ~/.claude/skills/*/SKILL.md for trigger-keywords frontmatter.
+Scans for SKILL.md files with trigger-keywords frontmatter.
 If any keywords match the user prompt, injects a reminder to load the skill.
+
+Skills are loaded from (in order, later overrides earlier):
+1. ~/.claude/skills/*/SKILL.md (user-level skills)
+2. .claude/skills/*/SKILL.md walking up from cwd to home dir (project-level skills)
 """
 
 import json
@@ -10,6 +14,54 @@ import re
 import sys
 from glob import glob
 from pathlib import Path
+
+
+def find_skills_directories(cwd: Path, home: Path, project_dir: Path | None) -> list[Path]:
+    """Find all .claude/skills directories.
+
+    If project_dir is provided (from CLAUDE_PROJECT_DIR), uses only:
+    - ~/.claude/skills (user-level)
+    - project_dir/.claude/skills (project-level)
+
+    Otherwise, walks from cwd up to home collecting .claude/skills dirs.
+
+    Returns directories in order: user-level first, then project-level.
+    This means project-level skills take precedence over user-level.
+    """
+    dirs = []
+
+    # User-level skills first (lowest precedence)
+    user_skills = home / '.claude' / 'skills'
+    if user_skills.is_dir():
+        dirs.append(user_skills)
+
+    # If CLAUDE_PROJECT_DIR is set, use it directly
+    if project_dir is not None:
+        project_skills = project_dir / '.claude' / 'skills'
+        if project_skills.is_dir():
+            dirs.append(project_skills)
+        return dirs
+
+    # Otherwise, walk from cwd up to (but not including) home
+    project_dirs = []
+    current = cwd.resolve()
+    home_resolved = home.resolve()
+
+    while current != current.parent:  # Stop at root
+        # Stop before home directory (user-level skills already added above)
+        if current == home_resolved:
+            break
+
+        skills_dir = current / '.claude' / 'skills'
+        if skills_dir.is_dir():
+            project_dirs.append(skills_dir)
+
+        current = current.parent
+
+    # Reverse so that dirs closer to cwd come later (higher precedence)
+    dirs.extend(reversed(project_dirs))
+
+    return dirs
 
 
 def parse_frontmatter(content: str) -> dict:
@@ -86,12 +138,23 @@ def main():
     if not prompt:
         sys.exit(0)
 
-    # Allow override via env var for testing
-    skills_dir = Path(os.environ.get('SKILLS_DIR', str(Path.home() / '.claude' / 'skills')))
-    if not skills_dir.exists():
+    cwd = Path(input_data.get('cwd', os.getcwd()))
+    home = Path.home()
+
+    # Use CLAUDE_PROJECT_DIR if available, otherwise walk up from cwd
+    project_dir_env = os.environ.get('CLAUDE_PROJECT_DIR', '').strip()
+    project_dir = Path(project_dir_env) if project_dir_env else None
+
+    # Find all skills directories
+    skills_dirs = find_skills_directories(cwd, home, project_dir)
+    if not skills_dirs:
         sys.exit(0)
 
-    skills = scan_skills(skills_dir)
+    # Scan all directories, later ones override earlier ones
+    skills = {}
+    for skills_dir in skills_dirs:
+        skills.update(scan_skills(skills_dir))
+
     matched_skills = []
 
     for skill_name, info in skills.items():
