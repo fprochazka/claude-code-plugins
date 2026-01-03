@@ -106,6 +106,38 @@ def prompt_contains_keyword(prompt: str, keywords: list[str]) -> bool:
     return bool(pattern.search(prompt))
 
 
+def get_loaded_skills(transcript_path: str | None) -> set[str]:
+    """Read transcript and extract already-loaded skill names."""
+    if not transcript_path:
+        return set()
+
+    path = Path(transcript_path)
+    if not path.exists():
+        return set()
+
+    loaded = set()
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    entry = json.loads(line.strip())
+                    # Navigate to content array in message
+                    message = entry.get('message', {})
+                    content = message.get('content', [])
+                    for item in content:
+                        if isinstance(item, dict) and item.get('name') == 'Skill':
+                            skill_input = item.get('input', {})
+                            skill_name = skill_input.get('skill', '')
+                            if skill_name:
+                                loaded.add(skill_name)
+                except json.JSONDecodeError:
+                    continue
+    except Exception:
+        pass
+
+    return loaded
+
+
 def scan_skills(skills_dir: Path) -> dict[str, dict]:
     """Scan all SKILL.md files and return {skill_name: {keywords, has_references}}."""
     skills = {}
@@ -160,6 +192,15 @@ def main():
     for skill_name, info in skills.items():
         if prompt_contains_keyword(prompt, info['keywords']):
             matched_skills.append((skill_name, info['has_references']))
+
+    # Filter out skills already loaded in this session
+    transcript_path = input_data.get('transcript_path')
+    loaded_skills = get_loaded_skills(transcript_path)
+    if loaded_skills:
+        matched_skills = [
+            (skill, has_refs) for skill, has_refs in matched_skills
+            if skill not in loaded_skills
+        ]
 
     if not matched_skills:
         sys.exit(0)

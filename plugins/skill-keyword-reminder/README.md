@@ -27,6 +27,8 @@ Project-level skills take precedence over user-level skills with the same name.
 
 If a skill directory contains a `references/` subdirectory, the reminder also mentions to check references.
 
+**Smart deduplication:** The plugin reads the current session transcript and skips reminders for skills that have already been loaded in this session.
+
 ## Configuration
 
 Add `trigger-keywords` to the YAML frontmatter of your `SKILL.md` files:
@@ -76,7 +78,7 @@ claude --plugin-dir /path/to/plugins/skill-keyword-reminder
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.10+
 - No external dependencies (uses stdlib only)
 
 ## Troubleshooting
