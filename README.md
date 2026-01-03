@@ -16,6 +16,14 @@ Then install plugins:
 claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins
 ```
 
+## Upgrading
+
+To upgrade installed plugins to the latest version:
+
+```bash
+claude plugin upgrade skill-keyword-reminder@fprochazka-claude-code-plugins
+```
+
 ## Available Plugins
 
 | Plugin | Description |
