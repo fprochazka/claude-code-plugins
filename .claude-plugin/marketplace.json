@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "fprochazka-claude-code-plugins",
+  "description": "Collection of Claude Code plugins by Filip Procházka",
+  "owner": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "plugins": [
+    {
+      "name": "skill-keyword-reminder",
+      "description": "Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts",
+      "version": "1.0.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/skill-keyword-reminder",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/skill-keyword-reminder"
+    }
+  ]
+}
