@@ -1,0 +1,6 @@
+{
+  "name": "gemini-cli",
+  "version": "1.0.0",
+  "description": "Skill for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions",
+  "skills": "./skills/"
+}
