@@ -30,6 +30,30 @@
       "source": "./plugins/gemini-cli",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/gemini-cli"
+    },
+    {
+      "name": "no-background-tasks",
+      "description": "Prevents background execution by rewriting run_in_background to false",
+      "version": "1.0.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/no-background-tasks",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/no-background-tasks"
+    },
+    {
+      "name": "glab-mr-fullstate",
+      "description": "Command for fixing GitLab MR issues (failed CI, unresolved comments) using glab-mr-fullstate",
+      "version": "1.0.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/glab-mr-fullstate",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/glab-mr-fullstate"
     }
   ]
 }
