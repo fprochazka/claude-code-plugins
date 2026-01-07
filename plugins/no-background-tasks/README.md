@@ -1,10 +1,13 @@
 # no-background-tasks
 
-A Claude Code plugin that prevents background execution by silently rewriting `run_in_background: true` to `false` for Bash and Task tools.
+> **Note:** This plugin is a work in progress. There is a known intermittent bug in Claude Code where `permissionDecision: "allow"` responses can cause an error: `undefined is not an object (evaluating 'H.includes')`. See [issue tracking](https://github.com/anthropics/claude-code/issues) for updates.
+
+A Claude Code plugin that enforces serial execution of Bash and Task tools within a session.
 
 ## What it does
 
-When Claude tries to run a command or launch a subagent in background mode, this hook intercepts the call and rewrites the parameter to force foreground execution. This ensures Claude waits for each operation to complete before continuing.
+1. **Rewrites `run_in_background: true` to `false`** - Silently forces foreground execution
+2. **Prevents parallel tool calls** - Uses a session-scoped lock file to ensure only one Bash/Task runs at a time
 
 ## Installation
 
@@ -14,28 +17,48 @@ claude plugin install no-background-tasks@fprochazka-claude-code-plugins
 
 ## How it works
 
-The plugin uses a `PreToolUse` hook that:
+The plugin uses three hooks:
 
-1. Matches `Bash` and `Task` tool calls
-2. Checks if `run_in_background` is set to `true`
-3. Uses `updatedInput` to silently change it to `false`
+**UserPromptSubmit:**
+- Releases any stale lock from previous turn (safety reset)
 
-This approach is token-efficient compared to blocking and requiring a retry.
+**PreToolUse** (Bash|Task):
+1. Rewrites `run_in_background: true` to `false` via `updatedInput`
+2. Attempts to acquire a session-scoped lock using atomic file creation
+3. If lock already held → denies the tool call with a message to retry
+
+**PostToolUse** (Bash|Task):
+- Releases the session lock when the tool completes
+
+Lock files are stored at `~/.claude/no-background-tasks/session-{id}.lock`.
+
+## Behavior
+
+When Claude attempts to run multiple tools in parallel:
+
+```
+Claude sends:
+  - Bash("sleep 5")   ← acquires lock, runs
+  - Bash("sleep 3")   ← denied: "Another tool is executing..."
+  - Bash("sleep 1")   ← denied: "Another tool is executing..."
+
+Claude retries denied calls sequentially after each completion.
+```
 
 ## Affected tools
 
 | Tool | Effect |
 |------|--------|
-| `Bash` | Commands run in foreground, Claude waits for output |
-| `Task` | Subagents run synchronously, Claude waits for completion |
+| `Bash` | Commands run serially, one at a time |
+| `Task` | Subagents run serially, one at a time |
 
-## Limitations
+## Token overhead
 
-This plugin prevents background execution but does **not** prevent parallel tool calls in a single message. If Claude sends multiple tool calls simultaneously, they will still execute in parallel (just not in the background).
-
-To also prevent parallel execution, combine this plugin with instructions in your `CLAUDE.md`:
+When parallel calls are denied, Claude sees the denial message and must retry. This uses some additional tokens compared to if Claude sent sequential calls from the start. Consider adding to your `CLAUDE.md`:
 
 ```markdown
 NEVER launch subagents in background or in parallel unless explicitly asked.
 Always run them one by one, and wait for them to finish.
 ```
+
+This reduces denied attempts since Claude will try to comply with instructions first.

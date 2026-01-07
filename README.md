@@ -31,7 +31,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 |--------|-------------|
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [gemini-cli](plugins/gemini-cli/) | Skill for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
-| [no-background-tasks](plugins/no-background-tasks/) | Prevents background execution by rewriting run_in_background to false |
+| [no-background-tasks](plugins/no-background-tasks/) | Enforces serial execution of Bash and Task tools within a session |
 | [glab-mr-fullstate](plugins/glab-mr-fullstate/) | Command for fixing GitLab MR issues (failed CI, unresolved comments) using glab-mr-fullstate |
 
 ## License

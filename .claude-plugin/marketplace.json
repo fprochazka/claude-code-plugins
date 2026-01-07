@@ -33,7 +33,7 @@
     },
     {
       "name": "no-background-tasks",
-      "description": "Prevents background execution by rewriting run_in_background to false",
+      "description": "Enforces serial execution of Bash and Task tools within a session",
       "version": "1.0.0",
       "author": {
         "name": "Filip Procházka",

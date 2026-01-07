@@ -1,6 +1,6 @@
 {
   "name": "no-background-tasks",
   "version": "1.0.0",
-  "description": "Prevents background execution by rewriting run_in_background to false",
+  "description": "Enforces serial execution of Bash and Task tools within a session",
   "hooks": "./hooks/hooks.json"
 }
