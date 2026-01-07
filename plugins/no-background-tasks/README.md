@@ -1,6 +1,6 @@
 # no-background-tasks
 
-> **Note:** This plugin is a work in progress. There is a known intermittent bug in Claude Code where `permissionDecision: "allow"` responses can cause an error: `undefined is not an object (evaluating 'H.includes')`. See [issue tracking](https://github.com/anthropics/claude-code/issues) for updates.
+> **Note:** This plugin is a work in progress. There is a known intermittent bug in Claude Code where `permissionDecision: "allow"` responses can cause an error: `undefined is not an object (evaluating 'H.includes')`. See [#16598](https://github.com/anthropics/claude-code/issues/16598) for updates.
 
 A Claude Code plugin that enforces serial execution of Bash and Task tools within a session.
 
