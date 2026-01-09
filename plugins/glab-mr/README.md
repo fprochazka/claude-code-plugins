@@ -40,3 +40,29 @@ All data is saved to `/tmp/glab-mr-<id>-<timestamp>/` with:
 ```bash
 claude plugin install glab-mr@fprochazka-claude-code-plugins
 ```
+
+## Known Issue: Permission Error
+
+Due to a [bug in Claude Code](https://github.com/anthropics/claude-code/issues/9354) where `${CLAUDE_PLUGIN_ROOT}` is not properly substituted in plugin `allowed-tools` frontmatter, you may see this error when running `/glab-mr:fix`:
+
+```
+Error: Bash command permission check failed for pattern "...": This command requires approval
+```
+
+### Workaround
+
+Add the script path to your `~/.claude/settings.json` in the `allow` array:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/.claude/plugins/cache/fprochazka-claude-code-plugins/glab-mr/1.0.0/scripts/fetch-mr-state.sh:*)"
+    ]
+  }
+}
+```
+
+Replace `~` with your actual home directory path (e.g., `/home/username` or `/Users/username`).
+
+**Note:** You'll need to update the version number (`1.0.0`) when the plugin is updated.
