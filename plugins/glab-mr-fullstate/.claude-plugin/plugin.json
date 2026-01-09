@@ -1,6 +1,0 @@
-{
-  "name": "glab-mr-fullstate",
-  "version": "1.0.0",
-  "description": "Command for fixing GitLab MR issues (failed CI, unresolved comments) using glab-mr-fullstate",
-  "commands": "./commands/"
-}

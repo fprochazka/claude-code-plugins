@@ -1,10 +1,11 @@
 ---
 description: Fix MR issues (failed CI, unresolved comments)
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)"]
 ---
 
 ## Context
 
-!`glab-mr-fullstate`
+!`${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh`
 
 ## Your task
 

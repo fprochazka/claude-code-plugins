@@ -44,16 +44,16 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/no-background-tasks"
     },
     {
-      "name": "glab-mr-fullstate",
-      "description": "Command for fixing GitLab MR issues (failed CI, unresolved comments) using glab-mr-fullstate",
+      "name": "glab-mr",
+      "description": "GitLab MR tools - fix failed CI, resolve comments, and more",
       "version": "1.0.0",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
       },
-      "source": "./plugins/glab-mr-fullstate",
+      "source": "./plugins/glab-mr",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/glab-mr-fullstate"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/glab-mr"
     }
   ]
 }
