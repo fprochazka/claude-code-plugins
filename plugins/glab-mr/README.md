@@ -14,6 +14,7 @@ Fetches comprehensive MR state and helps fix issues:
 
 ## Requirements
 
+- Claude Code **2.1.0 or newer** (see [Known Issue](#known-issue) below)
 - [`glab` CLI](https://docs.gitlab.com/cli/) installed and authenticated
 - `jq` for JSON processing
 
@@ -41,28 +42,8 @@ All data is saved to `/tmp/glab-mr-<id>-<timestamp>/` with:
 claude plugin install glab-mr@fprochazka-claude-code-plugins
 ```
 
-## Known Issue: Permission Error
+## Known Issue
 
-Due to a [bug in Claude Code](https://github.com/anthropics/claude-code/issues/9354) where `${CLAUDE_PLUGIN_ROOT}` is not properly substituted in plugin `allowed-tools` frontmatter, you may see this error when running `/glab-mr:fix`:
+This plugin requires Claude Code 2.1.0+ due to a [bug in older versions](https://github.com/anthropics/claude-code/issues/9354) where `${CLAUDE_PLUGIN_ROOT}` was not properly substituted in plugin `allowed-tools` frontmatter.
 
-```
-Error: Bash command permission check failed for pattern "...": This command requires approval
-```
-
-### Workaround
-
-Add the script path to your `~/.claude/settings.json` in the `allow` array:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(~/.claude/plugins/cache/fprochazka-claude-code-plugins/glab-mr/1.0.0/scripts/fetch-mr-state.sh:*)"
-    ]
-  }
-}
-```
-
-Replace `~` with your actual home directory path (e.g., `/home/username` or `/Users/username`).
-
-**Note:** You'll need to update the version number (`1.0.0`) when the plugin is updated.
+If you see `Error: Bash command permission check failed`, upgrade Claude Code to 2.1.0 or newer.
