@@ -11,17 +11,16 @@ This plugin provides a skill for leveraging Google's Gemini CLI in non-interacti
 - Cross-validating critical analysis
 - Multi-file architecture reviews
 
+## Requirements
+
+- [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed and authenticated
+
 ## Installation
 
 ```bash
 claude plugin marketplace add fprochazka/claude-code-plugins
 claude plugin install gemini-cli@fprochazka-claude-code-plugins
 ```
-
-## Prerequisites
-
-- Gemini CLI installed and configured (`gemini` command available)
-- Google Cloud authentication set up
 
 ## Usage
 
