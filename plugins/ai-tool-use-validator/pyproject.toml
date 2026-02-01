@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "claude-code-tool-use-validator"
-version = "0.1.0"
+version = "0.2.0"
 description = "AI-powered tool use validation for Claude Code using LLM backends"
 authors = ["Filip Prochazka"]
 license = "MIT"
