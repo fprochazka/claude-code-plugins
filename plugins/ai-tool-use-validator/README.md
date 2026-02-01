@@ -4,11 +4,13 @@ AI-powered tool use validation for Claude Code using LLM backends (Vertex AI, et
 
 ## What it does
 
-Uses a PermissionRequest hook to intercept tool calls before they execute and evaluates them with an LLM backend:
+Uses a PermissionRequest hook to intercept **Bash commands** before they execute and evaluates them with an LLM backend:
 
 1. **Allow** - Safe commands within the working directory or `/tmp` are auto-approved
 2. **Deny with correction** - Safe but suboptimal commands are blocked with feedback so Claude generates better commands
 3. **Ask user** - Potentially unsafe commands pass through to the user for manual approval
+
+Other tools (Write, Edit, Read, etc.) are **not validated** and pass through to the user directly. This is intentional to avoid interfering with Claude's built-in permission modes.
 
 ## Requirements
 
@@ -103,7 +105,22 @@ If you get a 404 error:
 
 ## How it works
 
-The plugin uses a `PermissionRequest` hook that invokes the `claude-code-tool-use-validator` binary for every tool call that would normally show a permission dialog. The validator:
+The plugin uses a `PermissionRequest` hook that invokes the `claude-code-tool-use-validator` binary for `Bash` tool calls. Other tools (Read, Write, Edit, etc.) are passed through to the user immediately - the validator intentionally does not auto-approve these to avoid interfering with Claude's built-in permission modes.
+
+### Permission dialog interaction
+
+When a tool call triggers the hook:
+
+1. **Permission dialog appears immediately** - The user sees the normal approval prompt right away
+2. **Hook runs in parallel** - The validator evaluates the command while the dialog is visible
+3. **User can respond first** - If you approve/deny before the hook finishes, your choice takes precedence
+4. **Hook can auto-decide** - If the hook finishes before you respond, it can auto-approve safe commands or deny with feedback
+
+This means you'll briefly see permission dialogs even for safe commands, but they'll disappear automatically once the validator approves them.
+
+### Validation logic
+
+The validator:
 
 1. Receives the tool name, input parameters, and current working directory via stdin (JSON)
 2. Reads the session transcript for context (last user prompt, recent operations)

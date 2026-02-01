@@ -387,6 +387,10 @@ def call_vertex_ai(config: Config, system_prompt: str, user_prompt: str) -> str:
     return ""
 
 
+# Tools that the validator will evaluate - all others pass through to user
+VALIDATED_TOOLS = {"Bash"}
+
+
 def evaluate_tool_use(hook_input: dict) -> dict | None:
     """
     Evaluate the tool use and return a decision.
@@ -400,6 +404,11 @@ def evaluate_tool_use(hook_input: dict) -> dict | None:
     tool_input = hook_input.get("tool_input", {})
     cwd = hook_input.get("cwd", "")
     transcript_path = hook_input.get("transcript_path", "")
+
+    # Only validate specific tools - pass others through to user
+    # This avoids interfering with Claude's built-in permission modes
+    if tool_name not in VALIDATED_TOOLS:
+        return None
 
     tool_input_summary = summarize_tool_input(tool_name, tool_input)
 
