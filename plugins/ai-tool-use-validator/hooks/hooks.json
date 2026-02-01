@@ -1,0 +1,18 @@
+{
+  "description": "AI-powered permission validation for tool use",
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude-code-tool-use-validator",
+            "timeout": 30,
+            "statusMessage": "Evaluating tool use with AI..."
+          }
+        ]
+      }
+    ]
+  }
+}

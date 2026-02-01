@@ -1,0 +1,11 @@
+{
+  "name": "ai-tool-use-validator",
+  "version": "0.1.0",
+  "description": "AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness",
+  "author": {
+    "name": "Filip Prochazka"
+  },
+  "repository": "https://github.com/fprochazka/claude-code-plugins",
+  "license": "MIT",
+  "keywords": ["permission", "validation", "vertex-ai", "security", "commands"]
+}

@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "claude-code-tool-use-validator"
+version = "0.1.0"
+description = "AI-powered tool use validation for Claude Code using LLM backends"
+authors = ["Filip Prochazka"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "claude_code_tool_use_validator", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+anthropic = {extras = ["vertex"], version = "^0.52"}
+
+[tool.poetry.scripts]
+claude-code-tool-use-validator = "claude_code_tool_use_validator.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

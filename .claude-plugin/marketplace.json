@@ -56,6 +56,18 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/glab-mr"
     },
     {
+      "name": "ai-tool-use-validator",
+      "description": "AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/ai-tool-use-validator",
+      "category": "security",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/ai-tool-use-validator"
+    },
+    {
       "name": "web-researcher",
       "description": "Iterative web research agent that searches, discovers new directions, and synthesizes findings",
       "version": "1.0.0",

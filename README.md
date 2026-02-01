@@ -33,6 +33,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [gemini-cli](plugins/gemini-cli/) | Skill for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
 | [no-background-tasks](plugins/no-background-tasks/) | Enforces serial execution of Bash and Task tools within a session |
 | [glab-mr](plugins/glab-mr/) | GitLab MR tools - fix failed CI, resolve comments, and more |
+| [ai-tool-use-validator](plugins/ai-tool-use-validator/) | AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness |
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
 
 ## License
