@@ -18,33 +18,40 @@ Uses a PermissionRequest hook to intercept tool calls before they execute and ev
 
 ## Installation
 
-### 1. Install the validator binary
+### 1. Add the marketplace and install the plugin
 
 ```bash
-# From the plugin directory
-pipx install -e ./plugins/ai-tool-use-validator
-
-# Or with force reinstall if updating
-pipx install -e -f ./plugins/ai-tool-use-validator
+claude plugin marketplace add fprochazka/claude-code-plugins
+claude plugin install ai-tool-use-validator@fprochazka-claude-code-plugins
 ```
 
-### 2. Configure GCP authentication
+### 2. Install the validator binary
+
+The plugin requires a Python CLI tool. Clone the repo and install with pipx:
+
+```bash
+git clone https://github.com/fprochazka/claude-code-plugins.git
+pipx install ./claude-code-plugins/plugins/ai-tool-use-validator
+```
+
+### 3. Configure GCP authentication
 
 ```bash
 gcloud auth application-default login
 ```
 
-### 3. Create config file
+### 4. Create config file
 
-Create `~/.config/claude-code-tool-use-validator/config.toml`:
-
-```toml
+```bash
+mkdir -p ~/.config/claude-code-tool-use-validator
+cat > ~/.config/claude-code-tool-use-validator/config.toml << 'EOF'
 project_id = "your-gcp-project-id"
-region = "us-east5"
+region = "europe-west1"
 model = "claude-opus-4-5@20251101"
+EOF
 ```
 
-### 4. Verify the configuration
+### 5. Verify the configuration
 
 ```bash
 claude-code-tool-use-validator --verify
@@ -52,10 +59,19 @@ claude-code-tool-use-validator --verify
 
 This will test the API connection and display the response.
 
-### 5. Install the plugin
+## Example
 
-```bash
-claude plugin install ai-tool-use-validator@fprochazka-claude-code-plugins
+Once installed, the validator evaluates tool calls automatically:
+
+```
+● Bash(npm test 2>&1 | tail -n 50)
+  ⎿  Error: Don't truncate test output with `| tail` - if you need to see
+     more context later, you'd have to re-run the entire test suite.
+  ⎿  Denied by PermissionRequest hook
+
+● Bash(rm -rf node_modules)
+  ⎿  (No content)
+  ⎿  Allowed by PermissionRequest hook
 ```
 
 ## Configuration
@@ -124,12 +140,30 @@ echo '{"tool_name": "Bash", "tool_input": {"command": "ls -la"}, "cwd": "/tmp"}'
 ### Testing locally
 
 ```bash
-# Install in development mode
+# Clone the repository
+git clone https://github.com/fprochazka/claude-code-plugins.git
+cd claude-code-plugins
+
+# Install in development mode (editable)
 pipx install -e ./plugins/ai-tool-use-validator
 
-# Run Claude with the plugin
+# Run Claude with the plugin loaded locally
 claude --plugin-dir ./plugins/ai-tool-use-validator
 
 # Watch syslog for decisions
 tail -f /var/log/syslog | grep claude-code-tool-validator
 ```
+
+### Reinstalling after changes
+
+```bash
+pipx install -e -f ./plugins/ai-tool-use-validator
+```
+
+## Author
+
+Filip Procházka
+
+## License
+
+MIT
