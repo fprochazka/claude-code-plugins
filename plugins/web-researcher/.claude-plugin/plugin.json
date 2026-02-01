@@ -2,6 +2,5 @@
   "name": "web-researcher",
   "version": "1.0.0",
   "description": "Iterative web research agent that searches, discovers new directions, and synthesizes findings",
-  "commands": "./commands/",
-  "agents": "./agents/"
+  "commands": "./commands/"
 }
