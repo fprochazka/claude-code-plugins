@@ -9,25 +9,36 @@ allowed-tools: Bash(slack:*)
 
 Command-line interface for Slack API operations.
 
-## Workspace Selection (REQUIRED)
+## First Step: Check Configuration
 
-**The `--org=<workspace>` option is mandatory for all commands.** You must specify which Slack workspace to use.
-
-If the user hasn't specified a workspace and it's not clear from context, **ask them which workspace to use** before running any commands.
+**Run `slack config` at the start of every session** to check workspace setup:
 
 ```bash
-slack --org=mycompany conversations list  # Specify workspace explicitly
+slack config
 ```
 
-To see available workspaces:
+Check the last line of output:
+- `Using org from SLACK_ORG: <name>` → No `--org` needed, commands use this workspace
+- `No org selected (use --org or SLACK_ORG)` → Must pass `--org=<workspace>` to every command
+
+The output also shows available workspaces in the "orgs" section.
+
+## Workspace Selection
+
 ```bash
-slack config  # Shows configured workspaces in "orgs" section
+# When SLACK_ORG env is set (no --org needed):
+slack conversations list
+
+# When no org is selected (--org required):
+slack --org=mycompany conversations list
 ```
+
+If the user hasn't specified a workspace and no default is configured, **ask them which workspace to use** (show the available orgs from `slack config`).
 
 ## Global Options
 
 ```bash
-slack --org=<workspace>  # REQUIRED: Specify which workspace to use
+slack --org=<workspace>  # Specify workspace (required if SLACK_ORG not set)
 slack --verbose          # Enable debug logging
 slack --json             # Output as JSON (available on most commands)
 ```
