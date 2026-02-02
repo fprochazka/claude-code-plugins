@@ -78,6 +78,18 @@
       "source": "./plugins/web-researcher",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/web-researcher"
+    },
+    {
+      "name": "slackcli",
+      "description": "Skill for interacting with Slack workspaces using the slackcli CLI",
+      "version": "1.0.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/slackcli",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/slackcli"
     }
   ]
 }
