@@ -1,0 +1,6 @@
+{
+  "name": "migrate-to-uv",
+  "version": "1.0.0",
+  "description": "Skill for migrating Python projects from Poetry, pipx, or pip to uv",
+  "skills": "./skills/"
+}

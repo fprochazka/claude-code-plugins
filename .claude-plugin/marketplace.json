@@ -90,6 +90,18 @@
       "source": "./plugins/slackcli",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/slackcli"
+    },
+    {
+      "name": "migrate-to-uv",
+      "description": "Skill for migrating Python projects from Poetry, pipx, or pip to uv",
+      "version": "1.0.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/migrate-to-uv",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/migrate-to-uv"
     }
   ]
 }
