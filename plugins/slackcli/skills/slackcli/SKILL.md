@@ -8,10 +8,25 @@ trigger-keywords: slack, slack message, slack channel, slack dm, slack thread, s
 
 Command-line interface for Slack API operations.
 
+## Workspace Selection (REQUIRED)
+
+**The `--org=<workspace>` option is mandatory for all commands.** You must specify which Slack workspace to use.
+
+If the user hasn't specified a workspace and it's not clear from context, **ask them which workspace to use** before running any commands.
+
+```bash
+slack --org=mycompany conversations list  # Specify workspace explicitly
+```
+
+To see available workspaces:
+```bash
+slack config  # Shows configured workspaces in "orgs" section
+```
+
 ## Global Options
 
 ```bash
-slack --org=<workspace>  # Use specific organization from config
+slack --org=<workspace>  # REQUIRED: Specify which workspace to use
 slack --verbose          # Enable debug logging
 slack --json             # Output as JSON (available on most commands)
 ```
