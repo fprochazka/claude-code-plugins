@@ -2,6 +2,7 @@
 name: slackcli
 description: CLI for interacting with Slack workspaces. Use when working with Slack to read messages, list channels, send messages, add reactions, or resolve Slack URLs. Triggered by requests involving Slack data, channel exploration, message searches, or Slack automation.
 trigger-keywords: slack, slack message, slack channel, slack dm, slack thread, slack reaction
+allowed-tools: Bash(slack:*)
 ---
 
 # slackcli

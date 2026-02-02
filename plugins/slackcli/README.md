@@ -15,6 +15,20 @@ claude plugin marketplace add fprochazka/claude-code-plugins
 claude plugin install slackcli@fprochazka-claude-code-plugins
 ```
 
+## Permissions
+
+The skill declares `allowed-tools: Bash(slack:*)` to auto-approve slack commands. Due to a [known bug](https://github.com/anthropics/claude-code/issues/14956), this may not work yet.
+
+As a workaround, add this to your `~/.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(slack:*)"]
+  }
+}
+```
+
 ## Usage
 
 The skill is automatically loaded when needed. It teaches Claude how to use the `slack` CLI to:
