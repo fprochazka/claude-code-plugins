@@ -4,8 +4,9 @@ Scans for SKILL.md files with trigger-keywords frontmatter.
 If any keywords match the user prompt, injects a reminder to load the skill.
 
 Skills are loaded from (in order, later overrides earlier):
-1. ~/.claude/skills/*/SKILL.md (user-level skills)
-2. .claude/skills/*/SKILL.md walking up from cwd to home dir (project-level skills)
+1. Installed plugins from ~/.claude/plugins/installed_plugins.json
+2. ~/.claude/skills/*/SKILL.md (user-level skills)
+3. .claude/skills/*/SKILL.md walking up from cwd to home dir (project-level skills)
 """
 
 import json
@@ -14,6 +15,36 @@ import re
 import sys
 from glob import glob
 from pathlib import Path
+
+
+def find_plugin_skills_directories(home: Path) -> list[Path]:
+    """Find skills directories from installed plugins.
+
+    Reads ~/.claude/plugins/installed_plugins.json and returns skills directories
+    from each installed plugin's installPath.
+    """
+    dirs = []
+    installed_plugins_path = home / '.claude' / 'plugins' / 'installed_plugins.json'
+
+    if not installed_plugins_path.exists():
+        return dirs
+
+    try:
+        with open(installed_plugins_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        plugins = data.get('plugins', {})
+        for plugin_name, installations in plugins.items():
+            for installation in installations:
+                install_path = installation.get('installPath', '')
+                if install_path:
+                    skills_dir = Path(install_path) / 'skills'
+                    if skills_dir.is_dir():
+                        dirs.append(skills_dir)
+    except Exception:
+        pass
+
+    return dirs
 
 
 def find_skills_directories(cwd: Path, home: Path, project_dir: Path | None) -> list[Path]:
@@ -177,8 +208,9 @@ def main():
     project_dir_env = os.environ.get('CLAUDE_PROJECT_DIR', '').strip()
     project_dir = Path(project_dir_env) if project_dir_env else None
 
-    # Find all skills directories
-    skills_dirs = find_skills_directories(cwd, home, project_dir)
+    # Find all skills directories (plugins first, then user/project - later overrides earlier)
+    skills_dirs = find_plugin_skills_directories(home)
+    skills_dirs.extend(find_skills_directories(cwd, home, project_dir))
     if not skills_dirs:
         sys.exit(0)
 
