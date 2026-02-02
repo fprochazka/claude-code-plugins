@@ -25,6 +25,7 @@ As a workaround, add read-only commands to your `~/.claude/settings.json`:
 {
   "permissions": {
     "allow": [
+      "Bash(slack --help)",
       "Bash(slack config:*)",
       "Bash(slack conversations list:*)",
       "Bash(slack messages list:*)",
