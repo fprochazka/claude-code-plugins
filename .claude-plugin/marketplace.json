@@ -82,7 +82,7 @@
     {
       "name": "slackcli",
       "description": "Skill for interacting with Slack workspaces using the slackcli CLI",
-      "version": "1.2.0",
+      "version": "2.0.0",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
