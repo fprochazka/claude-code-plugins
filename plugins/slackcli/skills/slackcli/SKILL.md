@@ -128,11 +128,12 @@ slack users get U0123456789         # Get by user ID
 
 ## Files
 
+Files are downloaded to `/tmp/slackcli-<random>/`.
+
 ```bash
 slack files download F0ABC123DEF                      # Download by file ID
 slack files download 'https://files.slack.com/...'   # Download by URL
-slack files download F0ABC123DEF --output /tmp/       # Specify output dir
-slack files download F0ABC123DEF --output ./file.txt  # Specify output file
+slack files download F0ABC123DEF --json               # Output download details as JSON
 ```
 
 ## Reactions
