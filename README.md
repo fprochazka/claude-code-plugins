@@ -37,6 +37,29 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
 | [slackcli](plugins/slackcli/) | Skill for interacting with Slack workspaces using the slackcli CLI |
 
+## Developing
+
+### Creating a New Plugin
+
+- [ ] Create `plugins/<name>/` directory
+- [ ] Create `plugins/<name>/.claude-plugin/plugin.json` with name, version, description
+- [ ] Add plugin content (skills/, commands/, agents/, hooks/, etc.)
+- [ ] Create `plugins/<name>/README.md`
+- [ ] Add entry to `.claude-plugin/marketplace.json` with matching version
+- [ ] Add row to "Available Plugins" table in the root README
+
+### Releasing a New Version
+
+- [ ] Update version in `plugins/<name>/.claude-plugin/plugin.json`
+- [ ] Update version in `.claude-plugin/marketplace.json`
+- [ ] Commit and push
+
+### Notes
+
+- Plugins are pinned to commit SHAs when installed
+- Users must run `claude plugin update <name>@fprochazka-claude-code-plugins` to get updates
+- Use semantic versioning: MAJOR.MINOR.PATCH
+
 ## License
 
 MIT
