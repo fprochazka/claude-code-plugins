@@ -206,7 +206,8 @@ Format: `1234567890.123456`. Get them from:
 
 ## Message Formatting
 
-When composing messages, use Slack's mrkdwn syntax:
+When composing messages, use Slack's mrkdwn syntax. **Slack does NOT support markdown tables** — use plain text alignment, bullet lists, or code blocks to present tabular data instead.
+
 
 | Syntax | Result |
 |--------|--------|
