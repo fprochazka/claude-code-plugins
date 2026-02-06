@@ -1,0 +1,6 @@
+{
+  "name": "metabasecli",
+  "version": "1.0.0",
+  "description": "Skill for interacting with Metabase using the metabase CLI",
+  "skills": "./skills/"
+}

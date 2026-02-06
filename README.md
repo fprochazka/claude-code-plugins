@@ -37,6 +37,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
 | [slackcli](plugins/slackcli/) | Skill for interacting with Slack workspaces using the slackcli CLI |
 | [migrate-to-uv](plugins/migrate-to-uv/) | Skill for migrating Python projects from Poetry, pipx, or pip to uv |
+| [metabasecli](plugins/metabasecli/) | Skill for interacting with Metabase using the metabase CLI |
 
 ## Developing
 
