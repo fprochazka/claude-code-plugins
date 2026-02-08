@@ -106,7 +106,7 @@
     {
       "name": "metabasecli",
       "description": "Skill for interacting with Metabase using the metabase CLI",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

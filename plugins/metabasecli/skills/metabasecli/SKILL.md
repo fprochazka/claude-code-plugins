@@ -27,10 +27,10 @@ metabase --json          # Available on most commands, structured JSON output
 ## JSON Output Format
 
 All commands support `--json`. Output wraps as:
-- Success: `{"success": true, "data": {...}, "meta": {...}}`
+- Success: `{"success": true, "data": {...}, "meta": {"timestamp": "...", "api_calls": N}}`
 - Error: `{"success": false, "error": {"code": "...", "message": "..."}}`
 
-Error codes: `NOT_FOUND`, `AUTHENTICATION_ERROR`, `SESSION_EXPIRED`, `API_ERROR`, `VALIDATION_ERROR`.
+Error codes: `NOT_FOUND`, `AUTHENTICATION_ERROR`, `SESSION_EXPIRED`, `PERMISSION_DENIED`, `API_ERROR`, `VALIDATION_ERROR`.
 
 ## Authentication
 
@@ -126,7 +126,9 @@ metabase cards list --filter database --database-id 1  # By database
 metabase cards get 123                                 # Full card details with query definition
 ```
 
-Valid `--filter`: `all`, `mine`, `bookmarked`, `archived`, `database`, `table`, `using_model`.
+At least one filter is required: `--filter`, `--collection-id`, or `--database-id`.
+
+Valid `--filter`: `mine`, `bookmarked`, `archived`, `database`, `table`, `using_model`.
 
 ### Run Cards
 
@@ -151,6 +153,8 @@ metabase cards import --file card.json --database-id 1 # Override target databas
 cat card.json | metabase cards import --file -          # From stdin
 ```
 
+For JSON format details and creating cards from scratch, see [references/creating-cards-and-dashboards.md](references/creating-cards-and-dashboards.md).
+
 ### Delete Cards
 
 ```bash
@@ -169,23 +173,28 @@ metabase dashboards get 456                            # Dashboard with dashcard
 metabase dashboards get 456 --include-cards            # Include full card definitions
 ```
 
-### Export/Import Dashboards
+### Export Dashboards
 
 ```bash
-metabase dashboards export 456                         # Export dashboard + all cards
+metabase dashboards export 456                         # Export dashboard + all referenced cards
 ```
 
-Exports to `/tmp/metabase-<timestamp>/` with a `manifest.json`.
+Exports to `/tmp/metabase-<timestamp>/` with:
+- `dashboard-456.json` — dashboard layout with dashcard placements (card_id references only)
+- `card-<id>.json` — one per referenced card (full card definition for context)
+
+### Import Dashboards
+
+Dashboard import only handles the layout. Cards must already exist — create them first with `metabase cards import`.
 
 ```bash
-metabase dashboards import --file manifest.json        # Import full dashboard
-metabase dashboards import --file manifest.json --id 456  # Update existing
-metabase dashboards import --file manifest.json --collection-id 42
-metabase dashboards import --file manifest.json --database-id 1
-metabase dashboards import --file manifest.json --cards-only     # Only import cards
-metabase dashboards import --file manifest.json --dashboard-only # Only import dashboard
-metabase dashboards import --file manifest.json --dry-run        # Preview without changes
+metabase dashboards import --file dashboard.json                  # Create new dashboard
+metabase dashboards import --file dashboard.json --id 456         # Update existing
+metabase dashboards import --file dashboard.json --collection-id 42  # Override collection
+cat dashboard.json | metabase dashboards import --file -          # From stdin
 ```
+
+For creating cards and dashboards from scratch, see [references/creating-cards-and-dashboards.md](references/creating-cards-and-dashboards.md).
 
 ### Revisions
 

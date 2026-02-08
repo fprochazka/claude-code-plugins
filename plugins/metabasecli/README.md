@@ -67,7 +67,8 @@ The skill is automatically loaded when needed. It teaches Claude how to use the 
 - Resolve Metabase URLs to entity details
 - Browse and manage collections
 - List, view, and run saved questions/cards
-- Export and import dashboards with all referenced cards
+- Export dashboards with all referenced cards for context
+- Import dashboard layouts and card definitions separately
 - Explore database metadata, schemas, tables, and fields
 - Manage dashboard revisions and reverts
 
