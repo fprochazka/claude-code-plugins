@@ -25,7 +25,8 @@ die() {
 }
 
 fix_paginated_json() {
-    sed 's/\]\[/,/g'
+    # Merge multiple JSON arrays from paginated output into one
+    jq -s 'add // []'
 }
 
 sanitize_filename() {
@@ -51,6 +52,34 @@ glab_api_with_retry() {
     done
 
     echo "ERROR: Failed to fetch $url after $MAX_RETRIES retries" > "$output_file"
+    return 1
+}
+
+# Fetches a paginated API endpoint with retry, merges arrays, and validates JSON.
+# Outputs the merged JSON array to stdout. Returns 1 on failure.
+glab_api_paginated_with_retry() {
+    local url="$1"
+    local retry=0
+    local delay=$INITIAL_RETRY_DELAY
+    local result
+
+    while (( retry < MAX_RETRIES )); do
+        local raw
+        if raw=$(glab api "$url" --paginate 2>/dev/null); then
+            if result=$(echo "$raw" | fix_paginated_json) && echo "$result" | jq empty 2>/dev/null; then
+                echo "$result"
+                return 0
+            fi
+        fi
+        retry=$((retry + 1))
+        if (( retry < MAX_RETRIES )); then
+            local jitter=$(( RANDOM % (delay / 2 + 1) ))
+            sleep $(( delay + jitter ))
+            delay=$(( delay * 2 ))
+        fi
+    done
+
+    echo "[]"
     return 1
 }
 
@@ -165,8 +194,8 @@ write_comment() {
 
 fetch_comments() {
     local comments_json
-    if ! comments_json=$(glab api "projects/$PROJECT_ID/merge_requests/$MR_ID/notes?per_page=100" --paginate 2>&1 | fix_paginated_json); then
-        echo "Warning: Could not fetch comments: $comments_json" >&2
+    if ! comments_json=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/merge_requests/$MR_ID/notes?per_page=100"); then
+        echo "Warning: Could not fetch comments after $MAX_RETRIES retries" >&2
         return
     fi
 
@@ -217,8 +246,8 @@ fetch_pipeline_info() {
     PIPELINE_STATUS=$(echo "$pipeline_json" | jq -r '.status')
 
     local jobs_json
-    if ! jobs_json=$(glab api "projects/$PROJECT_ID/pipelines/$pipeline_id/jobs?per_page=100" --paginate 2>&1 | fix_paginated_json); then
-        echo "Warning: Could not fetch jobs: $jobs_json" >&2
+    if ! jobs_json=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/pipelines/$pipeline_id/jobs?per_page=100"); then
+        echo "Warning: Could not fetch jobs after $MAX_RETRIES retries" >&2
         return
     fi
 
