@@ -4,7 +4,7 @@
 #
 # Fetches comprehensive merge request information including:
 # - MR details (description, link, author, etc.)
-# - All comments and notes (split by resolved/unresolved)
+# - All comments and notes (split by resolved/unresolved, human/bot)
 # - Latest pipeline status and job details
 # - Job logs (fetched in parallel with retry)
 #
@@ -84,6 +84,64 @@ glab_api_paginated_with_retry() {
 }
 
 # ==============================================================================
+# User Cache (bot detection)
+# ==============================================================================
+
+# Extracts GitLab hostname from a web URL (e.g. https://gitlab.example.com/foo -> gitlab.example.com)
+extract_hostname() {
+    echo "$1" | sed -E 's|https?://([^/]*).*|\1|'
+}
+
+# Fetches user JSON, caching to ~/.cache/gitlab/<hostname>/user_<id>.json
+fetch_user_cached() {
+    local user_id="$1"
+    local hostname="$2"
+    local cache_dir="$HOME/.cache/gitlab/$hostname"
+    local cache_file="$cache_dir/user_${user_id}.json"
+
+    if [[ -f "$cache_file" ]]; then
+        cat "$cache_file"
+        return 0
+    fi
+
+    mkdir -p "$cache_dir"
+    local temp_file
+    temp_file=$(mktemp)
+
+    if glab_api_with_retry "users/$user_id" "$temp_file"; then
+        if jq empty < "$temp_file" 2>/dev/null; then
+            mv "$temp_file" "$cache_file"
+            cat "$cache_file"
+            return 0
+        fi
+    fi
+
+    rm -f "$temp_file"
+    echo '{}'
+    return 1
+}
+
+# Builds a JSON object mapping author IDs to bot status: {"870": false, "867": true}
+build_bot_author_map() {
+    local comments_json="$1"
+    local hostname="$2"
+    local bot_map="{}"
+
+    local author_ids
+    author_ids=$(echo "$comments_json" | jq -r '[.[].author.id] | unique | .[]')
+
+    for user_id in $author_ids; do
+        local user_json
+        user_json=$(fetch_user_cached "$user_id" "$hostname")
+        local is_bot
+        is_bot=$(echo "$user_json" | jq -r '.bot // false')
+        bot_map=$(echo "$bot_map" | jq --arg id "$user_id" --argjson bot "$is_bot" '. + {($id): $bot}')
+    done
+
+    echo "$bot_map"
+}
+
+# ==============================================================================
 # Setup
 # ==============================================================================
 
@@ -95,6 +153,8 @@ setup_output_directory() {
     MR_INFO_FILE="$OUTPUT_DIR/mr-info.txt"
     COMMENTS_RESOLVED_FILE="$OUTPUT_DIR/comments-resolved.txt"
     COMMENTS_UNRESOLVED_FILE="$OUTPUT_DIR/comments-unresolved.txt"
+    COMMENTS_BOT_RESOLVED_FILE="$OUTPUT_DIR/comments-bot-resolved.txt"
+    COMMENTS_BOT_UNRESOLVED_FILE="$OUTPUT_DIR/comments-bot-unresolved.txt"
     PIPELINE_SUMMARY_FILE="$OUTPUT_DIR/full-pipeline-summary.txt"
     JOBS_DIR="$OUTPUT_DIR/job-logs"
     mkdir -p "$JOBS_DIR"
@@ -192,6 +252,27 @@ write_comment() {
     echo
 }
 
+write_comments_file() {
+    local title="$1"
+    local output_file="$2"
+    local comments_json="$3"
+    local count
+    count=$(echo "$comments_json" | jq 'length')
+
+    {
+        echo "$title (Total: $count)"
+        echo "=========================================="
+        echo
+        local idx=1
+        while IFS= read -r comment; do
+            write_comment "$idx" "$comment"
+            idx=$((idx + 1))
+        done < <(echo "$comments_json" | jq -c '.[]')
+    } > "$output_file"
+
+    echo "$count"
+}
+
 fetch_comments() {
     local comments_json
     if ! comments_json=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/merge_requests/$MR_ID/notes?per_page=100"); then
@@ -199,35 +280,23 @@ fetch_comments() {
         return
     fi
 
-    local resolved_json=$(echo "$comments_json" | jq '[.[] | select(.resolvable == false or .resolved == true)]')
-    local unresolved_json=$(echo "$comments_json" | jq '[.[] | select(.resolvable == true and .resolved == false)]')
+    # Build bot author map
+    local hostname
+    hostname=$(extract_hostname "$MR_URL")
+    local bot_map
+    bot_map=$(build_bot_author_map "$comments_json" "$hostname")
 
-    RESOLVED_COUNT=$(echo "$resolved_json" | jq 'length')
-    UNRESOLVED_COUNT=$(echo "$unresolved_json" | jq 'length')
+    # Split by bot/human, then by resolved/unresolved
+    local human_resolved human_unresolved bot_resolved bot_unresolved
+    human_resolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == false) | select(.resolvable == false or .resolved == true)]')
+    human_unresolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == false) | select(.resolvable == true and .resolved == false)]')
+    bot_resolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == true) | select(.resolvable == false or .resolved == true)]')
+    bot_unresolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == true) | select(.resolvable == true and .resolved == false)]')
 
-    # Write resolved
-    {
-        echo "RESOLVED COMMENTS (Total: $RESOLVED_COUNT)"
-        echo "=========================================="
-        echo
-        local idx=1
-        while IFS= read -r comment; do
-            write_comment "$idx" "$comment"
-            idx=$((idx + 1))
-        done < <(echo "$resolved_json" | jq -c '.[]')
-    } > "$COMMENTS_RESOLVED_FILE"
-
-    # Write unresolved
-    {
-        echo "UNRESOLVED COMMENTS (Total: $UNRESOLVED_COUNT)"
-        echo "=============================================="
-        echo
-        local idx=1
-        while IFS= read -r comment; do
-            write_comment "$idx" "$comment"
-            idx=$((idx + 1))
-        done < <(echo "$unresolved_json" | jq -c '.[]')
-    } > "$COMMENTS_UNRESOLVED_FILE"
+    RESOLVED_COUNT=$(write_comments_file "RESOLVED COMMENTS" "$COMMENTS_RESOLVED_FILE" "$human_resolved")
+    UNRESOLVED_COUNT=$(write_comments_file "UNRESOLVED COMMENTS" "$COMMENTS_UNRESOLVED_FILE" "$human_unresolved")
+    BOT_RESOLVED_COUNT=$(write_comments_file "BOT RESOLVED COMMENTS" "$COMMENTS_BOT_RESOLVED_FILE" "$bot_resolved")
+    BOT_UNRESOLVED_COUNT=$(write_comments_file "BOT UNRESOLVED COMMENTS" "$COMMENTS_BOT_UNRESOLVED_FILE" "$bot_unresolved")
 }
 
 # ==============================================================================
@@ -347,9 +416,11 @@ print_summary() {
     echo "  URL: $MR_URL"
     echo
     echo "Files Created:"
-    echo "  MR Info:               $MR_INFO_FILE"
-    echo "  Comments (resolved):   $COMMENTS_RESOLVED_FILE ($RESOLVED_COUNT comments)"
-    echo "  Comments (unresolved): $COMMENTS_UNRESOLVED_FILE ($UNRESOLVED_COUNT comments)"
+    echo "  MR Info:                   $MR_INFO_FILE"
+    echo "  Comments (resolved):       $COMMENTS_RESOLVED_FILE ($RESOLVED_COUNT comments)"
+    echo "  Comments (unresolved):     $COMMENTS_UNRESOLVED_FILE ($UNRESOLVED_COUNT comments)"
+    echo "  Bot comments (resolved):   $COMMENTS_BOT_RESOLVED_FILE ($BOT_RESOLVED_COUNT comments)"
+    echo "  Bot comments (unresolved): $COMMENTS_BOT_UNRESOLVED_FILE ($BOT_UNRESOLVED_COUNT comments)"
 
     [[ -n "${PIPELINE_STATUS:-}" ]] && echo "  Pipeline:              $PIPELINE_SUMMARY_FILE (status: $PIPELINE_STATUS)"
 
@@ -384,6 +455,8 @@ main() {
 
     RESOLVED_COUNT=0
     UNRESOLVED_COUNT=0
+    BOT_RESOLVED_COUNT=0
+    BOT_UNRESOLVED_COUNT=0
 
     fetch_mr_info
     fetch_comments
