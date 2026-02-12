@@ -312,6 +312,7 @@ fetch_pipeline_info() {
     fi
 
     local pipeline_id=$(echo "$pipeline_json" | jq -r '.id')
+    local pipeline_sha=$(echo "$pipeline_json" | jq -r '.sha')
     PIPELINE_STATUS=$(echo "$pipeline_json" | jq -r '.status')
 
     local jobs_json
@@ -322,6 +323,16 @@ fetch_pipeline_info() {
 
     JOBS_JSON="$jobs_json"
     local jobs_count=$(echo "$jobs_json" | jq 'length')
+
+    # Fetch external commit statuses (e.g. SonarQube)
+    local commit_statuses="[]"
+    if [[ -n "$pipeline_sha" && "$pipeline_sha" != "null" ]]; then
+        commit_statuses=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/repository/commits/$pipeline_sha/statuses?per_page=100" 2>/dev/null || echo "[]")
+        # Filter to only external statuses (not from pipeline jobs)
+        local job_names
+        job_names=$(echo "$jobs_json" | jq -r '[.[].name] | .[]')
+        EXTERNAL_STATUSES=$(echo "$commit_statuses" | jq --argjson jobs "$(echo "$jobs_json" | jq '[.[].name]')" '[.[] | select(.name as $n | $jobs | index($n) | not)]')
+    fi
 
     # Write pipeline summary
     {
@@ -353,6 +364,28 @@ fetch_pipeline_info() {
             echo "  Log File: $JOBS_DIR/${safe_name}-${job_id}.log"
             echo
         done < <(echo "$jobs_json" | jq -c '.[]')
+
+        # Print external commit statuses if any
+        local external_count
+        external_count=$(echo "${EXTERNAL_STATUSES:-[]}" | jq 'length')
+        if (( external_count > 0 )); then
+            echo "EXTERNAL COMMIT STATUSES ($external_count)"
+            echo "=========================================="
+            echo
+
+            while IFS= read -r ext; do
+                local ext_name=$(echo "$ext" | jq -r '.name // "Unknown"')
+                local ext_status=$(echo "$ext" | jq -r '.status // "unknown"')
+                local ext_desc=$(echo "$ext" | jq -r '.description // ""')
+                local ext_url=$(echo "$ext" | jq -r '.target_url // ""')
+
+                echo "Status: $ext_name"
+                echo "  Result: $ext_status"
+                [[ -n "$ext_desc" && "$ext_desc" != "null" ]] && echo "  Description: $ext_desc"
+                [[ -n "$ext_url" && "$ext_url" != "null" ]] && echo "  URL: $ext_url"
+                echo
+            done < <(echo "$EXTERNAL_STATUSES" | jq -c '.[]')
+        fi
     } > "$PIPELINE_SUMMARY_FILE"
 }
 
@@ -408,6 +441,9 @@ fetch_job_logs() {
 # ==============================================================================
 
 print_summary() {
+    local show_comments="${1:-true}"
+    local show_pipeline="${2:-true}"
+
     echo
     echo "MR Information:"
     echo "  Title: $MR_TITLE"
@@ -417,27 +453,52 @@ print_summary() {
     echo
     echo "Files Created:"
     echo "  MR Info:                   $MR_INFO_FILE"
-    echo "  Comments (resolved):       $COMMENTS_RESOLVED_FILE ($RESOLVED_COUNT comments)"
-    echo "  Comments (unresolved):     $COMMENTS_UNRESOLVED_FILE ($UNRESOLVED_COUNT comments)"
-    echo "  Bot comments (resolved):   $COMMENTS_BOT_RESOLVED_FILE ($BOT_RESOLVED_COUNT comments)"
-    echo "  Bot comments (unresolved): $COMMENTS_BOT_UNRESOLVED_FILE ($BOT_UNRESOLVED_COUNT comments)"
 
-    [[ -n "${PIPELINE_STATUS:-}" ]] && echo "  Pipeline:              $PIPELINE_SUMMARY_FILE (status: $PIPELINE_STATUS)"
+    if [[ "$show_comments" == true ]]; then
+        echo "  Comments (resolved):       $COMMENTS_RESOLVED_FILE ($RESOLVED_COUNT comments)"
+        echo "  Comments (unresolved):     $COMMENTS_UNRESOLVED_FILE ($UNRESOLVED_COUNT comments)"
+        echo "  Bot comments (resolved):   $COMMENTS_BOT_RESOLVED_FILE ($BOT_RESOLVED_COUNT comments)"
+        echo "  Bot comments (unresolved): $COMMENTS_BOT_UNRESOLVED_FILE ($BOT_UNRESOLVED_COUNT comments)"
+    fi
 
-    # Show failed jobs
-    if [[ -n "${JOBS_JSON:-}" ]]; then
-        local failed_jobs=$(echo "$JOBS_JSON" | jq -c '[.[] | select(.status == "failed")]')
-        local failed_count=$(echo "$failed_jobs" | jq 'length')
+    if [[ "$show_pipeline" == true ]]; then
+        [[ -n "${PIPELINE_STATUS:-}" ]] && echo "  Pipeline:              $PIPELINE_SUMMARY_FILE (status: $PIPELINE_STATUS)"
 
-        if (( failed_count > 0 )); then
-            echo
-            echo "Failed Jobs ($failed_count):"
-            while IFS= read -r job; do
-                local job_id=$(echo "$job" | jq -r '.id')
-                local job_name=$(echo "$job" | jq -r '.name')
-                local safe_name=$(sanitize_filename "$job_name")
-                echo "  $job_name: $JOBS_DIR/${safe_name}-${job_id}.log"
-            done < <(echo "$failed_jobs" | jq -c '.[]')
+        # Show failed jobs
+        if [[ -n "${JOBS_JSON:-}" ]]; then
+            local failed_jobs=$(echo "$JOBS_JSON" | jq -c '[.[] | select(.status == "failed")]')
+            local failed_count=$(echo "$failed_jobs" | jq 'length')
+
+            if (( failed_count > 0 )); then
+                echo
+                echo "Failed Jobs ($failed_count):"
+                while IFS= read -r job; do
+                    local job_id=$(echo "$job" | jq -r '.id')
+                    local job_name=$(echo "$job" | jq -r '.name')
+                    local safe_name=$(sanitize_filename "$job_name")
+                    echo "  $job_name: $JOBS_DIR/${safe_name}-${job_id}.log"
+                done < <(echo "$failed_jobs" | jq -c '.[]')
+            fi
+        fi
+
+        # Show failed external commit statuses
+        if [[ -n "${EXTERNAL_STATUSES:-}" ]]; then
+            local failed_external=$(echo "$EXTERNAL_STATUSES" | jq -c '[.[] | select(.status == "failed")]')
+            local failed_ext_count=$(echo "$failed_external" | jq 'length')
+
+            if (( failed_ext_count > 0 )); then
+                echo
+                echo "Failed External Statuses ($failed_ext_count):"
+                while IFS= read -r ext; do
+                    local ext_name=$(echo "$ext" | jq -r '.name')
+                    local ext_desc=$(echo "$ext" | jq -r '.description // ""')
+                    local ext_url=$(echo "$ext" | jq -r '.target_url // ""')
+                    echo -n "  $ext_name"
+                    [[ -n "$ext_desc" && "$ext_desc" != "null" ]] && echo -n " ($ext_desc)"
+                    echo
+                    [[ -n "$ext_url" && "$ext_url" != "null" ]] && echo "    URL: $ext_url"
+                done < <(echo "$failed_external" | jq -c '.[]')
+            fi
         fi
     fi
 
@@ -453,16 +514,42 @@ main() {
     command -v glab &>/dev/null || die "glab CLI is not installed"
     command -v jq &>/dev/null || die "jq is not installed"
 
+    local fetch_comments_flag=false
+    local fetch_pipeline_flag=false
+
+    # Parse arguments
+    if [[ $# -eq 0 ]] || [[ "$1" == "--all" ]]; then
+        fetch_comments_flag=true
+        fetch_pipeline_flag=true
+    else
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --comments) fetch_comments_flag=true ;;
+                --pipeline) fetch_pipeline_flag=true ;;
+                --all) fetch_comments_flag=true; fetch_pipeline_flag=true ;;
+                *) die "Unknown option: $1 (use --comments, --pipeline, or --all)" ;;
+            esac
+            shift
+        done
+    fi
+
     RESOLVED_COUNT=0
     UNRESOLVED_COUNT=0
     BOT_RESOLVED_COUNT=0
     BOT_UNRESOLVED_COUNT=0
 
     fetch_mr_info
-    fetch_comments
-    fetch_pipeline_info
-    fetch_job_logs
-    print_summary
+
+    if [[ "$fetch_comments_flag" == true ]]; then
+        fetch_comments
+    fi
+
+    if [[ "$fetch_pipeline_flag" == true ]]; then
+        fetch_pipeline_info
+        fetch_job_logs
+    fi
+
+    print_summary "$fetch_comments_flag" "$fetch_pipeline_flag"
 }
 
 main "$@"

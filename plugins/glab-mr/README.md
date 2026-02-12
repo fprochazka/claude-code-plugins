@@ -4,13 +4,24 @@ GitLab MR tools for Claude Code - fix failed CI, resolve comments, and more.
 
 ## Commands
 
-### `/glab-mr:fix`
+### `/glab-mr:fix-all`
 
-Fetches comprehensive MR state and helps fix issues:
+Fetches comprehensive MR state (comments + pipeline) and helps fix all issues:
 
 1. **Failed CI Jobs** - Analyzes job logs and fixes code issues
 2. **Unresolved Comments** - Reviews and addresses discussion threads
 3. **Resolved Comments Verification** - Checks for missed actionable feedback
+
+### `/glab-mr:fix-comments`
+
+Fetches only MR comments and helps fix comment-related issues:
+
+1. **Unresolved Comments** - Reviews and addresses discussion threads
+2. **Resolved Comments Verification** - Checks for missed actionable feedback
+
+### `/glab-mr:fix-pipeline`
+
+Fetches only pipeline status and job logs, and helps fix CI failures.
 
 ## Requirements
 
