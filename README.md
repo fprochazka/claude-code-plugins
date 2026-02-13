@@ -38,6 +38,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [slackcli](plugins/slackcli/) | Skill for interacting with Slack workspaces using the slackcli CLI |
 | [migrate-to-uv](plugins/migrate-to-uv/) | Skill for migrating Python projects from Poetry, pipx, or pip to uv |
 | [metabasecli](plugins/metabasecli/) | Skill for interacting with Metabase using the metabase CLI |
+| [llm-toto](plugins/llm-toto/) | LLM Tool Output Tokens Optimizer - buffers large command outputs to files to reduce token consumption and prevent wasteful re-runs |
 
 ## Developing
 

@@ -1,0 +1,17 @@
+{
+  "description": "Rewrites Bash tool calls to buffer large outputs via llm-toto",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/rewrite-bash.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

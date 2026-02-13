@@ -1,0 +1,9 @@
+{
+  "name": "llm-toto",
+  "version": "0.1.0",
+  "description": "LLM Tool Output Tokens Optimizer - buffers large command outputs to files, providing compact summaries to reduce token consumption and prevent wasteful command re-runs",
+  "author": {
+    "name": "Filip Prochazka"
+  },
+  "license": "MIT"
+}
