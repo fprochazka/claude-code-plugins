@@ -12,16 +12,16 @@ Fetches comprehensive MR state (comments + pipeline) and helps fix all issues:
 2. **Unresolved Comments** - Reviews and addresses discussion threads
 3. **Resolved Comments Verification** - Checks for missed actionable feedback
 
-### `/glab-mr:fix-comments`
+### `/glab-mr:comments`
 
-Fetches only MR comments and helps fix comment-related issues:
+Fetches only MR comments, analyzes them, and proposes what to do:
 
-1. **Unresolved Comments** - Reviews and addresses discussion threads
+1. **Unresolved Comments** - Reviews discussion threads and proposes actions
 2. **Resolved Comments Verification** - Checks for missed actionable feedback
 
-### `/glab-mr:fix-pipeline`
+### `/glab-mr:pipeline`
 
-Fetches only pipeline status and job logs, and helps fix CI failures.
+Fetches only pipeline status and job logs, triages failures and proposes fixes.
 
 ## Requirements
 
@@ -35,17 +35,17 @@ The plugin includes an inline bash script that:
 
 1. Auto-detects the MR from your current git branch
 2. Fetches MR info via `glab mr view`
-3. Fetches all comments, detects bot vs human authors (via cached user lookups), and splits into resolved/unresolved for each
-4. Fetches pipeline status and job details
-5. Fetches job logs in parallel with exponential backoff retry
-6. Writes organized output to a temp directory
+3. Fetches all discussions via the Discussions API, filters out system-only threads
+4. Groups comments by discussion thread with replies indented, sorted by creation time
+5. Includes `Discussion:` and `Note:` IDs so the AI can reply/resolve without extra API lookups
+6. Marks bot authors with `[BOT]` label (via cached user lookups)
+7. Splits into resolved/unresolved files
+8. Fetches pipeline status, job details, and logs in parallel with retry
 
 All data is saved to `/tmp/glab-mr-<id>-<timestamp>/` with:
 - `mr-info.txt` - Full MR details
-- `comments-resolved.txt` - Resolved human comments
-- `comments-unresolved.txt` - Unresolved human comments
-- `comments-bot-resolved.txt` - Resolved bot comments (AI reviewers, CI tools, etc.)
-- `comments-bot-unresolved.txt` - Unresolved bot comments
+- `comments-resolved.txt` - Resolved comments (bot authors marked with `[BOT]`)
+- `comments-unresolved.txt` - Unresolved comments
 - `full-pipeline-summary.txt` - Pipeline status and all jobs
 - `job-logs/` - Individual log files for each job
 

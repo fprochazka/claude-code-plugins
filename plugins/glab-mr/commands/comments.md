@@ -11,13 +11,13 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)"]
 
 ## Your task
 
-Analyze the MR comments above and help fix any issues:
+Analyze the MR comments above, no implementation yet.
+Look up the context and think about the discussions, then propose what to do about them. 
 
 ### 1. Unresolved Comments
 Review all unresolved discussion threads:
 - For each unresolved comment, understand what is being requested
 - Propose what to do about each one (fix code, respond, or explain why no action needed)
-- Implement fixes where appropriate
 
 ### 2. Resolved Comments Verification
 Review resolved comments as well because:
@@ -27,7 +27,7 @@ Review resolved comments as well because:
 
 ### 3. Interacting with Discussions
 
-Each comment in the dump includes `Discussion:` and `Note:` IDs. Use these with `glab api` to interact with discussions:
+Each comment in the dump includes `Discussion:` and `Note:` IDs. You may use these with `glab api` to interact with discussions:
 
 - **Reply to a discussion**: `glab api -X POST "projects/$PROJECT_ID/merge_requests/$MR_IID/discussions/$DISCUSSION_ID/notes" -f body="Your reply"`
 - **Resolve a discussion**: `glab api -X PUT "projects/$PROJECT_ID/merge_requests/$MR_IID/discussions/$DISCUSSION_ID" -f resolved=true`
