@@ -153,8 +153,6 @@ setup_output_directory() {
     MR_INFO_FILE="$OUTPUT_DIR/mr-info.txt"
     COMMENTS_RESOLVED_FILE="$OUTPUT_DIR/comments-resolved.txt"
     COMMENTS_UNRESOLVED_FILE="$OUTPUT_DIR/comments-unresolved.txt"
-    COMMENTS_BOT_RESOLVED_FILE="$OUTPUT_DIR/comments-bot-resolved.txt"
-    COMMENTS_BOT_UNRESOLVED_FILE="$OUTPUT_DIR/comments-bot-unresolved.txt"
     PIPELINE_SUMMARY_FILE="$OUTPUT_DIR/full-pipeline-summary.txt"
     JOBS_DIR="$OUTPUT_DIR/job-logs"
     mkdir -p "$JOBS_DIR"
@@ -220,83 +218,133 @@ fetch_mr_info() {
 # Comments
 # ==============================================================================
 
-write_comment() {
-    local idx="$1"
-    local comment_json="$2"
+write_note() {
+    local idx_label="$1"
+    local note_json="$2"
+    local indent="${3:-}"
+    local discussion_id="${4:-}"
 
-    local author=$(echo "$comment_json" | jq -r '.author.name // "Unknown"')
-    local created_at=$(echo "$comment_json" | jq -r '.created_at // "Unknown"')
-    local body=$(echo "$comment_json" | jq -r '.body // ""')
-    local note_type=$(echo "$comment_json" | jq -r '.type // ""')
-    local system=$(echo "$comment_json" | jq -r '.system // false')
+    local author=$(echo "$note_json" | jq -r '.author.name // "Unknown"')
+    local author_id=$(echo "$note_json" | jq -r '.author.id // ""')
+    local created_at=$(echo "$note_json" | jq -r '.created_at // "Unknown"')
+    local body=$(echo "$note_json" | jq -r '.body // ""')
+    local note_type=$(echo "$note_json" | jq -r '.type // ""')
+    local system=$(echo "$note_json" | jq -r '.system // false')
+    local note_id=$(echo "$note_json" | jq -r '.id // ""')
 
-    echo "[$idx] $author - $created_at"
-    [[ "$system" == "true" ]] && echo "[SYSTEM NOTE]"
-    [[ -n "$note_type" && "$note_type" != "null" ]] && echo "Type: $note_type"
+    # Check if author is a bot
+    local is_bot="false"
+    if [[ -n "$BOT_MAP" && -n "$author_id" ]]; then
+        is_bot=$(echo "$BOT_MAP" | jq -r --arg id "$author_id" '.[$id] // false')
+    fi
+
+    local author_label="$author"
+    [[ "$is_bot" == "true" ]] && author_label="$author [BOT]"
+
+    echo "${indent}[$idx_label] $author_label - $created_at"
+    [[ -n "$discussion_id" ]] && echo "${indent}Discussion: $discussion_id"
+    echo "${indent}Note: $note_id"
+    [[ "$system" == "true" ]] && echo "${indent}[SYSTEM NOTE]"
+    [[ -n "$note_type" && "$note_type" != "null" ]] && echo "${indent}Type: $note_type"
 
     # Code position
-    local has_position=$(echo "$comment_json" | jq -r '.position // null')
+    local has_position=$(echo "$note_json" | jq -r '.position // null')
     if [[ "$has_position" != "null" ]]; then
-        local commit=$(echo "$comment_json" | jq -r '.position.head_sha // ""' | cut -c1-8)
-        local file_path=$(echo "$comment_json" | jq -r '.position.new_path // .position.old_path // ""')
-        local line_num=$(echo "$comment_json" | jq -r '.position.new_line // .position.old_line // ""')
+        local commit=$(echo "$note_json" | jq -r '.position.head_sha // ""' | cut -c1-8)
+        local file_path=$(echo "$note_json" | jq -r '.position.new_path // .position.old_path // ""')
+        local line_num=$(echo "$note_json" | jq -r '.position.new_line // .position.old_line // ""')
         if [[ -n "$commit" && -n "$file_path" ]]; then
-            echo -n "Code: $commit $file_path"
+            echo -n "${indent}Code: $commit $file_path"
             [[ -n "$line_num" && "$line_num" != "null" ]] && echo -n ":$line_num"
             echo
         fi
     fi
 
-    echo "---"
-    echo "$body"
+    echo "${indent}---"
+    if [[ -n "$indent" ]]; then
+        echo "$body" | sed "s/^/${indent}/"
+    else
+        echo "$body"
+    fi
     echo
+}
+
+write_discussion() {
+    local idx="$1"
+    local discussion_json="$2"
+
+    local discussion_id=$(echo "$discussion_json" | jq -r '.id')
+    local notes_count=$(echo "$discussion_json" | jq '.notes | length')
+    local first_note=$(echo "$discussion_json" | jq -c '.notes[0]')
+
+    # Write first note with discussion ID
+    write_note "$idx" "$first_note" "" "$discussion_id"
+
+    # Write reply notes (indented)
+    if (( notes_count > 1 )); then
+        local reply_idx=1
+        while IFS= read -r reply_note; do
+            write_note "$idx.$reply_idx" "$reply_note" "  "
+            reply_idx=$((reply_idx + 1))
+        done < <(echo "$discussion_json" | jq -c '.notes[1:][]')
+    fi
 }
 
 write_comments_file() {
     local title="$1"
     local output_file="$2"
-    local comments_json="$3"
+    local discussions_json="$3"
     local count
-    count=$(echo "$comments_json" | jq 'length')
+    count=$(echo "$discussions_json" | jq 'length')
 
     {
         echo "$title (Total: $count)"
         echo "=========================================="
         echo
         local idx=1
-        while IFS= read -r comment; do
-            write_comment "$idx" "$comment"
+        while IFS= read -r discussion; do
+            write_discussion "$idx" "$discussion"
             idx=$((idx + 1))
-        done < <(echo "$comments_json" | jq -c '.[]')
+        done < <(echo "$discussions_json" | jq -c '.[]')
     } > "$output_file"
 
     echo "$count"
 }
 
 fetch_comments() {
-    local comments_json
-    if ! comments_json=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/merge_requests/$MR_ID/notes?per_page=100"); then
-        echo "Warning: Could not fetch comments after $MAX_RETRIES retries" >&2
+    local discussions_json
+    if ! discussions_json=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/merge_requests/$MR_ID/discussions?per_page=100"); then
+        echo "Warning: Could not fetch discussions after $MAX_RETRIES retries" >&2
         return
     fi
 
-    # Build bot author map
+    # Filter out discussions where all notes are system notes (e.g. "assigned to", "added commit")
+    discussions_json=$(echo "$discussions_json" | jq '[.[] | select([.notes[] | .system] | all | not)]')
+
+    # Build bot author map from all notes across all discussions
+    local all_notes
+    all_notes=$(echo "$discussions_json" | jq '[.[].notes[]]')
     local hostname
     hostname=$(extract_hostname "$MR_URL")
     local bot_map
-    bot_map=$(build_bot_author_map "$comments_json" "$hostname")
+    bot_map=$(build_bot_author_map "$all_notes" "$hostname")
 
-    # Split by bot/human, then by resolved/unresolved
-    local human_resolved human_unresolved bot_resolved bot_unresolved
-    human_resolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == false) | select(.resolvable == false or .resolved == true)]')
-    human_unresolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == false) | select(.resolvable == true and .resolved == false)]')
-    bot_resolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == true) | select(.resolvable == false or .resolved == true)]')
-    bot_unresolved=$(echo "$comments_json" | jq --argjson bots "$bot_map" '[.[] | select(($bots[(.author.id | tostring)] // false) == true) | select(.resolvable == true and .resolved == false)]')
+    # Make bot map available to write_note via global
+    BOT_MAP="$bot_map"
 
-    RESOLVED_COUNT=$(write_comments_file "RESOLVED COMMENTS" "$COMMENTS_RESOLVED_FILE" "$human_resolved")
-    UNRESOLVED_COUNT=$(write_comments_file "UNRESOLVED COMMENTS" "$COMMENTS_UNRESOLVED_FILE" "$human_unresolved")
-    BOT_RESOLVED_COUNT=$(write_comments_file "BOT RESOLVED COMMENTS" "$COMMENTS_BOT_RESOLVED_FILE" "$bot_resolved")
-    BOT_UNRESOLVED_COUNT=$(write_comments_file "BOT UNRESOLVED COMMENTS" "$COMMENTS_BOT_UNRESOLVED_FILE" "$bot_unresolved")
+    # Split discussions by resolved/unresolved, sorted by first note's created_at
+    local resolved unresolved
+
+    resolved=$(echo "$discussions_json" | jq '
+        [.[] | select(.notes[0].resolvable == false or .notes[0].resolved == true)]
+        | sort_by(.notes[0].created_at)')
+
+    unresolved=$(echo "$discussions_json" | jq '
+        [.[] | select(.notes[0].resolvable == true and .notes[0].resolved == false)]
+        | sort_by(.notes[0].created_at)')
+
+    RESOLVED_COUNT=$(write_comments_file "RESOLVED COMMENTS" "$COMMENTS_RESOLVED_FILE" "$resolved")
+    UNRESOLVED_COUNT=$(write_comments_file "UNRESOLVED COMMENTS" "$COMMENTS_UNRESOLVED_FILE" "$unresolved")
 }
 
 # ==============================================================================
@@ -457,8 +505,6 @@ print_summary() {
     if [[ "$show_comments" == true ]]; then
         echo "  Comments (resolved):       $COMMENTS_RESOLVED_FILE ($RESOLVED_COUNT comments)"
         echo "  Comments (unresolved):     $COMMENTS_UNRESOLVED_FILE ($UNRESOLVED_COUNT comments)"
-        echo "  Bot comments (resolved):   $COMMENTS_BOT_RESOLVED_FILE ($BOT_RESOLVED_COUNT comments)"
-        echo "  Bot comments (unresolved): $COMMENTS_BOT_UNRESOLVED_FILE ($BOT_UNRESOLVED_COUNT comments)"
     fi
 
     if [[ "$show_pipeline" == true ]]; then
@@ -535,8 +581,7 @@ main() {
 
     RESOLVED_COUNT=0
     UNRESOLVED_COUNT=0
-    BOT_RESOLVED_COUNT=0
-    BOT_UNRESOLVED_COUNT=0
+    BOT_MAP="{}"
 
     fetch_mr_info
 

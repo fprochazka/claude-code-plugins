@@ -31,4 +31,13 @@ Review resolved comments as well because:
 - AI reviewers and other automated tools sometimes post comments that appear in "resolved" instead of "unresolved"
 - Look for any actionable feedback that may have been missed
 
+### 4. Interacting with Discussions
+
+Each comment in the dump includes `Discussion:` and `Note:` IDs. Use these with `glab api` to interact with discussions:
+
+- **Reply to a discussion**: `glab api -X POST "projects/$PROJECT_ID/merge_requests/$MR_IID/discussions/$DISCUSSION_ID/notes" -f body="Your reply"`
+- **Resolve a discussion**: `glab api -X PUT "projects/$PROJECT_ID/merge_requests/$MR_IID/discussions/$DISCUSSION_ID" -f resolved=true`
+
+The PROJECT_ID and MR_IID (MR number) are available in the MR info section above.
+
 $ARGUMENTS
