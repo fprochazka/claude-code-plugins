@@ -276,6 +276,17 @@ write_discussion() {
     local discussion_id=$(echo "$discussion_json" | jq -r '.id')
     local notes_count=$(echo "$discussion_json" | jq '.notes | length')
     local first_note=$(echo "$discussion_json" | jq -c '.notes[0]')
+    local resolvable=$(echo "$first_note" | jq -r '.resolvable // false')
+    local resolved=$(echo "$first_note" | jq -r '.resolved // "null"')
+
+    # Add resolution status tag
+    if [[ "$resolvable" == "true" ]]; then
+        if [[ "$resolved" == "true" ]]; then
+            echo "[RESOLVED]"
+        else
+            echo "[UNRESOLVED]"
+        fi
+    fi
 
     # Write first note with discussion ID
     write_note "$idx" "$first_note" "" "$discussion_id"

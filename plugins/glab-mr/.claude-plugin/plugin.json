@@ -1,6 +1,6 @@
 {
   "name": "glab-mr",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "GitLab MR tools - fix failed CI, resolve comments, and more",
   "commands": "./commands/"
 }
