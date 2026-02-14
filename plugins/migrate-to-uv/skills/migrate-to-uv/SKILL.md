@@ -13,6 +13,42 @@ description: |
 
 Convert Python projects from Poetry/pipx/pip to uv.
 
+## Pre-Migration Assessment
+
+**IMPORTANT: Before starting any migration, assess the project for blockers.** Read `pyproject.toml`, `setup.py` (if present), and the build configuration to check for the following. Report findings to the user before proceeding.
+
+### Check 1: C/C++/Rust Extensions
+
+Look for signs of compiled extensions:
+- `setup.py` with `ext_modules`, `cffi`, `cython`, or `Extension()` calls
+- Build dependencies like `setuptools`, `cffi`, `cython`, `pybind11`, `maturin`, `scikit-build-core`
+- `.c`, `.cpp`, `.pyx`, or `.rs` source files referenced in the build
+
+**If found:** `uv_build` does NOT support compiling C/C++/Rust extensions. The project must use a compatible build backend (`setuptools`, `scikit-build-core`, `maturin`, or `hatchling` with extension plugins). This is a non-trivial change — warn the user that the build backend swap may require significant effort and testing, especially for projects with complex `setup.py` logic.
+
+### Check 2: Private Package Indexes
+
+Look for `[[tool.poetry.source]]` sections or references to private PyPI mirrors.
+
+**If found:** uv handles authentication differently from Poetry. Poetry uses `poetry config http-basic.<name> <user> <pass>`, while uv uses environment variables:
+- `UV_INDEX_<NAME>_USERNAME` / `UV_INDEX_<NAME>_PASSWORD`
+- Or `UV_INDEX_URL` with credentials embedded
+- Or keyring integration
+
+The migration tool won't convert auth config. The user needs to set up credentials separately for CI and local dev. See the "Private indexes" section below for format conversion.
+
+### Check 3: Monorepo / Multiple pyproject.toml Files
+
+Look for multiple `pyproject.toml` files, path dependencies between packages, or Poetry monorepo plugins (`poetry-plugin-monorepo`, `monoranger`).
+
+**If found:** This is actually a good candidate for migration — uv workspaces handle monorepos much better than Poetry. But the migration is more involved than a single-package project. See the "Monorepo / Workspace Migration" section below.
+
+### Check 4: Tox Configuration
+
+Look for `tox.ini` or `[tool.tox]` sections.
+
+**If found:** `tox` creates its own virtualenvs using pip by default. While tox can be configured to use uv, consider whether `uv run --python 3.X pytest` can replace tox environments entirely. This is a separate concern from the Poetry migration — tox can coexist with uv.
+
 ## Quick Start: Automated Migration
 
 For most Poetry projects, use the `migrate-to-uv` tool:
@@ -143,10 +179,10 @@ postgresql = ["psycopg2>=2.9,<3.0"]
 
 ### 6. Set Build Backend
 
-Choose one:
+Choose based on project type:
 
 ```toml
-# Option 1: hatchling (recommended, handles most cases)
+# Option 1: hatchling (recommended for most projects)
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -154,13 +190,34 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/myapp"]  # if using src layout
 
-# Option 2: uv_build (fastest, pure Python only)
+# Option 2: uv_build (fastest, pure Python only — NO C/C++/Rust extensions)
 [build-system]
 requires = ["uv_build>=0.6,<0.7"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "myapp"     # use a plain string, NOT a list — list syntax breaks on older uv
+module-root = ""          # "" for flat layout, "src" for src layout
+
+# Option 3: setuptools (required for C extensions with ext_modules)
+[build-system]
+requires = ["setuptools>=61", "cffi"]  # add extension build deps
+build-backend = "setuptools.build_meta"
+
+# Option 4: scikit-build-core (for CMake-based C++ extensions)
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+# Option 5: maturin (for Rust extensions via PyO3)
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
 ```
 
-**Do NOT use setuptools** with `license = {text = "MIT"}` - it has a known bug.
+**WARNING:** `uv_build` does NOT support compiling C/C++/Rust extensions. If the project has compiled extensions, you MUST use `setuptools`, `scikit-build-core`, or `maturin` as the build backend.
+
+**Do NOT use setuptools** with `license = {text = "MIT"}` — it has a known bug. Use `license = "MIT"` string form instead when using setuptools.
 
 ### 7. Convert Special Dependencies
 
@@ -205,6 +262,20 @@ name = "private"
 url = "https://pypi.company.com/simple"
 ```
 
+**Private index authentication** (Poetry uses `poetry config http-basic`, uv uses env vars):
+```bash
+# Option 1: Environment variables (recommended for CI)
+export UV_INDEX_PRIVATE_USERNAME="user"
+export UV_INDEX_PRIVATE_PASSWORD="token"
+
+# Option 2: Credentials in URL (use with caution)
+# [[tool.uv.index]]
+# url = "https://user:token@pypi.company.com/simple"
+
+# Option 3: keyring integration
+uv --keyring-provider subprocess ...
+```
+
 ### 8. Add uv Configuration
 
 ```toml
@@ -221,6 +292,62 @@ uv lock
 uv sync --all-extras --dev
 uv run pytest
 ```
+
+## Monorepo / Workspace Migration
+
+If the project has multiple packages with Poetry path dependencies, convert to a uv workspace.
+
+### 1. Create workspace root
+
+Add a `pyproject.toml` at the repository root (or use an existing one):
+
+```toml
+[project]
+name = "my-monorepo"
+version = "0.0.0"
+requires-python = ">=3.10"
+
+[tool.uv.workspace]
+members = ["packages/*", "services/*"]
+
+[tool.uv]
+package = false  # the root is not an installable package
+```
+
+### 2. Convert each member package
+
+Run the migration (automated or manual) for each `pyproject.toml` individually. Convert Poetry path dependencies to uv sources:
+
+```toml
+# BEFORE (in services/service-a/pyproject.toml)
+[tool.poetry.dependencies]
+lib-core = {path = "../../packages/lib-core", develop = true}
+
+# AFTER
+[project]
+dependencies = ["lib-core"]
+
+[tool.uv.sources]
+lib-core = {workspace = true}
+```
+
+### 3. Generate unified lockfile
+
+```bash
+# Remove per-package Poetry lockfiles
+find . -name "poetry.lock" -delete
+rm -rf .venv
+
+# Generate single workspace lockfile at the root
+uv lock
+uv sync --all-packages
+```
+
+**Key differences from Poetry monorepos:**
+- Single `uv.lock` at workspace root instead of per-package lockfiles
+- `uv sync` installs all workspace members in one environment
+- Cross-package dependencies use `{workspace = true}` instead of relative paths
+- No need for monorepo plugins (`poetry-plugin-monorepo`, `monoranger`)
 
 ## Converting pipx to uv tool
 
