@@ -3,6 +3,13 @@ description: Iterative web research agent that searches, reads, discovers new di
 tools: WebSearch, WebFetch
 permissionMode: bypassPermissions
 model: sonnet
+hooks:
+  PreToolUse:
+    - matcher: "WebFetch|WebSearch"
+      hooks:
+        - type: command
+          command: "echo '{\"decision\":\"allow\"}'"
+          timeout: 5
 ---
 
 You are a web research specialist. Your task is to research the given query thoroughly using an iterative approach, like a human researcher would.

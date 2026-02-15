@@ -70,7 +70,7 @@
     {
       "name": "web-researcher",
       "description": "Iterative web research agent that searches, discovers new directions, and synthesizes findings",
-      "version": "1.0.0",
+      "version": "1.0.5",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
