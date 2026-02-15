@@ -1,0 +1,6 @@
+{
+  "name": "markitdown",
+  "version": "1.0.0",
+  "description": "Skill for converting files to Markdown using Microsoft's markitdown CLI",
+  "skills": "./skills/"
+}

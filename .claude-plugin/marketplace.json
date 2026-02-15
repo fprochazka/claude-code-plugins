@@ -126,6 +126,18 @@
       "source": "./plugins/llm-toto",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/llm-toto"
+    },
+    {
+      "name": "markitdown",
+      "description": "Skill for converting files to Markdown using Microsoft's markitdown CLI",
+      "version": "1.0.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/markitdown",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/markitdown"
     }
   ]
 }

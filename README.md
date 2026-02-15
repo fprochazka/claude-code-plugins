@@ -39,6 +39,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [migrate-to-uv](plugins/migrate-to-uv/) | Skill for migrating Python projects from Poetry, pipx, or pip to uv |
 | [metabasecli](plugins/metabasecli/) | Skill for interacting with Metabase using the metabase CLI |
 | [llm-toto](plugins/llm-toto/) | LLM Tool Output Tokens Optimizer - buffers large command outputs to files to reduce token consumption and prevent wasteful re-runs |
+| [markitdown](plugins/markitdown/) | Skill for converting files to Markdown using Microsoft's markitdown CLI |
 
 ## Developing
 
