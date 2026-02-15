@@ -82,7 +82,7 @@
     {
       "name": "slackcli",
       "description": "Skill for interacting with Slack workspaces using the slackcli CLI",
-      "version": "2.0.6",
+      "version": "2.0.7",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -106,7 +106,7 @@
     {
       "name": "metabasecli",
       "description": "Skill for interacting with Metabase using the metabase CLI",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

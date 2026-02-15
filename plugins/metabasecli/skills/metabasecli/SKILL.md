@@ -2,7 +2,7 @@
 name: metabasecli
 description: CLI for querying Metabase (cards/questions, dashboards, collections, databases, search). Use when working with Metabase to search entities, browse collections, run saved questions, export/import dashboards, explore database metadata, or resolve Metabase URLs. Triggered by requests involving Metabase data, dashboard queries, saved questions, collection browsing, or Metabase automation.
 trigger-keywords: metabase, metabase card, metabase question, metabase query, metabase dashboard, metabase collection, metabase database
-allowed-tools: Bash(metabase:*)
+allowed-tools: Bash(metabase --help), Bash(metabase auth status:*), Bash(metabase search:*), Bash(metabase resolve:*), Bash(metabase databases list:*), Bash(metabase databases get:*), Bash(metabase databases metadata:*), Bash(metabase databases schemas:*), Bash(metabase collections tree:*), Bash(metabase collections get:*), Bash(metabase collections items:*), Bash(metabase cards list:*), Bash(metabase cards get:*), Bash(metabase cards run:*), Bash(metabase dashboards list:*), Bash(metabase dashboards get:*), Bash(metabase dashboards export:*), Bash(metabase dashboards revisions:*)
 ---
 
 # metabasecli
@@ -16,13 +16,26 @@ Command-line interface for Metabase API operations.
 - **Collections** = Collections (folders for organizing cards and dashboards)
 - **Databases** = Connected data sources
 
-## Global Options
+## Flag Placement
+
+**Always place flags after the full command path**, not between `metabase` and the command group. This ensures command prefix matching works correctly for permissions.
 
 ```bash
-metabase -p <profile>   # Use a named profile (default: "default")
-metabase -v              # Verbose output
-metabase --json          # Available on most commands, structured JSON output
+# Correct:
+metabase databases list --profile prod --json
+metabase cards run 123 --limit 100
+
+# Wrong:
+metabase -p prod databases list
 ```
+
+## Global Flags
+
+| Flag | Description |
+|------|-------------|
+| `-p`, `--profile` | Named profile to use (default: "default") |
+| `-v`, `--verbose` | Enable verbose output |
+| `--json` | JSON output (available on most commands) |
 
 ## JSON Output Format
 

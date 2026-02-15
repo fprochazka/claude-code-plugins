@@ -2,7 +2,7 @@
 name: slackcli
 description: CLI for interacting with Slack workspaces. Use when working with Slack to read messages, list channels, send messages, search, add reactions, or resolve Slack URLs. Triggered by requests involving Slack data, channel exploration, message searches, or Slack automation.
 trigger-keywords: slack, slack message, slack channel, slack dm, slack thread, slack reaction, slack search
-allowed-tools: Bash(slack:*)
+allowed-tools: Bash(slack --help), Bash(slack config:*), Bash(slack conversations list:*), Bash(slack messages list:*), Bash(slack search messages:*), Bash(slack search files:*), Bash(slack users list:*), Bash(slack users search:*), Bash(slack users get:*), Bash(slack files download:*), Bash(slack pins list:*), Bash(slack scheduled list:*), Bash(slack resolve:*)
 ---
 
 # slackcli
@@ -23,6 +23,19 @@ Check the last line of output:
 
 The output also shows available workspaces in the "orgs" section.
 
+## Flag Placement
+
+**Always place flags after the full command path**, not between `slack` and the command group. This ensures command prefix matching works correctly for permissions.
+
+```bash
+# Correct:
+slack conversations list --org=mycompany
+slack messages list '#channel' --org=work --json
+
+# Wrong:
+slack --org=mycompany conversations list
+```
+
 ## Workspace Selection
 
 ```bash
@@ -30,18 +43,18 @@ The output also shows available workspaces in the "orgs" section.
 slack conversations list
 
 # When no org is selected (--org required):
-slack --org=mycompany conversations list
+slack conversations list --org=mycompany
 ```
 
 If the user hasn't specified a workspace and no default is configured, **ask them which workspace to use** (show the available orgs from `slack config`).
 
-## Global Options
+## Global Flags
 
-```bash
-slack --org=<workspace>  # Specify workspace (required if SLACK_ORG not set)
-slack --verbose          # Enable debug logging
-slack --json             # Output as JSON (available on most commands)
-```
+| Flag | Description |
+|------|-------------|
+| `--org` | Workspace name (required if SLACK_ORG not set) |
+| `--verbose` | Enable debug logging |
+| `--json` | JSON output (available on most commands) |
 
 ## Conversations
 
