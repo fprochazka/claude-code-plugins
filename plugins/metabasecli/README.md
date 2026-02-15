@@ -17,47 +17,19 @@ claude plugin install metabasecli@fprochazka-claude-code-plugins
 
 ## Permissions
 
-The skill declares `allowed-tools: Bash(metabase:*)` to auto-approve metabase commands. Due to a [known bug](https://github.com/anthropics/claude-code/issues/14956), this may not work yet.
-
-As a workaround, add the skill and read-only commands to your `~/.claude/settings.json`:
+Add the following to `~/.claude/settings.json` to allow the skill to load and auto-approve read-only commands:
 
 ```json
 {
   "permissions": {
     "allow": [
-      "Skill(metabasecli)",
-      "Bash(metabase --help)",
-      "Bash(metabase auth status:*)",
-      "Bash(metabase search:*)",
-      "Bash(metabase resolve:*)",
-      "Bash(metabase databases list:*)",
-      "Bash(metabase databases get:*)",
-      "Bash(metabase databases metadata:*)",
-      "Bash(metabase databases schemas:*)",
-      "Bash(metabase collections tree:*)",
-      "Bash(metabase collections get:*)",
-      "Bash(metabase collections items:*)",
-      "Bash(metabase cards list:*)",
-      "Bash(metabase cards get:*)",
-      "Bash(metabase cards run:*)",
-      "Bash(metabase dashboards list:*)",
-      "Bash(metabase dashboards get:*)",
-      "Bash(metabase dashboards export:*)",
-      "Bash(metabase dashboards revisions:*)"
+      "Skill(metabasecli)"
     ]
   }
 }
 ```
 
-Or allow all metabase commands (including write operations):
-
-```json
-{
-  "permissions": {
-    "allow": ["Bash(metabase:*)"]
-  }
-}
-```
+The skill's `allowed-tools` frontmatter auto-allows read-only commands (`search`, `resolve`, `databases list`, `collections tree`, `cards get`, `dashboards export`, etc.) and auth/help commands. Write operations (`cards create`, `dashboards import`, etc.) require manual approval.
 
 ## Usage
 

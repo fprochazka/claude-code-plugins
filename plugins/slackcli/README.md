@@ -17,42 +17,19 @@ claude plugin install slackcli@fprochazka-claude-code-plugins
 
 ## Permissions
 
-The skill declares `allowed-tools: Bash(slack:*)` to auto-approve slack commands. Due to a [known bug](https://github.com/anthropics/claude-code/issues/14956), this may not work yet.
-
-As a workaround, add the skill and read-only commands to your `~/.claude/settings.json`:
+Add the following to `~/.claude/settings.json` to allow the skill to load and auto-approve read-only commands:
 
 ```json
 {
   "permissions": {
     "allow": [
-      "Skill(slackcli)",
-      "Bash(slack --help)",
-      "Bash(slack config:*)",
-      "Bash(slack conversations list:*)",
-      "Bash(slack messages list:*)",
-      "Bash(slack search messages:*)",
-      "Bash(slack search files:*)",
-      "Bash(slack users list:*)",
-      "Bash(slack users search:*)",
-      "Bash(slack users get:*)",
-      "Bash(slack files download:*)",
-      "Bash(slack pins list:*)",
-      "Bash(slack scheduled list:*)",
-      "Bash(slack resolve:*)"
+      "Skill(slackcli)"
     ]
   }
 }
 ```
 
-Or allow all slack commands (including write operations):
-
-```json
-{
-  "permissions": {
-    "allow": ["Bash(slack:*)"]
-  }
-}
-```
+The skill's `allowed-tools` frontmatter auto-allows read-only commands (`conversations list`, `messages list`, `search messages`, `users list`, `resolve`, etc.) and config/help commands. Write operations (`messages send`, `messages edit`, `reactions add`, etc.) require manual approval.
 
 ## Usage
 

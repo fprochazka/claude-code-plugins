@@ -15,17 +15,19 @@ claude plugin install gogcli@fprochazka-claude-code-plugins
 
 ## Permissions
 
-Add the following to `~/.claude/settings.json` to allow `gog` commands without confirmation:
+Add the following to `~/.claude/settings.json` to allow the skill to load and auto-approve read-only commands:
 
 ```json
 {
   "permissions": {
     "allow": [
-      "Bash(gog:*)"
+      "Skill(gogcli)"
     ]
   }
 }
 ```
+
+The skill's `allowed-tools` frontmatter auto-allows read-only commands (`gmail search`, `calendar events`, `drive ls`, `sheets get`, `contacts search`, etc.) and auth/config commands. Write operations (`gmail send`, `calendar create`, `drive upload`, etc.) require manual approval.
 
 ## Capabilities
 
