@@ -1,0 +1,6 @@
+{
+  "name": "gemini-deep-research",
+  "version": "1.0.0",
+  "description": "Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent",
+  "skills": "./skills/"
+}
