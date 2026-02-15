@@ -195,6 +195,18 @@ gog drive url <fileId>                                # Print web URL
 
 Download format options: `pdf`, `csv`, `xlsx`, `pptx`, `txt`, `png`, `docx`
 
+## Sheets Read
+
+To read a spreadsheet, first get sheet names with `metadata`, then read with an A1 range:
+
+```bash
+gog sheets metadata <spreadsheetId>                       # Discover sheet names
+gog sheets get <spreadsheetId> 'SheetName!A1:Z100'        # Read values (range required)
+gog sheets get <spreadsheetId> 'SheetName!A:Z'            # All rows in columns A-Z
+```
+
+The range must use A1 notation (`SheetName!A1:B10`). A bare sheet name will fail. Use `gog sheets get`, not `gog sheets read`.
+
 ## Command Groups
 
 | Group | Description |

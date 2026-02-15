@@ -1,6 +1,6 @@
 {
   "name": "gogcli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI",
   "skills": "./skills/"
 }
