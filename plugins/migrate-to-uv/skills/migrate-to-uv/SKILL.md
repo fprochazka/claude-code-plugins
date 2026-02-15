@@ -7,6 +7,7 @@ description: |
   (1) migrate/convert from Poetry to uv, (2) replace pipx with uv tool,
   (3) modernize Python project packaging, (4) convert requirements.txt to uv,
   (5) switch to uv, or mentions "poetry to uv" or "migrate to uv".
+allowed-tools: Bash(uv:*), Bash(uvx:*)
 ---
 
 # Migrate to uv
