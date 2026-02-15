@@ -43,12 +43,14 @@ gog --account work gmail search 'is:unread'
 
 ## Output Modes
 
+**Always use `--json` for search and list commands.** The default table output trims columns to fit the terminal, losing data. JSON returns complete results.
+
 ```bash
-gog gmail search 'newer_than:7d'                         # Rich TTY (colored tables)
-gog gmail search 'newer_than:7d' --plain                  # Stable TSV (for piping)
-gog gmail search 'newer_than:7d' --json                   # JSON (for scripting)
+gog gmail search 'newer_than:7d' --json                   # JSON (complete data)
 gog gmail search 'newer_than:7d' --json --results-only    # JSON without envelope
 gog gmail search 'newer_than:7d' --json --select=id,subject  # Select fields
+gog gmail search 'newer_than:7d' --plain                  # Stable TSV (for piping)
+gog gmail search 'newer_than:7d'                          # Rich TTY (truncates columns)
 ```
 
 ## Global Flags
