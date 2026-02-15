@@ -1,0 +1,6 @@
+{
+  "name": "glab",
+  "version": "0.1.0",
+  "description": "Skill for interacting with GitLab using the glab CLI",
+  "skills": "./skills/"
+}

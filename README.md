@@ -41,6 +41,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [llm-toto](plugins/llm-toto/) | LLM Tool Output Tokens Optimizer - buffers large command outputs to files to reduce token consumption and prevent wasteful re-runs |
 | [markitdown](plugins/markitdown/) | Skill for converting files to Markdown using Microsoft's markitdown CLI |
 | [gogcli](plugins/gogcli/) | Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI |
+| [glab](plugins/glab/) | Skill for interacting with GitLab using the glab CLI |
 
 ## Developing
 

@@ -150,6 +150,18 @@
       "source": "./plugins/gogcli",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/gogcli"
+    },
+    {
+      "name": "glab",
+      "description": "Skill for interacting with GitLab using the glab CLI",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/glab",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/glab"
     }
   ]
 }
