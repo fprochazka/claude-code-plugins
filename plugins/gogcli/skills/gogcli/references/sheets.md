@@ -1,16 +1,27 @@
 # Google Sheets
 
-## Read Values
+**Important:** Use `gog sheets get`, not `gog sheets read`. The command name is `get`.
+
+## Reading a Spreadsheet
+
+To read a spreadsheet, first discover the sheet names, then read with a proper A1 range:
+
+```bash
+# Step 1: Get sheet names and structure
+gog sheets metadata <spreadsheetId>
+
+# Step 2: Read values using A1 notation (sheet name + cell range)
+gog sheets get <spreadsheetId> 'SheetName!A1:Z100'
+```
+
+The range argument is **required** and must use A1 notation: `SheetName!A1:B10`. A bare sheet name like `Sheet1` will fail — always include the cell range (e.g. `Sheet1!A1:Z100`).
 
 ```bash
 gog sheets get <spreadsheetId> 'Sheet1!A1:B10'
 gog sheets get <spreadsheetId> 'Sheet1!A1:B10' --json
-gog sheets get <spreadsheetId> 'Sheet1!A1:B10' --dimension COLUMNS
+gog sheets get <spreadsheetId> 'Sheet1!A:Z'              # All rows in columns A-Z
 gog sheets get <spreadsheetId> 'Sheet1!A1:B10' --render FORMULA
-gog sheets get <spreadsheetId> 'Sheet1!A1:B10' --render UNFORMATTED_VALUE
 ```
-
-Flags: `--dimension` (ROWS/COLUMNS), `--render` (FORMATTED_VALUE/UNFORMATTED_VALUE/FORMULA)
 
 ## Update Values
 

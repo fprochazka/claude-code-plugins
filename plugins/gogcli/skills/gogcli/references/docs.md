@@ -1,5 +1,7 @@
 # Google Docs
 
+**Important:** `gog docs cat` only works on Google Docs. For Sheets use `gog sheets get`, for Slides use `gog slides read-slide`. If unsure about file type, check with `gog drive get <fileId>` first — the `mimeType` field tells the type.
+
 ## Read as Text
 
 ```bash
