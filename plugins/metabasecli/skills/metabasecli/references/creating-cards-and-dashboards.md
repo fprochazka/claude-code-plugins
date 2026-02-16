@@ -7,6 +7,26 @@
 
 Cards are always managed separately. Dashboard import only handles the layout/placement.
 
+## Editing Native SQL Cards
+
+When modifying the SQL query of an exported card, **always extract the query to a separate `.sql` file** rather than editing SQL inside JSON. This avoids JSON escaping issues and makes the query readable.
+
+### Extract, Edit, and Re-pack Workflow
+
+```bash
+# 1. Export the card
+metabase dashboards export 456
+
+# 2. Extract SQL to a .sql file for editing
+jq -r '.card.dataset_query.native.query' card-123.json > card-123.sql
+
+# 3. Edit the .sql file with Read/Edit/Write tools
+
+# 4. Pack SQL back into the card JSON and import
+jq --rawfile sql card-123.sql '.card.dataset_query.native.query = $sql' card-123.json | \
+  metabase cards import --file - --id 123
+```
+
 ## Creating Native SQL Cards
 
 Use `metabase cards import` with a JSON file. Minimal required fields:
