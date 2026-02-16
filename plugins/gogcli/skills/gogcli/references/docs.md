@@ -2,16 +2,22 @@
 
 **Important:** `gog docs cat` only works on Google Docs. For Sheets use `gog sheets get`, for Slides use `gog slides read-slide`. If unsure about file type, check with `gog drive get <fileId>` first — the `mimeType` field tells the type.
 
-## Read as Text
+## Read Document Content
+
+**Prefer `gog docs export --format md`** over `gog docs cat` when you need to understand document structure. The `cat` command outputs plain text only — all headings, bold/italic, links, and tables are lost. The markdown export preserves formatting.
 
 ```bash
+# Best approach: export as markdown, then read the file
+gog docs export <docId> --format md --out /tmp/doc.md && cat /tmp/doc.md
+
+# Plain text (loses all formatting):
 gog docs cat <docId>                                  # Print as plain text
 gog docs cat <docId> --max-bytes 10000                # Limit output size
 gog docs cat <docId> --tab "Notes"                    # Read specific tab
 gog docs cat <docId> --all-tabs                       # Read all tabs with headers
 ```
 
-Flags: `--max-bytes` (default 2000000, 0=unlimited), `--tab`, `--all-tabs`
+Flags for `cat`: `--max-bytes` (default 2000000, 0=unlimited), `--tab`, `--all-tabs`
 
 ## Info & Tabs
 
@@ -23,12 +29,15 @@ gog docs list-tabs <docId>                            # List all tabs
 ## Export
 
 ```bash
+gog docs export <docId> --format md --out ./doc.md   # Markdown (best for reading)
 gog docs export <docId> --format pdf --out ./doc.pdf
 gog docs export <docId> --format docx --out ./doc.docx
 gog docs export <docId> --format txt --out ./doc.txt
 ```
 
-Flags: `--out`, `--format` (pdf/docx/txt, default pdf)
+Flags: `--out`, `--format` (pdf/docx/txt/md, default pdf)
+
+**Prefer `--format md` when you need to read or process document content.** Markdown preserves headings, bold/italic, links, tables, and lists — unlike `txt` which strips all formatting, and `cat` which outputs plain text to stdout. Use `pdf`/`docx` only when the user specifically needs those file formats.
 
 ## Create
 

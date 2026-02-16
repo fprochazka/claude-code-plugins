@@ -185,15 +185,19 @@ Key flags: `--max` (default 20), `--raw-query` (use Drive query language directl
 ### Get / Download
 
 ```bash
-gog drive get <fileId>                                # File metadata
-gog drive download <fileId>                           # Download file
-gog drive download <fileId> --out ./file.pdf          # Specify output path
-gog drive download <fileId> --format pdf              # Export Google Docs format
-gog drive download <fileId> --format docx
-gog drive url <fileId>                                # Print web URL
+gog drive get <fileId>                                                   # File metadata (check mimeType)
+gog drive download <fileId> --format md --out /tmp/gdoc-fileid.md        # Export Google Doc as markdown
+gog drive download <fileId> --format pdf --out /tmp/gdoc-fileid.pdf      # Export as PDF
+gog drive url <fileId>                                                   # Print web URL
 ```
 
-Download format options: `pdf`, `csv`, `xlsx`, `pptx`, `txt`, `png`, `docx`
+Format options by file type:
+- **Google Docs:** `md` (best for reading), `pdf`, `docx`, `txt`
+- **Google Sheets:** `csv`, `xlsx`, `pdf`
+- **Google Slides:** `pptx`, `pdf`
+- **Google Drawings:** `png`, `pdf`
+
+**When you need to read a Google Doc's content, prefer `--format md`.** It preserves headings, bold/italic, links, tables, and lists. Plain text (`txt`) strips all formatting.
 
 ## Sheets Read
 
@@ -237,7 +241,7 @@ For detailed command references beyond search/read operations, consult:
 - **[references/gmail.md](references/gmail.md)** - Send, drafts, labels, thread modify, batch, filters, settings, tracking, watch
 - **[references/calendar.md](references/calendar.md)** - Create, update, delete, respond, freebusy, conflicts, team, focus-time, OOO, working-location
 - **[references/drive.md](references/drive.md)** - Upload, mkdir, move, rename, delete, share, permissions, copy, comments
-- **[references/docs.md](references/docs.md)** - Export, cat (read as text), create, write, insert, find-replace, tabs, comments
+- **[references/docs.md](references/docs.md)** - Export (prefer `--format md` for reading), cat, create, write, insert, find-replace, tabs, comments
 - **[references/slides.md](references/slides.md)** - Create, export, add/replace slides, notes
 - **[references/sheets.md](references/sheets.md)** - Read, write, append, clear, format, notes, metadata, create, copy, export
 - **[references/forms.md](references/forms.md)** - Create forms, get form details, list/get responses
