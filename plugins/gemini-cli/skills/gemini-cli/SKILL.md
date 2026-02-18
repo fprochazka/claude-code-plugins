@@ -8,18 +8,20 @@ trigger-keywords: gemini cli, gemini-cli
 
 Always run through subagents for better iteration and summarization. Make the subagent always ask Gemini to provide evidence, and make the subagent verify the findings before summarizing for the main agent.
 
+**NEVER use `--approval-mode yolo` or `--yolo`.** Gemini must not auto-approve destructive actions.
+
 ## Quick Reference
 
 ```bash
 # Basic one-shot query (non-interactive mode)
 gemini "Explain this codebase architecture"
 
-# Specify model
-gemini -m gemini-3-flash-preview "Complex analysis task"
-gemini -m gemini-2.5-flash "Standard analysis task"
-gemini -m gemini-2.5-pro "Deep reasoning task"
+# Specify model (by alias or full ID)
+gemini -m flash "Standard analysis task"
+gemini -m pro "Deep reasoning task"
+gemini -m gemini-2.5-flash "Use specific GA model"
 
-# Include additional directories
+# Include additional directories in context
 gemini --include-directories ./libs,./shared "Analyze dependencies"
 
 # Multi-line prompt using heredoc
@@ -29,21 +31,45 @@ Focus on: SQL injection, XSS, authentication issues
 __GEMINI_PROMPT__
 
 # Output formats
-gemini -o json "query"
-gemini -o text "query"        # default
-gemini -o stream-json "query"
+gemini -o json "query"         # structured JSON output
+gemini -o text "query"         # default
+gemini -o stream-json "query"  # real-time JSONL events
 ```
 
 ## Available Models
 
-### Gemini 3 (Preview)
-- **gemini-3-flash-preview** - Best for agentic coding (78% SWE-bench), 1/4 cost of Pro.
-- **gemini-3-pro-preview** - Most powerful for multimodal understanding and deep reasoning.
+### Model Aliases (recommended for `-m` flag)
 
-### Gemini 2.5 (GA)
-- **gemini-2.5-flash** - Stable, fast
-- **gemini-2.5-pro** - Balanced performance for complex tasks
-- **gemini-2.5-flash-lite** - Lowest latency and cost
+| Alias | Resolves to | Use case |
+|-------|------------|----------|
+| `auto` | `gemini-3-pro-preview` | Default, auto-routing |
+| `pro` | `gemini-3-pro-preview` | Deep reasoning |
+| `flash` | `gemini-3-flash-preview` | Fast agentic coding |
+| `flash-lite` | `gemini-2.5-flash-lite` | Lowest latency/cost |
+
+### Full Model IDs
+
+**Gemini 3 (Preview):**
+- `gemini-3-pro-preview` - Most powerful, deep reasoning
+- `gemini-3-flash-preview` - Best for agentic coding (78% SWE-bench), 1/4 cost of Pro
+
+**Gemini 2.5 (GA):**
+- `gemini-2.5-pro` - Stable, balanced performance
+- `gemini-2.5-flash` - Stable, fast
+- `gemini-2.5-flash-lite` - Lowest latency and cost
+
+## Headless Mode Tool Restrictions
+
+In non-interactive mode (positional query or `-p` flag), Gemini restricts certain tools by default:
+
+| Default | Excluded: shell, edit, write_file, web_fetch |
+|---------|-----------------------------------------------|
+| `--approval-mode auto_edit` | Excluded: shell only |
+
+Override specific restrictions with `--allowed-tools` when needed:
+```bash
+gemini --allowed-tools ShellTool "Run the test suite and report results"
+```
 
 ## Subagent Delegation Pattern
 
@@ -51,7 +77,7 @@ gemini -o stream-json "query"
 
 ### Pattern: Using Task Tool with Gemini
 
-```bash
+```
 Task(
   subagent_type: "general-purpose",
   description: "Analyze codebase with Gemini",
@@ -65,7 +91,7 @@ Task(
 
 ### Pattern: Second Opinion
 
-```bash
+```
 Task(
   subagent_type: "general-purpose",
   description: "Get Gemini second opinion",
@@ -85,17 +111,14 @@ Task(
 | Tasks exceeding Claude's context | Tasks requiring file edits |
 | | Tasks requiring follow-up questions |
 
-## Model Selection Guide
+## Additional Resources
 
-- **Production workloads:** `gemini-2.5-flash` (stable, any endpoint)
-- **Cutting-edge agentic coding:** `gemini-3-flash-preview` (requires global endpoint)
-- **Complex reasoning:** `gemini-2.5-pro` or `gemini-3-pro-preview`
-- **High-volume simple queries:** `gemini-2.5-flash-lite`
+- **`references/prompt_patterns.md`** - Effective prompt templates for codebase analysis, security audits, performance analysis, second opinions, and context maximization tips
 
 ## Troubleshooting
 
-**Model not available:**
-- Gemini 3 models require `-preview` suffix and `GOOGLE_CLOUD_LOCATION=global`
-- Fall back to Gemini 2.5 models which work on all endpoints
+**Model not available:** Gemini 3 models are still in preview. Fall back to Gemini 2.5 models for GA stability.
 
-**Slow responses:** Large context takes time. Consider narrowing scope or use `gemini-2.5-flash-lite`.
+**Slow responses:** Large context takes time. Narrow scope with `--include-directories` or use `flash-lite`.
+
+**Tools not running in headless mode:** Default headless excludes write tools. Use `--allowed-tools` to selectively enable specific tools.
