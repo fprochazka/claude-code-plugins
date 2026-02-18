@@ -166,10 +166,14 @@ fetch_mr_info() {
     # Check if we're in a git repository
     git rev-parse --git-dir &>/dev/null || die "Not in a git repository. Please run from within a GitLab repository."
 
-    # Fetch MR data
-    local mr_json
-    if ! mr_json=$(glab mr view --output=json 2>&1); then
-        if [[ "$mr_json" == *"no open merge request"* ]] || [[ "$mr_json" == *"could not find"* ]]; then
+    # Fetch MR data (stderr captured separately to avoid corrupting JSON output)
+    local mr_json mr_stderr_file
+    mr_stderr_file=$(mktemp)
+    if ! mr_json=$(glab mr view --output=json 2>"$mr_stderr_file"); then
+        local mr_err
+        mr_err=$(cat "$mr_stderr_file")
+        rm -f "$mr_stderr_file"
+        if [[ "$mr_err" == *"no open merge request"* ]] || [[ "$mr_err" == *"could not find"* ]]; then
             echo "Error: No open merge request found for the current branch" >&2
             echo "" >&2
             echo "Make sure you:" >&2
@@ -179,12 +183,13 @@ fetch_mr_info() {
             echo "" >&2
             echo "Current branch: $(git branch --show-current 2>/dev/null || echo 'unknown')" >&2
             exit 1
-        elif [[ "$mr_json" == *"authentication"* ]] || [[ "$mr_json" == *"401"* ]]; then
+        elif [[ "$mr_err" == *"authentication"* ]] || [[ "$mr_err" == *"401"* ]]; then
             die "GitLab authentication failed. Please run 'glab auth login' to authenticate."
         else
-            die "Failed to fetch MR data: $mr_json"
+            die "Failed to fetch MR data: $mr_err"
         fi
     fi
+    rm -f "$mr_stderr_file"
 
     # Extract fields
     MR_ID=$(echo "$mr_json" | jq -r '.iid')
