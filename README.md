@@ -43,6 +43,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [markitdown](plugins/markitdown/) | Skill for converting files to Markdown using Microsoft's markitdown CLI |
 | [gogcli](plugins/gogcli/) | Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI |
 | [glab](plugins/glab/) | Skill for interacting with GitLab using the glab CLI |
+| [rabbitmqadmin](plugins/rabbitmqadmin/) | Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng) |
 
 ## Developing
 
