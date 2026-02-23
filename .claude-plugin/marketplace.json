@@ -178,7 +178,7 @@
     {
       "name": "rabbitmqadmin",
       "description": "Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng)",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

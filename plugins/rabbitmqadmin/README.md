@@ -33,19 +33,19 @@ The skill's `allowed-tools` frontmatter auto-allows help and config commands. Wr
 
 ## Recommended: Set Environment Variables
 
-Add the following to `~/.claude/settings.json` under `"env"` to get cleaner output and avoid interactive prompts:
+Add the following to `~/.claude/settings.json` under `"env"` for compact, grep-friendly output:
 
 ```json
 {
   "env": {
-    "RABBITMQADMIN_TABLE_STYLE": "borderless"
+    "RABBITMQADMIN_NON_INTERACTIVE_MODE": "true"
   }
 }
 ```
 
-- `RABBITMQADMIN_TABLE_STYLE=borderless` — produces output that is easy to read and grep/filter (no Unicode box drawing)
+- `RABBITMQADMIN_NON_INTERACTIVE_MODE=true` — implies `borderless` table style, removes header rows, and flattens multi-line cell values into single lines. Produces the most compact output for agent consumption.
 
-**Note:** Do not set `RABBITMQADMIN_NON_INTERACTIVE_MODE` — it conflicts with `--table-style` on some subcommands (e.g. `config_file show`).
+**Note:** Do not combine with `RABBITMQADMIN_TABLE_STYLE` — `--non-interactive` and `--table-style` are mutually exclusive. The `config_file show` subcommand ignores this setting and always uses its own table format.
 
 ## Usage
 

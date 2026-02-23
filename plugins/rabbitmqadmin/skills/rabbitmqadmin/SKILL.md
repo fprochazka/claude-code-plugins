@@ -95,7 +95,7 @@ rabbitmqadmin --node <NODE> show memory_breakdown_in_percent
 |------|-------------|
 | `--node, -N` | Connection name from config file (default: "default") |
 | `--vhost, -V` | Target virtual host (default: "/") |
-| `--table-style` | Output style (set via `RABBITMQADMIN_TABLE_STYLE` env, do not pass explicitly) |
+| `--non-interactive` | Implies borderless style, removes headers, flattens newlines (set via `RABBITMQADMIN_NON_INTERACTIVE_MODE=true` env, do not pass explicitly). Mutually exclusive with `--table-style`. |
 
 ## Advanced Usage
 
