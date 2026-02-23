@@ -57,13 +57,25 @@ rabbitmqadmin --node <NODE> exchanges list --vhost <VHOST>
 rabbitmqadmin --node <NODE> bindings list --vhost <VHOST>
 ```
 
-## Filtering
+## Filtering and Output
 
-The CLI has no built-in name filtering. To filter results, pipe through `grep`:
+The CLI has no built-in name filtering. To filter or limit output, use only these pipe targets — they are auto-approved by the permission hook:
+
+- `| grep` — filter lines by pattern (supports `-i`, `-v`, `-E`, `-c`, etc.)
+- `| head` — show first N lines
+- `| tail` — show last N lines
+- `> /path/to/file` or `>> /path/to/file` — redirect output to a file
+- `2>&1` — redirect stderr to stdout
+
+**Do not use** `sort`, `wc`, `awk`, `sed`, `tee`, or other commands in pipes — they will require manual approval. Prefer `grep`/`head`/`tail` for all filtering needs.
 
 ```bash
 rabbitmqadmin --node <NODE> --vhost <VHOST> queues list | grep <PATTERN>
-rabbitmqadmin --node <NODE> --vhost <VHOST> exchanges list | grep <PATTERN>
+rabbitmqadmin --node <NODE> --vhost <VHOST> exchanges list | grep -i <PATTERN>
+rabbitmqadmin --node <NODE> --vhost <VHOST> queues list | head -20
+rabbitmqadmin --node <NODE> --vhost <VHOST> queues list | grep <PATTERN> | tail -5
+rabbitmqadmin --node <NODE> --vhost <VHOST> queues list > /tmp/queues.txt
+rabbitmqadmin --node <NODE> --vhost <VHOST> queues list 2>&1 | grep <PATTERN>
 ```
 
 ## Shorthand Listing via `list` Command

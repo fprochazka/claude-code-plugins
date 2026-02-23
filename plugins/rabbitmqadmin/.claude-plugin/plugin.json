@@ -1,6 +1,6 @@
 {
   "name": "rabbitmqadmin",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng)",
   "skills": "./skills/"
 }

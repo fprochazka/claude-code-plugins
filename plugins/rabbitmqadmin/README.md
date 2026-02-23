@@ -29,7 +29,14 @@ Add the following to `~/.claude/settings.json` to allow the skill to load and au
 }
 ```
 
-The skill's `allowed-tools` frontmatter auto-allows help and config commands. Write operations (`declare`, `delete`, `purge`, `publish`, etc.) require manual approval.
+The plugin includes a `PreToolUse` hook (`scripts/validate-readonly.sh`) that auto-allows read-only commands regardless of `--node` flag positioning. The hook enforces:
+
+- **Read-only subcommands only**: `vhosts list`, `queues list`, `queues show`, `exchanges list`, `bindings list`, `list`, `show`, `config_file show`, `--help`
+- **Configured connections only**: `--node` values are validated against `~/.rabbitmqadmin.conf` — inline `--host`/`--username`/`--password` flags are rejected
+- **Safe pipes only**: output may be piped to `grep`, `head`, `tail`, redirected to a file, or use `2>&1` — other pipe targets require approval
+- **No command chaining**: `;`, `&&`, `||` are rejected
+
+Write operations (`declare`, `delete`, `purge`, `publish`, etc.) always require manual approval.
 
 ## Recommended: Set Environment Variables
 
@@ -57,6 +64,14 @@ The skill is automatically loaded when needed. It teaches Claude how to use the 
 - List exchanges and bindings
 - View cluster overview and memory breakdowns
 - Filter results with grep
+
+## Development
+
+Run the hook validation tests after editing `scripts/validate-readonly.sh`:
+
+```bash
+bash plugins/rabbitmqadmin/scripts/test-validate-readonly.sh
+```
 
 ## Author
 
