@@ -38,14 +38,14 @@ Add the following to `~/.claude/settings.json` under `"env"` to get cleaner outp
 ```json
 {
   "env": {
-    "RABBITMQADMIN_NON_INTERACTIVE_MODE": "",
     "RABBITMQADMIN_TABLE_STYLE": "borderless"
   }
 }
 ```
 
 - `RABBITMQADMIN_TABLE_STYLE=borderless` — produces output that is easy to read and grep/filter (no Unicode box drawing)
-- `RABBITMQADMIN_NON_INTERACTIVE_MODE` — suppresses interactive prompts (set to any value, even empty string)
+
+**Note:** Do not set `RABBITMQADMIN_NON_INTERACTIVE_MODE` — it conflicts with `--table-style` on some subcommands (e.g. `config_file show`).
 
 ## Usage
 
