@@ -32,6 +32,18 @@ The skill is automatically loaded when needed. It includes reference prompts in 
 - Migration assessments
 - Second opinion prompts
 
+### Review Agent
+
+The `gemini-cli:review-agent` provides an autonomous code review workflow:
+
+1. **Scope definition** - determines target path, review type, and focus areas
+2. **Context collection** - maps project structure to construct effective prompts
+3. **Gemini invocation** - runs Gemini with a targeted review prompt
+4. **Verification** - reads actual code to confirm each finding
+5. **Final report** - produces a structured report with verified findings only
+
+Trigger it by asking for a code review with Gemini, e.g. "review this codebase with gemini" or "use gemini for a security audit".
+
 ## Author
 
 Filip Procházka
