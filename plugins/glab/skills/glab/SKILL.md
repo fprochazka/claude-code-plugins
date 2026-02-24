@@ -31,6 +31,14 @@ glab mr view               # current branch's MR
 
 ---
 
+## Temp Files
+
+When writing content to temp files (MR descriptions, job logs, etc.), always use unique filenames with a random suffix to avoid collisions with previously created files. For example: `/tmp/mr-description-$(date +%s)-$RANDOM.md`, `/tmp/glab-job-build-$(date +%s).log`.
+
+**Never reuse fixed filenames** like `/tmp/mr-description.md` — they cause conflicts across multiple invocations.
+
+---
+
 ## Creating a Merge Request
 
 ```bash
@@ -175,7 +183,7 @@ glab ci get --with-job-details -F json
 **Always redirect job logs to a temp file** — the output can be thousands of lines and will waste context tokens.
 
 ```bash
-glab ci trace <job-name> > /tmp/glab-job-<job-name>.log 2>&1
+glab ci trace <job-name> > /tmp/glab-job-<job-name>-$(date +%s).log 2>&1
 ```
 
 **DO NOT** run `glab ci trace` without redirecting to a file.
