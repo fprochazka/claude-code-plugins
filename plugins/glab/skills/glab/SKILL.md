@@ -33,9 +33,11 @@ glab mr view               # current branch's MR
 
 ## Temp Files
 
-When writing content to temp files (MR descriptions, job logs, etc.), always use unique filenames with a random suffix to avoid collisions with previously created files. For example: `/tmp/mr-description-$(date +%s)-$RANDOM.md`, `/tmp/glab-job-build-$(date +%s).log`.
+When writing content to temp files (MR descriptions, job logs, etc.), use filenames unique to the MR or job — include the MR number, branch name, or job name as a slug (e.g., `/tmp/mr-desc-123.md`, `/tmp/mr-desc-feature-auth.md`, `/tmp/glab-job-build-123.log`).
 
-**Never reuse fixed filenames** like `/tmp/mr-description.md` — they cause conflicts across multiple invocations.
+**Reuse the same file for the same MR/entity** across multiple edits — the Write tool shows diffs, so the user can see exactly what changed between revisions.
+
+**Never use generic fixed filenames** like `/tmp/mr-description.md` — they collide across different MRs.
 
 ---
 
