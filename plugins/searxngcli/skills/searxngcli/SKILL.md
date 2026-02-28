@@ -58,6 +58,42 @@ searxng engines
 searxng categories
 ```
 
+## Output Format
+
+The `--json` output is a JSON object with these top-level fields:
+
+```json
+{
+  "query": "search terms",
+  "number_of_results": 100,
+  "results": [
+    {
+      "title": "asyncio — Asynchronous I/O — Python 3.14.3 documentation",
+      "url": "https://docs.python.org/3/library/asyncio.html",
+      "content": "asyncio is a library to write concurrent code using the async/await syntax...",
+      "engine": "google",
+      "engines": ["braveapi", "google", "startpage"],
+      "category": "general",
+      "score": 9.0,
+      "published_date": "2025-07-30T00:00:00",
+      "thumbnail": ""
+    }
+  ],
+  "suggestions": ["related query 1", "related query 2"],
+  "corrections": []
+}
+```
+
+**Do not pipe through `grep`** — the output is structured JSON. To extract specific fields, use `jq`:
+
+```bash
+# Extract just URLs
+searxng search "python asyncio" --json | jq -r '.results[].url'
+
+# Extract title and URL pairs
+searxng search "python asyncio" --json | jq '.results[] | {title, url}'
+```
+
 ## Important Notes
 
 - **Prefer defaults** — do not use `-c`, `-e`, or `-l` flags unless there is a clear reason to narrow the scope (e.g., user explicitly asks for news, or for results from a specific engine). The instance is pre-configured with good defaults.
