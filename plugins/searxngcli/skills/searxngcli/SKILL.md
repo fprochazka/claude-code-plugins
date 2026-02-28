@@ -20,16 +20,16 @@ Always use `--json` for machine-readable output. Always quote the query string.
 searxng search "python asyncio" --json
 
 # Filter by category (general, images, news, videos, music, files, it, science, social media)
-searxng search "breaking news" -c news --json
+searxng search "breaking news" --categories news --json
 
 # Filter by specific engines
-searxng search "rust" -e google,duckduckgo --json
+searxng search "rust" --engines google,duckduckgo --json
 
 # Filter by time range (day, week, month, year)
-searxng search "latest updates" -t week --json
+searxng search "latest updates" --time-range week --json
 
 # Combine filters
-searxng search "climate change" -c news -t month -n 20 --json
+searxng search "climate change" --categories news --time-range month --num 20 --json
 
 # Use search engine operators (passed through to engines)
 searxng search "site:github.com python cli" --json
@@ -37,16 +37,16 @@ searxng search "site:github.com python cli" --json
 
 ### Search Options
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--categories` | `-c` | Comma-separated categories |
-| `--engines` | `-e` | Comma-separated engines |
-| `--language` | `-l` | Language code (en, de, cs, etc.) |
-| `--num` | `-n` | Number of results (default: 10) |
-| `--page` | `-p` | Page number (default: 1) |
-| `--time-range` | `-t` | day, week, month, year |
-| `--safe-search` | | 0=off, 1=moderate, 2=strict |
-| `--json` | | Raw JSON output |
+| Flag | Description |
+|------|-------------|
+| `--categories` | Comma-separated categories |
+| `--engines` | Comma-separated engines |
+| `--language` | Language code (en, de, cs, etc.) |
+| `--num` | Number of results (default: 10) |
+| `--page` | Page number (default: 1) |
+| `--time-range` | day, week, month, year |
+| `--safe-search` | 0=off, 1=moderate, 2=strict |
+| `--json` | Raw JSON output |
 
 ## Discovery
 
@@ -84,7 +84,7 @@ The `--json` output is a JSON object with these top-level fields:
 }
 ```
 
-**Do not pipe through `grep`** — the output is structured JSON. To extract specific fields, use `jq`:
+**Never pipe through `grep`, `head`, `tail`, or similar text tools** — the output is already structured JSON. Use `jq` if filtering is needed:
 
 ```bash
 # Extract just URLs
