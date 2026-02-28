@@ -186,6 +186,18 @@
       "source": "./plugins/rabbitmqadmin",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/rabbitmqadmin"
+    },
+    {
+      "name": "searxngcli",
+      "description": "Skill for searching the web using a SearXNG instance via the searxngcli CLI",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/searxngcli",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/searxngcli"
     }
   ]
 }

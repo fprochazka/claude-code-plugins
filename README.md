@@ -44,6 +44,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [gogcli](plugins/gogcli/) | Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI |
 | [glab](plugins/glab/) | Skill for interacting with GitLab using the glab CLI |
 | [rabbitmqadmin](plugins/rabbitmqadmin/) | Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng) |
+| [searxngcli](plugins/searxngcli/) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |
 
 ## Developing
 
