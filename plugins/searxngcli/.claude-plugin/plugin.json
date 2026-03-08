@@ -1,6 +1,6 @@
 {
   "name": "searxngcli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Skill for searching the web using a SearXNG instance via the searxngcli CLI",
   "skills": "./skills/",
   "commands": "./commands/"

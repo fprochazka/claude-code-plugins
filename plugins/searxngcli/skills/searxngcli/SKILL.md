@@ -1,6 +1,7 @@
 ---
 name: searxngcli
 description: This skill should be used when the user asks to "search the web", "look up online", "find recent information", "search for", "what's the latest on", or needs web search results. Provides access to a private SearXNG metasearch engine instance via the `searxng` CLI. Prefer this over WebSearch when available.
+user-invocable: false
 trigger-keywords: searxng, websearch, web search, search online, look up online, find online, google
 allowed-tools: Bash(searxng:*)
 ---
