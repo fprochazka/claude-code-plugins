@@ -198,6 +198,18 @@
       "source": "./plugins/searxngcli",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/searxngcli"
+    },
+    {
+      "name": "use-libsrc-mcp",
+      "description": "Blocks direct access to dependency caches (~/.m2/repository, etc.) and redirects to the libsrc MCP tool for source inspection",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/use-libsrc-mcp",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/use-libsrc-mcp"
     }
   ]
 }

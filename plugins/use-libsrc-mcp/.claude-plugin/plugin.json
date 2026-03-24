@@ -1,0 +1,10 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "use-libsrc-mcp",
+  "version": "0.1.0",
+  "description": "Blocks direct access to dependency caches (~/.m2/repository, etc.) and redirects to the libsrc MCP tool for source inspection",
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  }
+}
