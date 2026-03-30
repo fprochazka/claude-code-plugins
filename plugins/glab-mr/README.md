@@ -12,6 +12,10 @@ Fetches comprehensive MR state (comments + pipeline) and helps fix all issues:
 2. **Unresolved Comments** - Reviews and addresses discussion threads
 3. **Resolved Comments Verification** - Checks for missed actionable feedback
 
+### `/glab-mr:overview`
+
+Fetches comprehensive MR state and presents a clear status overview without taking any action.
+
 ### `/glab-mr:comments`
 
 Fetches only MR comments, analyzes them, and proposes what to do:
