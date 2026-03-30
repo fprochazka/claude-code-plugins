@@ -138,6 +138,7 @@ fetch_mr_info() {
     MR_AUTHOR=$(echo "$mr_json" | jq -r '.author.name')
     MR_STATE=$(echo "$mr_json" | jq -r '.state')
     MR_URL=$(echo "$mr_json" | jq -r '.web_url')
+    MR_TARGET_BRANCH=$(echo "$mr_json" | jq -r '.target_branch')
     MR_JSON="$mr_json"
 
     setup_output_directory "$MR_ID"
@@ -345,6 +346,7 @@ print_summary() {
     echo "  Title: $MR_TITLE"
     echo "  Author: $MR_AUTHOR"
     echo "  State: $MR_STATE"
+    echo "  Target Branch: $MR_TARGET_BRANCH"
     echo "  URL: $MR_URL"
     echo
     echo "Files Created:"
