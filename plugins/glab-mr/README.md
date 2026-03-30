@@ -27,29 +27,23 @@ Fetches only pipeline status and job logs, triages failures and proposes fixes.
 
 - Claude Code **2.1.0 or newer** (see [Known Issue](#known-issue) below)
 - [`glab` CLI](https://docs.gitlab.com/cli/) installed and authenticated
+- [`glab-discussion`](https://github.com/fprochazka/glab-discussion) for discussion handling (`uv tool install glab-discussion`)
 - `jq` for JSON processing
 
 ## How it works
 
-The plugin includes an inline bash script that:
+The plugin includes a bash script that:
 
 1. Auto-detects the MR from your current git branch
 2. Fetches MR info via `glab mr view`
-3. Fetches all discussions via the Discussions API, filters out system-only threads
-4. Groups comments by discussion thread with replies indented, sorted by creation time
-5. Includes `Discussion:` and `Note:` IDs so the AI can reply/resolve without extra API lookups
-6. Marks bot authors with `[BOT]` label (via cached user lookups)
-7. Splits into resolved/unresolved files
-8. Fetches pipeline status, job details, and logs in parallel with retry
+3. Delegates discussion fetching to `glab-discussion read --dump` (per-thread files with incremental updates, bot detection, diff note positions)
+4. Fetches pipeline status, job details, and logs in parallel with retry
 
-All data is saved to `/tmp/glab-mr-<id>-<timestamp>/` with:
-- `mr-info.txt` - Full MR details
-- `comments-resolved.txt` - Resolved comments (bot authors marked with `[BOT]`)
-- `comments-unresolved.txt` - Unresolved comments
+Output:
+- `mr-info.txt` - Full MR details (in `/tmp/glab-mr-<id>-<timestamp>/`)
+- `/tmp/glab-discussion/<host>/mr-<iid>/*.txt` - One file per discussion thread (managed by `glab-discussion`)
 - `full-pipeline-summary.txt` - Pipeline status and all jobs
 - `job-logs/` - Individual log files for each job
-
-User data (for bot detection) is cached at `~/.cache/gitlab/<hostname>/user_<id>.json` to avoid redundant API calls across runs.
 
 ## Installation
 
