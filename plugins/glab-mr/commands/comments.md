@@ -1,6 +1,6 @@
 ---
 description: Fix MR comment issues (unresolved and missed comments)
-allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)"]
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)", "Bash(glab-discussion:*)"]
 ---
 
 ## Context
@@ -11,8 +11,8 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)"]
 
 ## Your task
 
-Analyze the MR comments above, no implementation yet.
-Look up the context and think about the discussions, then propose what to do about them. 
+The discussions have been dumped by `glab-discussion` into per-thread files in the discussions directory listed above.
+Read the discussion files to understand each thread, then analyze and propose what to do about them. No implementation yet.
 
 ### 1. Unresolved Comments
 Review all unresolved discussion threads:
@@ -27,11 +27,21 @@ Review resolved comments as well because:
 
 ### 3. Interacting with Discussions
 
-Each comment in the dump includes `Discussion:` and `Note:` IDs. You may use these with `glab api` to interact with discussions:
+Each discussion file includes the `Discussion:` ID in its header. Use `glab-discussion` to interact:
 
-- **Reply to a discussion**: `glab api -X POST "projects/$PROJECT_ID/merge_requests/$MR_IID/discussions/$DISCUSSION_ID/notes" -f body="Your reply"`
-- **Resolve a discussion**: `glab api -X PUT "projects/$PROJECT_ID/merge_requests/$MR_IID/discussions/$DISCUSSION_ID" -f resolved=true`
+**Reply to a discussion:**
+```bash
+glab-discussion write --reply-to <discussion_id> --body "Your reply"
+```
 
-The PROJECT_ID and MR_IID (MR number) are available in the MR info section above.
+**Resolve a discussion:**
+```bash
+glab-discussion resolve <discussion_id>
+```
+
+**Add a diff note on a specific line:**
+```bash
+glab-discussion write --file <path> --new-line <n> --body "Comment"
+```
 
 $ARGUMENTS

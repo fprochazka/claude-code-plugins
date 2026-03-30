@@ -84,64 +84,6 @@ glab_api_paginated_with_retry() {
 }
 
 # ==============================================================================
-# User Cache (bot detection)
-# ==============================================================================
-
-# Extracts GitLab hostname from a web URL (e.g. https://gitlab.example.com/foo -> gitlab.example.com)
-extract_hostname() {
-    echo "$1" | sed -E 's|https?://([^/]*).*|\1|'
-}
-
-# Fetches user JSON, caching to ~/.cache/gitlab/<hostname>/user_<id>.json
-fetch_user_cached() {
-    local user_id="$1"
-    local hostname="$2"
-    local cache_dir="$HOME/.cache/gitlab/$hostname"
-    local cache_file="$cache_dir/user_${user_id}.json"
-
-    if [[ -f "$cache_file" ]]; then
-        cat "$cache_file"
-        return 0
-    fi
-
-    mkdir -p "$cache_dir"
-    local temp_file
-    temp_file=$(mktemp)
-
-    if glab_api_with_retry "users/$user_id" "$temp_file"; then
-        if jq empty < "$temp_file" 2>/dev/null; then
-            mv "$temp_file" "$cache_file"
-            cat "$cache_file"
-            return 0
-        fi
-    fi
-
-    rm -f "$temp_file"
-    echo '{}'
-    return 1
-}
-
-# Builds a JSON object mapping author IDs to bot status: {"870": false, "867": true}
-build_bot_author_map() {
-    local comments_json="$1"
-    local hostname="$2"
-    local bot_map="{}"
-
-    local author_ids
-    author_ids=$(echo "$comments_json" | jq -r '[.[].author.id] | unique | .[]')
-
-    for user_id in $author_ids; do
-        local user_json
-        user_json=$(fetch_user_cached "$user_id" "$hostname")
-        local is_bot
-        is_bot=$(echo "$user_json" | jq -r '.bot // false')
-        bot_map=$(echo "$bot_map" | jq --arg id "$user_id" --argjson bot "$is_bot" '. + {($id): $bot}')
-    done
-
-    echo "$bot_map"
-}
-
-# ==============================================================================
 # Setup
 # ==============================================================================
 
@@ -151,8 +93,6 @@ setup_output_directory() {
     mkdir -p "$OUTPUT_DIR"
 
     MR_INFO_FILE="$OUTPUT_DIR/mr-info.txt"
-    COMMENTS_RESOLVED_FILE="$OUTPUT_DIR/comments-resolved.txt"
-    COMMENTS_UNRESOLVED_FILE="$OUTPUT_DIR/comments-unresolved.txt"
     PIPELINE_SUMMARY_FILE="$OUTPUT_DIR/full-pipeline-summary.txt"
     JOBS_DIR="$OUTPUT_DIR/job-logs"
     mkdir -p "$JOBS_DIR"
@@ -223,144 +163,36 @@ fetch_mr_info() {
 # Comments
 # ==============================================================================
 
-write_note() {
-    local idx_label="$1"
-    local note_json="$2"
-    local indent="${3:-}"
-    local discussion_id="${4:-}"
-
-    local author=$(echo "$note_json" | jq -r '.author.name // "Unknown"')
-    local author_id=$(echo "$note_json" | jq -r '.author.id // ""')
-    local created_at=$(echo "$note_json" | jq -r '.created_at // "Unknown"')
-    local body=$(echo "$note_json" | jq -r '.body // ""')
-    local note_type=$(echo "$note_json" | jq -r '.type // ""')
-    local system=$(echo "$note_json" | jq -r '.system // false')
-    local note_id=$(echo "$note_json" | jq -r '.id // ""')
-
-    # Check if author is a bot
-    local is_bot="false"
-    if [[ -n "$BOT_MAP" && -n "$author_id" ]]; then
-        is_bot=$(echo "$BOT_MAP" | jq -r --arg id "$author_id" '.[$id] // false')
-    fi
-
-    local author_label="$author"
-    [[ "$is_bot" == "true" ]] && author_label="$author [BOT]"
-
-    echo "${indent}[$idx_label] $author_label - $created_at"
-    [[ -n "$discussion_id" ]] && echo "${indent}Discussion: $discussion_id"
-    echo "${indent}Note: $note_id"
-    [[ "$system" == "true" ]] && echo "${indent}[SYSTEM NOTE]"
-    [[ -n "$note_type" && "$note_type" != "null" ]] && echo "${indent}Type: $note_type"
-
-    # Code position
-    local has_position=$(echo "$note_json" | jq -r '.position // null')
-    if [[ "$has_position" != "null" ]]; then
-        local commit=$(echo "$note_json" | jq -r '.position.head_sha // ""' | cut -c1-8)
-        local file_path=$(echo "$note_json" | jq -r '.position.new_path // .position.old_path // ""')
-        local line_num=$(echo "$note_json" | jq -r '.position.new_line // .position.old_line // ""')
-        if [[ -n "$commit" && -n "$file_path" ]]; then
-            echo -n "${indent}Code: $commit $file_path"
-            [[ -n "$line_num" && "$line_num" != "null" ]] && echo -n ":$line_num"
-            echo
-        fi
-    fi
-
-    echo "${indent}---"
-    if [[ -n "$indent" ]]; then
-        echo "$body" | sed "s/^/${indent}/"
-    else
-        echo "$body"
-    fi
-    echo
-}
-
-write_discussion() {
-    local idx="$1"
-    local discussion_json="$2"
-
-    local discussion_id=$(echo "$discussion_json" | jq -r '.id')
-    local notes_count=$(echo "$discussion_json" | jq '.notes | length')
-    local first_note=$(echo "$discussion_json" | jq -c '.notes[0]')
-    local resolvable=$(echo "$first_note" | jq -r '.resolvable // false')
-    local resolved=$(echo "$first_note" | jq -r '.resolved // "null"')
-
-    # Add resolution status tag
-    if [[ "$resolvable" == "true" ]]; then
-        if [[ "$resolved" == "true" ]]; then
-            echo "[RESOLVED]"
-        else
-            echo "[UNRESOLVED]"
-        fi
-    fi
-
-    # Write first note with discussion ID
-    write_note "$idx" "$first_note" "" "$discussion_id"
-
-    # Write reply notes (indented)
-    if (( notes_count > 1 )); then
-        local reply_idx=1
-        while IFS= read -r reply_note; do
-            write_note "$idx.$reply_idx" "$reply_note" "  "
-            reply_idx=$((reply_idx + 1))
-        done < <(echo "$discussion_json" | jq -c '.notes[1:][]')
-    fi
-}
-
-write_comments_file() {
-    local title="$1"
-    local output_file="$2"
-    local discussions_json="$3"
-    local count
-    count=$(echo "$discussions_json" | jq 'length')
-
-    {
-        echo "$title (Total: $count)"
-        echo "=========================================="
-        echo
-        local idx=1
-        while IFS= read -r discussion; do
-            write_discussion "$idx" "$discussion"
-            idx=$((idx + 1))
-        done < <(echo "$discussions_json" | jq -c '.[]')
-    } > "$output_file"
-
-    echo "$count"
-}
-
 fetch_comments() {
-    local discussions_json
-    if ! discussions_json=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/merge_requests/$MR_ID/discussions?per_page=100"); then
-        echo "Warning: Could not fetch discussions after $MAX_RETRIES retries" >&2
-        return
+    local mr_url="$1"
+    local output_dir="$2"
+
+    local dump_output
+    dump_output=$(glab-discussion read --dump --mr-url "$mr_url" 2>&1)
+    local exit_code=$?
+
+    if [ $exit_code -ne 0 ]; then
+        echo "ERROR: glab-discussion read failed:"
+        echo "$dump_output"
+        return 1
     fi
 
-    # Filter out discussions where all notes are system notes (e.g. "assigned to", "added commit")
-    discussions_json=$(echo "$discussions_json" | jq '[.[] | select([.notes[] | .system] | all | not)]')
+    # Extract the dump directory path from the first line of output
+    # Format: "Discussions: /tmp/glab-discussion/<host>/mr-<iid>/"
+    local discussions_dir
+    discussions_dir=$(echo "$dump_output" | head -1 | sed 's/^Discussions: //' | sed 's/\/$//')
 
-    # Build bot author map from all notes across all discussions
-    local all_notes
-    all_notes=$(echo "$discussions_json" | jq '[.[].notes[]]')
-    local hostname
-    hostname=$(extract_hostname "$MR_URL")
-    local bot_map
-    bot_map=$(build_bot_author_map "$all_notes" "$hostname")
+    if [ ! -d "$discussions_dir" ]; then
+        echo "WARNING: No discussions directory found at: $discussions_dir"
+        echo "$dump_output"
+        return 0
+    fi
 
-    # Make bot map available to write_note via global
-    BOT_MAP="$bot_map"
+    # Write the full output to the output dir for reference
+    echo "$dump_output" > "$output_dir/comments-summary.txt"
+    echo "$discussions_dir" > "$output_dir/discussions-dir.txt"
 
-    # Split discussions by resolved/unresolved, sorted by first note's created_at
-    local resolved unresolved
-
-    resolved=$(echo "$discussions_json" | jq '
-        [.[] | select(.notes[0].resolvable == false or .notes[0].resolved == true)]
-        | sort_by(.notes[0].created_at)')
-
-    unresolved=$(echo "$discussions_json" | jq '
-        [.[] | select(.notes[0].resolvable == true and .notes[0].resolved == false)]
-        | sort_by(.notes[0].created_at)')
-
-    RESOLVED_COUNT=$(write_comments_file "RESOLVED COMMENTS" "$COMMENTS_RESOLVED_FILE" "$resolved")
-    UNRESOLVED_COUNT=$(write_comments_file "UNRESOLVED COMMENTS" "$COMMENTS_UNRESOLVED_FILE" "$unresolved")
+    DISCUSSIONS_DIR="$discussions_dir"
 }
 
 # ==============================================================================
@@ -519,8 +351,15 @@ print_summary() {
     echo "  MR Info:                   $MR_INFO_FILE"
 
     if [[ "$show_comments" == true ]]; then
-        echo "  Comments (resolved):       $COMMENTS_RESOLVED_FILE ($RESOLVED_COUNT comments)"
-        echo "  Comments (unresolved):     $COMMENTS_UNRESOLVED_FILE ($UNRESOLVED_COUNT comments)"
+        local discussions_dir=""
+        if [[ -f "$OUTPUT_DIR/discussions-dir.txt" ]]; then
+            discussions_dir=$(cat "$OUTPUT_DIR/discussions-dir.txt")
+        fi
+        if [[ -n "$discussions_dir" && -d "$discussions_dir" ]]; then
+            local thread_count
+            thread_count=$(find "$discussions_dir" -maxdepth 1 -name '*.txt' | wc -l)
+            echo "  Discussions:               $discussions_dir/*.txt ($thread_count threads)"
+        fi
     fi
 
     if [[ "$show_pipeline" == true ]]; then
@@ -576,6 +415,17 @@ main() {
     command -v glab &>/dev/null || die "glab CLI is not installed"
     command -v jq &>/dev/null || die "jq is not installed"
 
+    if ! command -v glab-discussion &>/dev/null; then
+        echo ""
+        echo "ERROR: glab-discussion is not installed!"
+        echo ""
+        echo "Please ask the user to install it:"
+        echo "  uv tool install glab-discussion"
+        echo ""
+        echo "More info: https://github.com/fprochazka/glab-discussion"
+        exit 1
+    fi
+
     local fetch_comments_flag=false
     local fetch_pipeline_flag=false
 
@@ -595,14 +445,10 @@ main() {
         done
     fi
 
-    RESOLVED_COUNT=0
-    UNRESOLVED_COUNT=0
-    BOT_MAP="{}"
-
     fetch_mr_info
 
     if [[ "$fetch_comments_flag" == true ]]; then
-        fetch_comments
+        fetch_comments "$MR_URL" "$OUTPUT_DIR"
     fi
 
     if [[ "$fetch_pipeline_flag" == true ]]; then
