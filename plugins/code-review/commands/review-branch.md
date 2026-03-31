@@ -77,15 +77,15 @@ Launch all 5 review agents **in parallel**. These are independent read-only revi
 
 Do NOT pass file lists, diffs, or commit lists — the agents will query git directly. This avoids context-passing errors and lets each agent get exactly the data it needs.
 
+Do NOT tell the agents what to check for — each agent already has its own embedded checklist and scope definition. Do NOT repeat or summarize their responsibilities in the prompt. Just pass them the context they need and let them work.
+
 The agents to launch (use the `code-review:review-*` agents):
 
-1. **review-conventions** — documented conventions, naming, test structure, annotation usage
-2. **review-architecture** — module placement, layer separation, coupling, abstraction levels, API surface design, dependency direction
-3. **review-bugs** — bugs, logic errors, edge cases, error handling, data flow
-4. **review-security** — injection, auth, secrets, input validation, OWASP
-5. **review-git-history** — commit hygiene, atomicity, message format, history
-
-Each agent has its own checklist and knows what's out of scope. Each returns structured findings with confidence ratings.
+- **review-conventions**
+- **review-architecture**
+- **review-bugs**
+- **review-security**
+- **review-git-history**
 
 ## Phase 4 — Validate & Report (main thread)
 
