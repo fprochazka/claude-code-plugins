@@ -1,0 +1,144 @@
+---
+description: Review current branch — loads full context, then reviews against conventions
+argument-hint: [focus area or specific concerns]
+disable-model-invocation: true
+---
+
+# Review Current Branch
+
+Perform a thorough, context-aware code review of all changes on the current branch compared to its base branch.
+
+$ARGUMENTS
+
+## Phase 1 — Load Context (main thread, no subagents)
+
+Do all of this BEFORE forming any opinions. You need full context first. Everything in this phase stays in your main context window — do NOT delegate to subagents.
+
+### 1.1 Branch & Diff
+
+1. Determine the **base branch**:
+   - If there's a merge/pull request, extract the target branch from it.
+   - Otherwise, fall back to `master` or `main` (whichever exists).
+2. List all commits on this branch since divergence:
+   ```
+   git log --oneline <base>..HEAD
+   ```
+3. Get the changed files overview: `git diff --numstat <base>...HEAD`
+4. Read the full diff: `git diff <base>...HEAD`
+5. Skim the file list to understand scope — which files, which modules, what kind of change (feature, fix, refactor, migration, test).
+
+### 1.2 Merge/Pull Request Context
+
+If the project uses a code hosting platform with MR/PR workflows, load the MR/PR context:
+- Description, target branch, labels
+- All comment threads (resolved and unresolved) — pay close attention to **unresolved threads**, reviewers may have already flagged issues
+- Pipeline/CI status
+
+Use the appropriate skill or CLI for the platform (e.g., `/glab-mr:overview` for GitLab, `gh pr view` for GitHub).
+
+If there is no MR/PR yet, skip this step.
+
+### 1.3 Ticket Context
+
+1. Extract the ticket ID from the MR/PR title or branch name (common patterns: `TEAM-123`, `#123`, etc.)
+2. If found, use the project's issue tracker to fetch the ticket — read its description, acceptance criteria, status, and comments.
+3. Check for **related tickets** (parent, children, blocked-by, blocking) and skim those too — they provide motivation and constraints.
+4. If the ticket has links to external resources, see if you can read those too (documents, discussion links, etc.).
+
+If no ticket is identifiable, skip this step.
+
+### 1.4 Note Unresolved Reviewer Comments
+
+If there are unresolved discussions from the MR/PR, note them. You will check whether they have been addressed during the validation phase.
+
+## Phase 2 — Understand Surrounding Code (single subagent)
+
+Launch a single **Explore subagent** to build understanding of the codebase areas touched by the diff. This agent should investigate:
+
+1. **Callers** — who calls the modified code? Will they be affected?
+2. **Callees** — what does the modified code call? Are the contracts respected?
+3. **Data flow** — where does the data come from and where does it go? (DB, API, message queue, cache)
+4. **Downstream effects** — could this change affect other systems, scheduled jobs, or async consumers?
+5. **Previous state** — what did the code look like before? Was the old behavior intentional? (`git show <base>:<file>` for key files)
+6. **Project conventions** — find and read all convention docs: `docs/conventions/*.md`, `AGENTS.md`, `CLAUDE.md`, module-specific docs
+
+Focus on areas where the change is non-trivial. Simple renames or formatting don't need deep exploration.
+
+The subagent should return a summary of its understanding — this will be included as context for the review agents.
+
+## Phase 3 — Parallel Review (5 subagents)
+
+Launch all 5 review agents **in parallel**. Pass each agent:
+- The branch range: `<base>...HEAD` (each agent will fetch the git data it needs on its own)
+- The MR/PR description (if available)
+- A brief ticket summary (if available)
+- The code exploration summary from Phase 2
+
+Do NOT pass file lists, diffs, or commit lists — the agents will query git directly. This avoids context-passing errors and lets each agent get exactly the data it needs.
+
+The agents to launch (use the `code-review:review-*` agents):
+
+1. **review-conventions** — documented conventions, naming, test structure, annotation usage
+2. **review-architecture** — module placement, layer separation, coupling, abstraction levels, API surface design, dependency direction
+3. **review-bugs** — bugs, logic errors, edge cases, error handling, data flow
+4. **review-security** — injection, auth, secrets, input validation, OWASP
+5. **review-git-history** — commit hygiene, atomicity, message format, history
+
+Each agent has its own checklist and knows what's out of scope. Each returns structured findings with confidence ratings.
+
+## Phase 4 — Validate & Report (main thread)
+
+Back in the main context window, with the full unsummarized context from Phase 1:
+
+### 4.1 Validate Findings
+
+For each finding from the 5 agents:
+1. Check it against the full context you have (diff, ticket, MR comments, code understanding)
+2. Verify the finding is accurate — is the code actually wrong, or did the agent misunderstand context?
+3. Check if an existing MR/PR comment already covers this finding
+4. **Drop findings you cannot verify** from main context. Do not include anything you're unsure about.
+5. Keep the confidence scores from agents, but adjust them if your fuller context changes the assessment.
+
+### 4.2 Produce Report
+
+Determine the report location:
+- Extract a meaningful topic from the branch name or ticket ID (e.g., `TEAM-123-add-user-export` → `add-user-export`)
+- Create report at `./.claude/review-report/<topic>.md`
+- Create the `.claude/review-report/` directory if it doesn't exist
+
+Write the report:
+
+```markdown
+# Branch Review: <branch-name>
+
+## Summary
+One paragraph: what this branch does, overall assessment.
+
+## Ticket: <TICKET-ID>
+Link and whether acceptance criteria appear met.
+
+## Findings
+
+### Blocking
+Issues that must be fixed before merge.
+
+### Suggestions
+Improvements worth making but not blocking.
+
+### Nitpicks
+Style, naming, minor things.
+
+### Positive Notes
+Things done well — good patterns, thorough tests, clean commits.
+
+## Commit-by-Commit Notes
+Per-commit observations (if useful).
+
+## Unresolved MR/PR Discussions
+Status of each — addressed, partially addressed, or still open.
+```
+
+Then show the user a brief inline summary in the conversation:
+- One-line verdict (looks good / has issues / needs discussion)
+- Bullet list of findings, grouped by severity (blocking, suggestion, nitpick)
+- Path to the full report file

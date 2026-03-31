@@ -210,6 +210,18 @@
       "source": "./plugins/use-libsrc-mcp",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/use-libsrc-mcp"
+    },
+    {
+      "name": "code-review",
+      "description": "Multi-agent branch code review — conventions, bugs, security, and git history reviewed in parallel",
+      "version": "1.0.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/code-review",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/code-review"
     }
   ]
 }
