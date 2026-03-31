@@ -14,29 +14,30 @@ $ARGUMENTS
 
 Do all of this BEFORE forming any opinions. You need full context first. Everything in this phase stays in your main context window — do NOT delegate to subagents.
 
-### 1.1 Branch & Diff
+### 1.1 Merge/Pull Request Context (do this FIRST)
 
-1. Determine the **base branch**:
-   - If there's a merge/pull request, extract the target branch from it.
-   - Otherwise, fall back to `master` or `main` (whichever exists).
-2. List all commits on this branch since divergence:
-   ```
-   git log --oneline <base>..HEAD
-   ```
-3. Get the changed files overview: `git diff --numstat <base>...HEAD`
-4. Read the full diff: `git diff <base>...HEAD`
-5. Skim the file list to understand scope — which files, which modules, what kind of change (feature, fix, refactor, migration, test).
-
-### 1.2 Merge/Pull Request Context
+**You MUST load MR/PR context first** — it contains the target branch, which determines the correct diff range. Do NOT run any git diff or git log commands until you know the target branch.
 
 If the project uses a code hosting platform with MR/PR workflows, load the MR/PR context:
-- Description, target branch, labels
+- Description, **target branch**, labels
 - All comment threads (resolved and unresolved) — pay close attention to **unresolved threads**, reviewers may have already flagged issues
 - Pipeline/CI status
 
 Use the appropriate skill or CLI for the platform (e.g., `/glab-mr:overview` for GitLab, `gh pr view` for GitHub).
 
-If there is no MR/PR yet, skip this step.
+If there is no MR/PR, fall back to `master` or `main` (whichever exists) as the base branch.
+
+### 1.2 Branch & Diff
+
+Now that you know the **target branch** from 1.1, use it as `<base>`:
+
+1. List all commits on this branch since divergence:
+   ```
+   git log --oneline <base>..HEAD
+   ```
+2. Get the changed files overview: `git diff --numstat <base>...HEAD`
+3. Read the full diff: `git diff <base>...HEAD`
+4. Skim the file list to understand scope — which files, which modules, what kind of change (feature, fix, refactor, migration, test).
 
 ### 1.3 Ticket Context
 
