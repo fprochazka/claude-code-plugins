@@ -1,5 +1,5 @@
 ---
-description: Review current branch — loads full context, then reviews against conventions
+description: Full multi-agent code review of current branch — context, exploration, parallel review, validation
 argument-hint: [focus area or specific concerns]
 disable-model-invocation: true
 ---

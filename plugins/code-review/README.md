@@ -5,7 +5,7 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 ## Usage
 
 ```
-/code-review:review-branch [focus area or specific concerns]
+/code-review:full [focus area or specific concerns]
 ```
 
 ## How it works
