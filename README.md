@@ -33,6 +33,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [gemini-cli](plugins/gemini-cli/) | Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
 | [gemini-deep-research](plugins/gemini-deep-research/) | Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent |
 | [glab](plugins/glab/) | Skill for interacting with GitLab using the glab CLI |
+| [glab-discussion](https://github.com/fprochazka/glab-discussion) | Standalone CC plugin + CLI for reading and managing GitLab MR discussion threads |
 | [glab-mr](plugins/glab-mr/) | GitLab MR tools - fix failed CI, resolve comments, and more |
 | [ai-tool-use-validator](plugins/ai-tool-use-validator/) | AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness |
 | [slackcli](plugins/slackcli/) | Skill for interacting with Slack workspaces using the slackcli CLI |
