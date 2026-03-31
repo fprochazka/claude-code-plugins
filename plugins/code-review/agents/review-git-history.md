@@ -26,7 +26,7 @@ You are responsible for fetching git data yourself:
 ## Your Scope
 
 You review ONLY:
-- **Atomic commits** — each commit does one thing, all related changes included, all unrelated changes excluded
+- **Atomic commits** — each commit does one thing, all related changes included, all unrelated changes excluded. In particular: a feature commit MUST include its tests in the same commit — adding tests in a follow-up commit is a violation. Exception: adding tests BEFORE a bugfix is explicitly superior — the test commit captures current (broken) behavior, and the bugfix commit then shows the behavior change in the test diff. Same principle applies to snapshot tests — first commit adds snapshots of current behavior, second commit changes the behavior and the snapshots update along with it.
 - **Refactoring separation** — refactorings and typo/formatting fixes committed BEFORE feature/bugfix commits, not mixed in
 - **Behavior separation** — commits that move/rename code must NOT also change behavior in the same commit
 - **Fixup detection** — later commits that fix problems introduced by earlier commits in the same branch (these should be `fixup!` commits and squashed)
