@@ -1,5 +1,0 @@
-{
-  "name": "no-background-tasks",
-  "version": "1.0.1",
-  "description": "Enforces serial execution of Bash and Task tools within a session"
-}

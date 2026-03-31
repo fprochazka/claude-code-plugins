@@ -32,20 +32,17 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [gemini-cli](plugins/gemini-cli/) | Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
 | [gemini-deep-research](plugins/gemini-deep-research/) | Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent |
-| [no-background-tasks](plugins/no-background-tasks/) | Enforces serial execution of Bash and Task tools within a session |
 | [glab-mr](plugins/glab-mr/) | GitLab MR tools - fix failed CI, resolve comments, and more |
 | [ai-tool-use-validator](plugins/ai-tool-use-validator/) | AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness |
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
 | [slackcli](plugins/slackcli/) | Skill for interacting with Slack workspaces using the slackcli CLI |
 | [migrate-to-uv](plugins/migrate-to-uv/) | Skill for migrating Python projects from Poetry, pipx, or pip to uv |
 | [metabasecli](plugins/metabasecli/) | Skill for interacting with Metabase using the metabase CLI |
-| [llm-toto](plugins/llm-toto/) | LLM Tool Output Tokens Optimizer - buffers large command outputs to files to reduce token consumption and prevent wasteful re-runs |
-| [markitdown](plugins/markitdown/) | Skill for converting files to Markdown using Microsoft's markitdown CLI |
 | [gogcli](plugins/gogcli/) | Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI |
 | [glab](plugins/glab/) | Skill for interacting with GitLab using the glab CLI |
 | [rabbitmqadmin](plugins/rabbitmqadmin/) | Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng) |
 | [searxngcli](plugins/searxngcli/) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |
-| [use-libsrc-mcp](plugins/use-libsrc-mcp/) | Blocks direct access to dependency caches (~/.m2/repository, etc.) and redirects to the libsrc MCP tool |
+| [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, bugs, security, and git history reviewed in parallel |
 
 ## Developing
 

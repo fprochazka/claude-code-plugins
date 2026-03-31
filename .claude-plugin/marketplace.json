@@ -44,18 +44,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/gemini-deep-research"
     },
     {
-      "name": "no-background-tasks",
-      "description": "Enforces serial execution of Bash and Task tools within a session",
-      "version": "1.0.0",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/no-background-tasks",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/no-background-tasks"
-    },
-    {
       "name": "glab-mr",
       "description": "GitLab MR tools - fix failed CI, resolve comments, and more",
       "version": "1.7.1",
