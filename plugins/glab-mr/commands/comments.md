@@ -5,9 +5,7 @@ allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)", "Bash
 
 ## Context
 
-```!
-"${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh" --comments
-```
+!`"${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh" --comments`
 
 ## Your task
 
