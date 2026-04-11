@@ -200,6 +200,18 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/use-libsrc-mcp"
     },
     {
+      "name": "git",
+      "description": "Git workflow rules for atomic commits, refactor-first ordering, and fixup-based history cleanup",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/git",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/git"
+    },
+    {
       "name": "code-review",
       "description": "Multi-agent branch code review — conventions, bugs, security, and git history reviewed in parallel",
       "version": "1.2.0",
