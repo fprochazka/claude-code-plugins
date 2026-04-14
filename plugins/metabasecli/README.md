@@ -11,8 +11,8 @@ See the [metabasecli repository](https://github.com/fprochazka/metabasecli) for 
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install metabasecli@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install metabasecli@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Permissions

@@ -11,8 +11,8 @@ See the [rabbitmqadmin-ng repository](https://github.com/rabbitmq/rabbitmqadmin-
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install rabbitmqadmin@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install rabbitmqadmin@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Permissions

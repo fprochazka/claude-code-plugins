@@ -7,13 +7,13 @@ A collection of Claude Code plugins by Filip Procházka.
 Add this marketplace to Claude Code:
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
 ```
 
 Then install plugins:
 
 ```bash
-claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins
+claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Upgrading

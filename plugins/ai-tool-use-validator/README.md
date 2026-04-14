@@ -23,8 +23,8 @@ Other tools (Write, Edit, Read, etc.) are **not validated** and pass through to 
 ### 1. Add the marketplace and install the plugin
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install ai-tool-use-validator@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install ai-tool-use-validator@fprochazka-claude-code-plugins --scope user
 ```
 
 ### 2. Install the validator binary

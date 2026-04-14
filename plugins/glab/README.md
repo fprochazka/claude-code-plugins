@@ -10,8 +10,8 @@ Claude Code skill for interacting with GitLab using the [glab CLI](https://gitla
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install glab@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install glab@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Permissions

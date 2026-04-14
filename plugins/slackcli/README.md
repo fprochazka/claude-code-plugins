@@ -11,8 +11,8 @@ See the [slackcli repository](https://github.com/fprochazka/slackcli) for instal
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install slackcli@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install slackcli@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Permissions

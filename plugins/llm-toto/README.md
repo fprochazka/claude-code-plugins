@@ -82,8 +82,8 @@ export LLM_TOTO_THRESHOLD=8000
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install llm-toto@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install llm-toto@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Requirements

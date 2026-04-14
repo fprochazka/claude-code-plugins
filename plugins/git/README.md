@@ -7,8 +7,8 @@ This is the writing-side counterpart to [`code-review`](../code-review/)'s `revi
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install git@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install git@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Highlights

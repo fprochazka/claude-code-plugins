@@ -18,8 +18,8 @@ This plugin provides a skill for leveraging Google's Gemini CLI in non-interacti
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install gemini-cli@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install gemini-cli@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Usage

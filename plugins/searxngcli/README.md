@@ -11,8 +11,8 @@ See the [searxngcli repository](https://github.com/fprochazka/searxngcli) for in
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install searxngcli@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install searxngcli@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Permissions

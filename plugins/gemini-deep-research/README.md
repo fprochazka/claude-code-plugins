@@ -12,8 +12,8 @@ See the [gemini-deep-research repository](https://github.com/fprochazka/gemini-d
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install gemini-deep-research@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install gemini-deep-research@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Permissions

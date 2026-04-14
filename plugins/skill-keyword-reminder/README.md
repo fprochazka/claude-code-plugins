@@ -66,8 +66,8 @@ trigger-keywords: deep research, deep dive, comprehensive analysis
 **From marketplace:**
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins --scope user
 ```
 
 **Local testing:**

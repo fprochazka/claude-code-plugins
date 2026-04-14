@@ -52,6 +52,6 @@ The main agent validates every finding against its full unsummarized context. Fi
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install code-review@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install code-review@fprochazka-claude-code-plugins --scope user
 ```

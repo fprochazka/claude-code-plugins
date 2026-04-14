@@ -5,8 +5,8 @@ Blocks attempts to extract or inspect source code from dependency cache director
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install use-libsrc-mcp@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install use-libsrc-mcp@fprochazka-claude-code-plugins --scope user
 ```
 
 ## Why

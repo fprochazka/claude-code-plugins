@@ -21,6 +21,6 @@ The skill is automatically loaded when Claude detects migration-related requests
 ## Installation
 
 ```bash
-claude plugin marketplace add fprochazka/claude-code-plugins
-claude plugin install migrate-to-uv@fprochazka-claude-code-plugins
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install migrate-to-uv@fprochazka-claude-code-plugins --scope user
 ```
