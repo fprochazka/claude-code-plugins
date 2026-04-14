@@ -52,6 +52,7 @@ Output:
 ## Installation
 
 ```bash
+claude plugin marketplace add fprochazka/claude-code-plugins
 claude plugin install glab-mr@fprochazka-claude-code-plugins
 ```
 

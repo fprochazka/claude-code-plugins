@@ -10,6 +10,7 @@ Claude Code skill for interacting with Google services using the [gogcli](https:
 ## Installation
 
 ```bash
+claude plugin marketplace add fprochazka/claude-code-plugins
 claude plugin install gogcli@fprochazka-claude-code-plugins
 ```
 

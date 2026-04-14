@@ -5,6 +5,7 @@ Iterative web research agent that searches, discovers new directions, and synthe
 ## Installation
 
 ```bash
+claude plugin marketplace add fprochazka/claude-code-plugins
 claude plugin install web-researcher@fprochazka-claude-code-plugins
 ```
 

@@ -5,6 +5,7 @@ Skill for converting files to Markdown using [Microsoft's markitdown](https://gi
 ## Installation
 
 ```bash
+claude plugin marketplace add fprochazka/claude-code-plugins
 claude plugin install markitdown@fprochazka-claude-code-plugins
 ```
 

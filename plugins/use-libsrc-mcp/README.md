@@ -2,6 +2,13 @@
 
 Blocks attempts to extract or inspect source code from dependency cache directories (`~/.m2/repository`, etc.) and redirects Claude to use the `mcp__libsrc__get_library_sources` MCP tool instead.
 
+## Installation
+
+```bash
+claude plugin marketplace add fprochazka/claude-code-plugins
+claude plugin install use-libsrc-mcp@fprochazka-claude-code-plugins
+```
+
 ## Why
 
 Claude sometimes tries to inspect dependency sources by extracting JARs from `~/.m2/repository` — running `jar tf`, `unzip -p`, or reading `.java`/`.class` files directly. This is fragile, slow, and wastes tokens.
