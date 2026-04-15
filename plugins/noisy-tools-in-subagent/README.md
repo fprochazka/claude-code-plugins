@@ -1,0 +1,64 @@
+# noisy-tools-in-subagent
+
+Forces noisy commands — builds, tests, linters, static analysis, anything that produces a wall of output — to run inside a Sonnet subagent instead of the main agent's context window. Main-agent tokens are for work that needs them, not for 2,000 lines of Maven output.
+
+## Installation
+
+Prereq: install [`bash-classify`](https://github.com/fprochazka/bash-classify), used by the hook to parse Bash commands:
+
+```bash
+uv tool install bash-classify
+```
+
+Then add the marketplace and install:
+
+```bash
+claude plugin marketplace add fprochazka/claude-code-plugins --scope user
+claude plugin install noisy-tools-in-subagent@fprochazka-claude-code-plugins --scope user
+```
+
+If `bash-classify` isn't on your `PATH`, the hook refuses to proceed and tells the agent to install it.
+
+## How it works
+
+Two pieces:
+
+1. **A `PreToolUse` hook** on `Bash` that parses each command with `bash-classify` (walking pipes, chains, and subshells) and matches every parsed command against a regex whitelist of noisy build/test/lint tools. In the main agent context, a match gets denied with a short message instructing the agent to delegate to the subagent. In any subagent context, the hook passes through — other subagents aren't affected, and the `noisy-runner` can freely run what it was asked to run.
+
+2. **A `noisy-runner` subagent** (Sonnet, strictly scoped to `Bash` and `Read`) that runs the commands it is given, wraps them in `tee` to capture full logs to `/tmp`, reads any files the output references to interpret errors, and reports back a concise summary plus log paths. It does not explore, fix, or modify anything — its only job is *run, read, interpret, report*.
+
+Net effect: when the main agent wants `./mvnw test`, it gets redirected into a "3 tests failed at X:42, Y:87, Z:12 because …, full logs at /tmp/…" summary instead of a flood of output.
+
+The whitelist and its tuning live in `hooks/enforce-subagent.py`. Small introspection commands (`mvn help:*`, `gradle tasks`, `mvn dependency:tree`) pass through to the main agent — only the heavy lifecycle phases are blocked.
+
+## Using the subagent directly
+
+The `noisy-runner` subagent isn't limited to the hook's whitelist. Invoke it via the Task tool any time you want a command run and *interpreted* rather than transcribed into your context:
+
+```
+subagent_type: "noisy-tools-in-subagent:noisy-runner"
+prompt: run `./mvnw test -pl foo` and `./gradlew :bar:check`, tell me what broke
+```
+
+You can pass multiple commands in one invocation — the subagent runs them sequentially.
+
+## Relationship to `llm-toto`
+
+Complements rather than replaces [`llm-toto`](../llm-toto/). `llm-toto` transparently buffers a single noisy command's output to a file and returns a summary — no agent loop. This plugin wraps the command in a full Sonnet agent loop that can read referenced files and correlate findings across multiple commands. Use `llm-toto` for dumb output buffering; use `noisy-tools-in-subagent` when you want interpretation.
+
+Both can be installed at the same time; they hook `PreToolUse:Bash` but operate on different command sets and don't conflict.
+
+## Known Claude Code UI quirk
+
+When the hook denies a command, Claude Code's terminal UI may render the rejection message 2–3 times in the same tool-call block (an empty "blocking error" header, a red `Error:` card, sometimes a side-panel overlay). This is a Claude Code rendering quirk — upstream issues [anthropics/claude-code#34713](https://github.com/anthropics/claude-code/issues/34713) and [#21504](https://github.com/anthropics/claude-code/issues/21504). The model itself only sees the rejection reason once in its context, so it's visual clutter, not token waste.
+
+## Upgrading
+
+```bash
+claude plugin marketplace update fprochazka-claude-code-plugins
+claude plugin update noisy-tools-in-subagent@fprochazka-claude-code-plugins
+```
+
+## License
+
+MIT

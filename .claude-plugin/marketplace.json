@@ -222,6 +222,18 @@
       "source": "./plugins/code-review",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/code-review"
+    },
+    {
+      "name": "noisy-tools-in-subagent",
+      "description": "Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/noisy-tools-in-subagent",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/noisy-tools-in-subagent"
     }
   ]
 }

@@ -1,0 +1,17 @@
+{
+  "description": "Blocks noisy build/test/lint commands in the main context, forcing delegation to the noisy-runner subagent",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/enforce-subagent.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
