@@ -44,12 +44,6 @@ prompt: run `./mvnw test -pl foo` and `./gradlew :bar:check`, tell me what broke
 
 You can pass multiple commands in one invocation — the subagent runs them sequentially.
 
-## Relationship to `llm-toto`
-
-Complements rather than replaces [`llm-toto`](../llm-toto/). `llm-toto` transparently buffers a single noisy command's output to a file and returns a summary — no agent loop. This plugin wraps the command in a full Sonnet agent loop that can read referenced files and correlate findings across multiple commands. Use `llm-toto` for dumb output buffering; use `noisy-tools-in-subagent` when you want interpretation.
-
-Both can be installed at the same time; they hook `PreToolUse:Bash` but operate on different command sets and don't conflict.
-
 ## Known Claude Code UI quirk
 
 When the hook denies a command, Claude Code's terminal UI may render the rejection message 2–3 times in the same tool-call block (an empty "blocking error" header, a red `Error:` card, sometimes a side-panel overlay). This is a Claude Code rendering quirk — upstream issues [anthropics/claude-code#34713](https://github.com/anthropics/claude-code/issues/34713) and [#21504](https://github.com/anthropics/claude-code/issues/21504). The model itself only sees the rejection reason once in its context, so it's visual clutter, not token waste.
