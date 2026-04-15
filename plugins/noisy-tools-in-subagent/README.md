@@ -2,6 +2,8 @@
 
 Forces noisy commands — builds, tests, linters, static analysis, anything that produces a wall of output — to run inside a Sonnet subagent instead of the main agent's context window. Main-agent tokens are for work that needs them, not for 2,000 lines of Maven output.
 
+![Example: main agent's `uv run ruff format --check . && uv run ruff check . && uv run pytest` is blocked by the hook, delegated to the `noisy-runner` subagent, which runs the three commands and reports a 4-line summary back (3 tool uses, 10.9k tokens, 41s) instead of dumping 598 pytest lines into the main context.](example.png)
+
 ## Installation
 
 Prereq: install [`bash-classify`](https://github.com/fprochazka/bash-classify), used by the hook to parse Bash commands:
