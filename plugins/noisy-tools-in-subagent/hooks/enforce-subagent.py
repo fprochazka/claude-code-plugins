@@ -84,14 +84,17 @@ WHITELIST: list[re.Pattern[str]] = [
     re.compile(r"^biome\s+(?:check|lint|ci)\b"),
 
     # --- Python ---
-    re.compile(r"^pytest(?:\s|$)"),
-    re.compile(r"^tox(?:\s|$)"),
-    re.compile(r"^nox(?:\s|$)"),
-    re.compile(r"^ruff\s+(?:check|format)\b"),
-    re.compile(r"^mypy(?:\s|$)"),
-    re.compile(r"^pyright(?:\s|$)"),
-    re.compile(r"^pylint(?:\s|$)"),
-    re.compile(r"^flake8(?:\s|$)"),
+    # Bare invocations and common runner-wrapped forms (`uv run <tool>`,
+    # `poetry run <tool>`). The wrapper prefix is optional so one pattern
+    # covers both `pytest` and `uv run pytest`.
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?pytest(?:\s|$)"),
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?tox(?:\s|$)"),
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?nox(?:\s|$)"),
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?ruff\s+(?:check|format)\b"),
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?mypy(?:\s|$)"),
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?pyright(?:\s|$)"),
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?pylint(?:\s|$)"),
+    re.compile(r"^(?:(?:uv|poetry)\s+run\s+)?flake8(?:\s|$)"),
 
     # --- Rust ---
     re.compile(r"^cargo\s+(?:build|test|check|clippy|bench|doc)\b"),
