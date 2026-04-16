@@ -1,7 +1,7 @@
 ---
 name: review-security
 description: >
-  Security review agent. Launched by the review-branch command
+  Security review agent. Launched by the review-full command
   to analyze code changes for security vulnerabilities, injection risks,
   authentication/authorization issues, and secret exposure.
 model: inherit
@@ -45,6 +45,7 @@ You review ONLY:
 - **Code conventions** — handled by review-conventions agent (naming, test structure, annotation usage)
 - **Architecture & design** — handled by review-architecture agent (module placement, coupling, abstraction levels)
 - **Bugs & logic errors** (non-security) — handled by review-bugs agent
+- **Release & deployment risks** — handled by review-release agent (migrations, messaging, config, rollout safety)
 - **Commit hygiene & git history** — handled by review-git-history agent
 
 ## Process

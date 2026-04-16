@@ -1,7 +1,7 @@
 ---
 name: review-architecture
 description: >
-  Architecture and design review agent. Launched by the review-branch command
+  Architecture and design review agent. Launched by the review-full command
   to analyze code changes for correct module placement, layer separation,
   coupling, abstraction levels, API surface design, and dependency direction.
 model: inherit
@@ -42,6 +42,7 @@ You review ONLY:
 - **Documented conventions** — handled by review-conventions agent (naming, test structure, annotation usage, formatting rules)
 - **Bugs & logic errors** — handled by review-bugs agent
 - **Security vulnerabilities** — handled by review-security agent
+- **Release & deployment risks** — handled by review-release agent (migrations, messaging, config, rollout safety)
 - **Commit hygiene & git history** — handled by review-git-history agent
 
 ## Process

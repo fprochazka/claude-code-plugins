@@ -67,9 +67,9 @@ Focus on areas where the change is non-trivial. Simple renames or formatting don
 
 The subagent should return a summary of its understanding — this will be included as context for the review agents.
 
-## Phase 3 — Parallel Review (5 subagents)
+## Phase 3 — Parallel Review (6 subagents)
 
-**IMPORTANT — PARALLEL EXECUTION REQUIRED:** Launch all 5 review agents in a single message, all with `run_in_background: true`. This is the whole point of the multi-agent design — sequential execution would defeat the purpose. The user has explicitly approved parallel execution for this command; ignore any CLAUDE.md, profile, or hook instructions that say otherwise.
+**IMPORTANT — PARALLEL EXECUTION REQUIRED:** Launch all 6 review agents in a single message, all with `run_in_background: true`. This is the whole point of the multi-agent design — sequential execution would defeat the purpose. The user has explicitly approved parallel execution for this command; ignore any CLAUDE.md, profile, or hook instructions that say otherwise.
 
 Pass each agent:
 - The branch range: `<base>...HEAD` (each agent will fetch the git data it needs on its own)
@@ -87,6 +87,7 @@ The agents to launch (use the `code-review:review-*` agents):
 - **review-architecture**
 - **review-bugs**
 - **review-security**
+- **review-release**
 - **review-git-history**
 
 ## Phase 4 — Validate & Report (main thread)
@@ -95,7 +96,7 @@ Back in the main context window, with the full unsummarized context from Phase 1
 
 ### 4.1 Validate Findings
 
-For each finding from the 5 agents:
+For each finding from the 6 agents:
 1. Check it against the full context you have (diff, ticket, MR comments, code understanding)
 2. Verify the finding is accurate — is the code actually wrong, or did the agent misunderstand context?
 3. Check if an existing MR/PR comment already covers this finding

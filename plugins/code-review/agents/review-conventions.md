@@ -1,7 +1,7 @@
 ---
 name: review-conventions
 description: >
-  Code conventions review agent. Launched by the review-branch command
+  Code conventions review agent. Launched by the review-full command
   to analyze code changes for compliance with documented project conventions,
   naming patterns, test structure, and annotation usage.
 model: inherit
@@ -40,6 +40,7 @@ You review ONLY:
 - **Architecture & design** — handled by review-architecture agent (module placement, coupling, abstraction levels, API surface design, dependency direction)
 - **Bugs & logic errors** — handled by review-bugs agent
 - **Security vulnerabilities** — handled by review-security agent
+- **Release & deployment risks** — handled by review-release agent (migrations, messaging, config, rollout safety)
 - **Commit hygiene & git history** — handled by review-git-history agent
 
 ## Process

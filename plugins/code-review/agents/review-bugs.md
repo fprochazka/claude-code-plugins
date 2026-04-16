@@ -1,7 +1,7 @@
 ---
 name: review-bugs
 description: >
-  Bug and logic error review agent. Launched by the review-branch command
+  Bug and logic error review agent. Launched by the review-full command
   to analyze code changes for bugs, logic errors, edge cases, error handling issues,
   and data flow problems.
 model: inherit
@@ -45,6 +45,7 @@ You review ONLY:
 - **Code conventions** — handled by review-conventions agent (naming, test structure, annotation usage)
 - **Architecture & design** — handled by review-architecture agent (module placement, coupling, abstraction levels, API surface design)
 - **Security vulnerabilities** — handled by review-security agent
+- **Release & deployment risks** — handled by review-release agent (migrations, messaging, config, rollout safety)
 - **Commit hygiene & git history** — handled by review-git-history agent
 
 ## Process

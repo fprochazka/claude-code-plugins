@@ -1,7 +1,7 @@
 ---
 name: review-git-history
 description: >
-  Git history and commit hygiene review agent. Launched by the review-branch command
+  Git history and commit hygiene review agent. Launched by the review-full command
   to analyze commit structure, atomicity, message format, and history quality.
 model: inherit
 color: green
@@ -40,6 +40,7 @@ You review ONLY:
 - **Architecture & design** — handled by review-architecture agent (module placement, coupling, abstraction levels)
 - **Bugs & logic errors** — handled by review-bugs agent
 - **Security vulnerabilities** — handled by review-security agent
+- **Release & deployment risks** — handled by review-release agent (migrations, messaging, config, rollout safety)
 
 ## Process
 
