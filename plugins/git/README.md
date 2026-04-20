@@ -21,6 +21,11 @@ claude plugin install git@fprochazka-claude-code-plugins --scope user
 
 Full rules and rationale in [`skills/git-workflow/SKILL.md`](skills/git-workflow/).
 
+## Commands
+
+- `/git:commit-all` — commits all pending changes (staged and unstaged) following the `git-workflow` skill rules. Will split into multiple atomic commits when appropriate. Pass extra instructions as arguments.
+- `/git:commit-staged` — commits **only what is already staged**, without running `git add`. Use when you've hand-picked the staged hunks and just want a good commit message.
+
 ## What it isn't
 
 Not a git tutorial. It assumes the agent already knows how to drive `git` and teaches **when and why** to reach for each operation, not command syntax.

@@ -43,7 +43,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [rabbitmqadmin](plugins/rabbitmqadmin/) | Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng) |
 | [searxngcli](plugins/searxngcli/) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
-| [git](plugins/git/) | Git workflow rules skill — atomic commits, refactor-first ordering, test-before-bugfix, and fixup-based history cleanup |
+| [git](plugins/git/) | Git workflow skill and commit commands — atomic commits, refactor-first ordering, test-before-bugfix, and fixup-based history cleanup |
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, bugs, security, release readiness, and git history reviewed in parallel |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
 
