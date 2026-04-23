@@ -36,7 +36,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [glab-discussion](https://github.com/fprochazka/glab-discussion) | Standalone CC plugin + CLI for reading and managing GitLab MR discussion threads |
 | [glab-mr](plugins/glab-mr/) | GitLab MR tools - fix failed CI, resolve comments, and more |
 | [ai-tool-use-validator](plugins/ai-tool-use-validator/) | AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness |
-| [slackcli](plugins/slackcli/) | Skill for interacting with Slack workspaces using the slackcli CLI |
+| [slackcli](https://github.com/fprochazka/slackcli) | Standalone CC plugin + CLI for interacting with Slack workspaces |
 | [migrate-to-uv](plugins/migrate-to-uv/) | Skill for migrating Python projects from Poetry, pipx, or pip to uv |
 | [metabasecli](plugins/metabasecli/) | Skill for interacting with Metabase using the metabase CLI |
 | [gogcli](plugins/gogcli/) | Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI |

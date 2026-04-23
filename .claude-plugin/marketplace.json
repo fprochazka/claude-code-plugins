@@ -79,19 +79,7 @@
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/web-researcher"
     },
-    {
-      "name": "slackcli",
-      "description": "Skill for interacting with Slack workspaces using the slackcli CLI",
-      "version": "2.0.7",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/slackcli",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/slackcli"
-    },
-    {
+{
       "name": "migrate-to-uv",
       "description": "Skill for migrating Python projects from Poetry, pipx, or pip to uv",
       "version": "1.2.0",

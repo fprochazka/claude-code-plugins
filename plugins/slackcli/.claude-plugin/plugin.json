@@ -1,6 +1,0 @@
-{
-  "name": "slackcli",
-  "version": "2.0.7",
-  "description": "Skill for interacting with Slack workspaces using the slackcli CLI",
-  "skills": "./skills/"
-}
