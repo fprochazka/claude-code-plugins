@@ -142,7 +142,7 @@
     {
       "name": "glab",
       "description": "Skill for interacting with GitLab using the glab CLI",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

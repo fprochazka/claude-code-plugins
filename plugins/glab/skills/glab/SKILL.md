@@ -31,13 +31,13 @@ glab mr view               # current branch's MR
 
 ---
 
-## Temp Files
+## Files for tool arguments
 
-When writing content to temp files (MR descriptions, job logs, etc.), use filenames unique to the MR or job — include the MR number, branch name, or job name as a slug (e.g., `/tmp/mr-desc-123.md`, `/tmp/mr-desc-feature-auth.md`, `/tmp/glab-job-build-123.log`).
+For any `glab` argument longer than a few words (MR descriptions, comments, job logs), put the content in a file and pass it via `"$(cat <path>)"` instead of inlining. Edits stay cheap, and the Write tool diff shows the user exactly what changed between revisions.
 
-**Reuse the same file for the same MR/entity** across multiple edits — the Write tool shows diffs, so the user can see exactly what changed between revisions.
-
-**Never use generic fixed filenames** like `/tmp/mr-description.md` — they collide across different MRs.
+- If the content already exists as a file on disk, use it directly — do **not** copy it to `/tmp` first.
+- When generating new content, write it to `/tmp/<unique-slug>.md` including the MR number, branch name, or job name (e.g., `/tmp/mr-desc-123.md`, `/tmp/glab-job-build-123.log`). **Never** use generic names like `/tmp/mr-description.md` — they collide across MRs.
+- Reuse the same file for the same MR/entity across edits.
 
 ---
 
