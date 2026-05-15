@@ -6,7 +6,11 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 
 ```
 /code-review:full [focus area or specific concerns]
+/code-review:post
 ```
+
+- `/code-review:full` — runs the multi-phase review and writes a report.
+- `/code-review:post` — posts the report from the current session to the GitLab MR as inline diff comments + one summary comment. Requires a `/code-review:full` run earlier in the same session. GitLab-only.
 
 ## How it works
 
