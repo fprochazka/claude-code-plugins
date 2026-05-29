@@ -104,18 +104,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/metabasecli"
     },
     {
-      "name": "llm-toto",
-      "description": "LLM Tool Output Tokens Optimizer - buffers large command outputs to files to reduce token consumption and prevent wasteful re-runs",
-      "version": "0.1.0",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/llm-toto",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/llm-toto"
-    },
-    {
       "name": "markitdown",
       "description": "Skill for converting files to Markdown using Microsoft's markitdown CLI",
       "version": "1.0.0",
