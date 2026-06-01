@@ -70,6 +70,18 @@ _NODE_KEYWORDS = (
     r")\b"
 )
 
+# Nx task runner targets that are noisy (they fan out into builds/tests/lints).
+# Deliberately EXCLUDES cheap introspection targets (`graph`, `list`, `show`,
+# `report`) so those pass through. The `(?::\w+)?` tail catches the
+# `affected:test` / `run-many:build` colon-suffixed forms, while a separate
+# `--target=<noisy>` branch catches `nx run-many --target=test`.
+_NX_TARGETS = (
+    r"(?:"
+    r"\b(?:build|test|lint|e2e|serve|run|run-many|affected|migrate)(?::\w+)?\b"
+    r"|--target[=\s]+(?:build|test|lint|e2e|serve)\b"
+    r")"
+)
+
 WHITELIST: list[re.Pattern[str]] = [
     # --- Maven / Gradle (JVM) — only on lifecycle phases ---
     re.compile(rf"^mvn\s+.*{_MVN_GRADLE_PHASES}"),
@@ -79,6 +91,11 @@ WHITELIST: list[re.Pattern[str]] = [
 
     # --- Node / JS / TS ---
     re.compile(rf"^(?:npm|pnpm|yarn)\s+.*{_NODE_KEYWORDS}"),
+    # Nx invoked via its own binary or npx. The yarn/npm/pnpm-prefixed forms
+    # (`yarn nx test`) already match the node pattern above; these catch the
+    # bare `nx test` and `npx nx test` invocations.
+    re.compile(rf"^npx\s+nx\s+.*{_NX_TARGETS}"),
+    re.compile(rf"^nx\s+.*{_NX_TARGETS}"),
     re.compile(r"^tsc(?:\s|$)"),
     re.compile(r"^eslint(?:\s|$)"),
     re.compile(r"^biome\s+(?:check|lint|ci)\b"),
@@ -196,6 +213,37 @@ def _classify(command: str) -> "list[dict]":
     return commands
 
 
+def _iter_command_argvs(entry: "dict") -> "Iterator[list[str]]":
+    """Yield the argv of `entry` and of every nested inner command.
+
+    Many noisy commands reach us behind a wrapper that swallows the real
+    command as its argument tail — `timeout 300 yarn nx test`, `rtk yarn test`,
+    `env FOO=1 pytest`, `nice -n 10 cargo test`, even `bash -c "yarn test"`.
+    bash-classify already understands these: it keeps the wrapper as a command
+    node whose `argv` begins with the wrapper, AND exposes the *unwrapped* real
+    command under `inner_commands` (recursively, so stacked wrappers like
+    `rtk timeout 300 yarn test` nest several levels deep, each `inner_commands`
+    entry carrying the next argv with the wrapper peeled).
+
+    By walking `inner_commands` we let the `^`-anchored WHITELIST patterns match
+    the real tool (`yarn`/`pytest`/`cargo`) even when it is hidden behind one or
+    more wrappers — without us maintaining any wrapper-specific arg-skipping
+    logic ourselves. The wrapper's own top-level argv is also yielded, but it
+    harmlessly fails the anchored patterns (it starts with `timeout`/`env`/…).
+    Non-wrapper heads like `echo` simply have no `inner_commands`, so
+    `echo yarn test` is never mistaken for actually running yarn.
+    """
+    if not isinstance(entry, dict):
+        return
+    argv = entry.get("argv")
+    if isinstance(argv, list):
+        yield [str(a) for a in argv]
+    inner = entry.get("inner_commands")
+    if isinstance(inner, list):
+        for child in inner:
+            yield from _iter_command_argvs(child)
+
+
 def _check_argv(argv: "list[str]") -> "tuple[re.Pattern[str], str] | None":
     """Return (matched pattern, joined argv) if argv triggers the whitelist."""
     if not argv:
@@ -247,17 +295,15 @@ def main() -> "None":
             _reject(REJECT_MESSAGE_TEMPLATE.format(matched_argv=joined))
         _passthrough()
 
-    # Walk every classified command in the pipeline / chain.
+    # Walk every classified command in the pipeline / chain, descending into
+    # `inner_commands` so commands hidden behind wrappers (timeout/env/rtk/…)
+    # are matched against the WHITELIST too. See `_iter_command_argvs`.
     for entry in parsed_commands:
-        if not isinstance(entry, dict):
-            continue
-        argv = entry.get("argv")
-        if not isinstance(argv, list):
-            continue
-        match = _check_argv([str(a) for a in argv])
-        if match is not None:
-            _, joined = match
-            _reject(REJECT_MESSAGE_TEMPLATE.format(matched_argv=joined))
+        for argv in _iter_command_argvs(entry):
+            match = _check_argv(argv)
+            if match is not None:
+                _, joined = match
+                _reject(REJECT_MESSAGE_TEMPLATE.format(matched_argv=joined))
 
     _passthrough()
 
