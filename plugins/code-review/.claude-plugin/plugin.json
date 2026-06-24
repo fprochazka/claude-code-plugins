@@ -1,6 +1,6 @@
 {
   "name": "code-review",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Multi-agent branch code review — conventions, bugs, security, release readiness, and git history reviewed in parallel",
   "author": {
     "name": "Filip Prochazka"

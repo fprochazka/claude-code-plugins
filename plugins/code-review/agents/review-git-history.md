@@ -62,6 +62,7 @@ You review ONLY:
 - Minor commit message style variations that don't reduce clarity
 - Commit ordering preferences when the current order doesn't cause review confusion
 - Merge commits from pulling in upstream changes
+- Commit message trailers such as `Co-Authored-By:` and `Signed-off-by:` — these are conventional metadata, not message-quality issues
 
 ## Output Format
 
