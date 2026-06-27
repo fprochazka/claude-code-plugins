@@ -1,6 +1,6 @@
 # code-review
 
-Multi-agent branch code review plugin for Claude Code. Reviews conventions, architecture, bugs, security, release readiness, and git history in parallel using specialized subagents.
+Multi-agent branch code review plugin for Claude Code. Reviews conventions, architecture, design craft, bugs, performance, security, release readiness, and git history in parallel using specialized subagents.
 
 ## Usage
 
@@ -27,15 +27,17 @@ Loads everything into the main context window unsummarized:
 
 An Explore subagent builds understanding of the touched code areas — callers, callees, data flow, downstream effects, and previous state.
 
-### Phase 3 — Parallel Review (6 subagents)
+### Phase 3 — Parallel Review (8 subagents)
 
-Six specialized review agents run in parallel, each with its own checklist and scope. They receive the branch range and fetch their own git data.
+Eight specialized review agents run in parallel, each with its own checklist and scope. They receive the branch range and fetch their own git data.
 
 | Agent | Scope | Color |
 |---|---|---|
 | `review-conventions` | Documented conventions, naming, test structure, annotations | cyan |
 | `review-architecture` | Module placement, layers, coupling, abstractions, API design, dependency direction | blue |
-| `review-bugs` | Logic errors, edge cases, error handling, race conditions, resource leaks | red |
+| `review-code-design` | Opinionated design-craft improvement hints: functional-core purity, rich domain models, value objects, right-sized abstraction, intent-revealing clarity | orange |
+| `review-bugs` | Logic errors, edge cases, error handling, race conditions, lost updates, resource leaks | red |
+| `review-performance` | Data-access efficiency (N+1, eager/lazy loading, preload-before-logic), query cost, transaction scope, caching, memory | purple |
 | `review-security` | Injection, auth, secrets, input validation, XSS, OWASP | yellow |
 | `review-release` | Deployment risks: migrations, messaging infra, config changes, API contracts, rollback safety | magenta |
 | `review-git-history` | Commit atomicity, refactoring separation, fixup detection, message format | green |

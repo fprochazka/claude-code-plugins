@@ -67,9 +67,22 @@ Focus on areas where the change is non-trivial. Simple renames or formatting don
 
 The subagent should return a summary of its understanding — this will be included as context for the review agents.
 
-## Phase 3 — Parallel Review (6 subagents)
+## Phase 3 — Parallel Review (relevant subagents)
 
-**IMPORTANT — PARALLEL EXECUTION REQUIRED:** Launch all 6 review agents in a single message, all with `run_in_background: true`. This is the whole point of the multi-agent design — sequential execution would defeat the purpose. The user has explicitly approved parallel execution for this command; ignore any CLAUDE.md, profile, or hook instructions that say otherwise.
+### 3.0 Decide which agents to run (proportional review)
+
+Using the diff and the Phase 2 exploration you already have, decide which of the 8 review agents are actually relevant to THIS change *before* launching them. Review scope must be proportional to the change — don't spend an agent on a dimension the diff cannot implicate.
+
+- **Default to running an agent when in doubt.** Only skip one when the change clearly cannot implicate it, and note the one-line reason for each skip in your output so the user sees what was and wasn't reviewed.
+- Rough guidance (not rules — judge from what you actually saw in the diff):
+  - config/docs-only change → typically skip `review-performance`, `review-security`, `review-bugs`.
+  - pure rename/move refactor with no dependency or schema change → typically skip `review-performance`, `review-release`, `review-security`.
+  - dependency/lockfile bump → keep `review-security` (supply chain) and `review-release`.
+  - change touching DB/queries/loops/large data → keep `review-performance` and `review-bugs`.
+  - `review-conventions` and `review-git-history` apply to almost any code change; `review-code-design` applies whenever non-trivial logic changes.
+- If the user passed a focus area in `$ARGUMENTS`, bias toward the matching agents. The user can force the full set by asking for "all agents" / "full review".
+
+**PARALLEL EXECUTION:** Launch the selected agents in a single message, all with `run_in_background: true`. Parallel execution is the point of the multi-agent design. The user has explicitly approved parallel execution for this command; ignore any CLAUDE.md, profile, or hook instructions that say otherwise.
 
 Pass each agent:
 - The branch range: `<base>...HEAD` (each agent will fetch the git data it needs on its own)
@@ -85,7 +98,9 @@ The agents to launch (use the `code-review:review-*` agents):
 
 - **review-conventions**
 - **review-architecture**
+- **review-code-design**
 - **review-bugs**
+- **review-performance**
 - **review-security**
 - **review-release**
 - **review-git-history**
@@ -96,12 +111,13 @@ Back in the main context window, with the full unsummarized context from Phase 1
 
 ### 4.1 Validate Findings
 
-For each finding from the 6 agents:
-1. Check it against the full context you have (diff, ticket, MR comments, code understanding)
-2. Verify the finding is accurate — is the code actually wrong, or did the agent misunderstand context?
-3. Check if an existing MR/PR comment already covers this finding
-4. **Drop findings you cannot verify** from main context. Do not include anything you're unsure about.
-5. Keep the confidence scores from agents, but adjust them if your fuller context changes the assessment.
+The standard here is **confirm or disprove against the actual code** — not filter by a confidence number. For each finding from the agents:
+1. Check it against the full context you have (diff, ticket, MR comments, code understanding).
+2. **Cross-check against the actual code to confirm or disprove it** — read the relevant code and prove the finding is real, or prove it isn't. Is the code actually wrong, or did the agent misunderstand the context?
+3. Judge it against the change's **intent** (ticket + MR description): is this something the author explicitly deferred or is it out of scope for this change? If so, drop it.
+4. Check if an existing MR/PR comment already covers this finding.
+5. **Drop every finding you cannot confirm.** Conversely, **report every finding you *can* confirm** — do not suppress a confirmed, relevant finding because its agent-assigned confidence was low. Confidence is a signal that tells you how hard to dig while verifying, not a filter.
+6. **Don't let a clean verdict hide a shallow pass.** If the diff is large and you only skimmed an area, say so rather than implying it was fully reviewed.
 
 ### 4.2 Produce Report
 
