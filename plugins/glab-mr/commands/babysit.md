@@ -1,0 +1,161 @@
+---
+description: Babysit MR(s) — loop that rebases, fixes CI, resolves comments, and waits for AI review until every MR is green and quiet
+---
+
+# Babysit the MR(s)
+
+Run a continuous loop that watches one or more merge requests and drives each toward mergeable: keep it rebased, fix failing CI, resolve review comments that don't need product decisions, and wait for automated reviewers — passing back to the user only for genuine product/design calls or when everything solvable is solved.
+
+**This is not a rubber stamp.** Review feedback — especially from AI review bots — is sometimes correct, sometimes wrong, sometimes pedantic, and sometimes proposes a fix that creates a new problem. Every finding is critically evaluated before any change lands.
+
+## Autonomy — you are pre-authorized; pausing to ask is a failure
+
+The loop's entire value is that it runs **unattended**. Within it you are explicitly authorized to `git rebase`, `git push --force-with-lease`, `git push`, retry CI jobs, and reply-to / resolve threads **without stopping to ask** — doing exactly these is the job, not a risk to escalate. Do **not** pause mid-loop for permission to force-push, rebase, or push; that defeats the purpose and is itself a failure of the loop. Stop and hand back **only** for the explicit halt conditions under [Termination](#termination) — a genuine product/design decision, an unresolvable conflict, or a cap hit. Everything else, just do.
+
+(If your harness's safety classifier blocks these git operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README.)
+
+## Prerequisites
+
+- Each MR you're babysitting has its source branch checked out locally (in its own repo/worktree — a cross-repo change means several checkouts). The loop rebases and pushes each.
+- `glab` and `jq` available.
+
+## Tooling — prefer the helpers, fall back to raw `glab`
+
+Two purpose-built CLIs make this loop cleaner; **check for each once at setup** (`command -v glab-pipeline`, `command -v glab-discussion`) and prefer it when present, otherwise fall back to raw `glab api` / `glab ci`:
+
+- **`glab-pipeline`** (CI triage) — if missing, use `glab ci get --with-job-details -F json` to list jobs and `glab ci trace <job-name> > /tmp/babysit-job-<name>.log 2>&1` (always redirect — traces are huge) for each failed job's log.
+- **`glab-discussion`** (comment threads) — if missing, use `glab api "projects/:id/merge_requests/<iid>/discussions" --paginate` to read, `glab api -X POST ".../discussions/<id>/notes" -f body=@<file>` to reply, and `glab api -X PUT ".../discussions/<id>" -F resolved=true` to resolve.
+
+The steps below name the preferred tool first, then the fallback. Install the helpers for the better experience: `uv tool install glab-pipeline glab-discussion`.
+
+## Setup (once, before the loop)
+
+### 1. Establish the MR set — explicit or session-derived only
+
+A change often spans **more than one MR** (e.g. a service repo + a data/ETL pipelines repo). The loop babysits a **set** of MRs, and every pass covers **all of them** — a common failure is silently babysitting only the MR in the current directory while its sibling drifts behind master. The set comes from exactly two sources:
+
+- **MRs the user explicitly named** — URLs or `!iid`s in the invocation or the loop prompt.
+- **MRs this session created or worked on** — ones you opened via `glab mr create`, or that a session recap/handover you were given names as this branch's MRs.
+
+**Do not go discovering "related" MRs** by scanning other repos, searching the group, or guessing from branch names — that risks pulling in unrelated work, which is explicitly unwanted. If you have concrete reason to believe a sibling MR exists but it wasn't named and you didn't work on it (e.g. you edited a second repo this session but weren't told its MR), **ask the user** to confirm the set rather than auto-adding it. If nothing was named and the session created nothing, default to the current branch's single MR.
+
+State the resolved set back to the user in the first pass's report ("babysitting MR !123 and !456"), so a missing sibling is visible immediately.
+
+### 2. Record each MR and run safety checks
+
+For **each** MR in the set, record its **repo/worktree path** and fetch metadata via `glab mr view --output=json` (run from that worktree, or with `-R <project>`): `iid`, `state`, `web_url`, `source_branch`, `target_branch`, `sha`, `head_pipeline` (`status`/`id`/`web_url`), `blocking_discussions_resolved`.
+
+Then, per MR, **refuse and drop it from the set (report why) if any safety check fails:**
+- Its source branch is checked out in its worktree (`git branch --show-current` equals `source_branch`). Never auto-checkout a different branch.
+- The branch is **not** `master`/`main` (guards against pushing to the default branch).
+- That worktree is clean (`git status --porcelain` empty). If dirty, surface and skip that MR — the loop rebases and force-pushes, unsafe over uncommitted work.
+
+Drop any MR whose `state` is `merged`/`closed`. If the set is empty after this, report and stop.
+
+## Driving the cadence
+
+**Do not sleep, poll, or wait inside a pass, and do not use the Monitor tool.** Run **exactly one pass** (covering every MR in the set), then return. Re-running every ~2 minutes is delegated to the native `/loop`.
+
+These instructions are already in context after this first read, so **don't re-invoke the whole command** each cycle — that re-injects the entire spec for nothing. Instead kick off the loop with a lightweight reminder prompt naming the MRs:
+
+```
+/loop 2m re-check MR !123 and !456 and run the next babysit pass
+```
+
+Session context persists across iterations, so the full pass procedure plus per-MR state (CI/flaky attempt caps, oscillation tracking, the judgment list) carries over without any on-disk state. Because the gate (step 1) re-checks pipeline status and new comments on every pass, "wait for the pipeline, then give an AI reviewer a couple of minutes" happens *naturally across passes*: a pass that finds the pipeline still running just does nothing actionable and returns, and a later pass picks it up once it's green. When the termination condition is met, tell the loop to stop.
+
+## The loop — one pass
+
+Each pass iterates **every MR in the set**; for each MR, `cd` to its worktree and run steps 1–5 below, tracking attempt caps and the judgment list **per MR**. Then do the single end-of-pass report (step 6). A pass that pushes anything lets the next pass (≈2 min later) watch the resulting pipeline.
+
+### 1. Gate
+
+`glab mr view --output=json` for this MR. If `state` is `merged`/`closed` → drop it from the set (report), and if the set is now empty, **stop the loop**. Otherwise read `head_pipeline.status`, `target_branch`, `sha`, `blocking_discussions_resolved` for the steps below.
+
+### 2. Keep it rebased
+
+```bash
+git fetch origin "$TARGET_BRANCH"          # fetch ONLY the target branch — see note below
+git rev-list --count HEAD..origin/"$TARGET_BRANCH"
+```
+
+If the count is `> 0`, the branch is behind:
+
+```bash
+git rebase origin/"$TARGET_BRANCH"
+```
+
+- **On conflict → resolve it yourself.** Read both sides, understand what each change intended, and reapply the MR's intended change on top of the target branch's new state — the target branch is the base you're building on, and the MR's change is what must survive, adapted to that base (not a mechanical union of both hunks). Verify the result builds/tests where feasible before continuing. Rebasing is safe because git's reflog holds every prior state: as long as you use git properly at each step (no `--no-verify`, no destructive resets over unstaged work), you can always recover — `git reflog` then `git reset --hard <pre-rebase-sha>` (or `git rebase --abort` while mid-rebase) rewinds to before the rebase. So attempt the resolution rather than bailing.
+  - **Only surface + stop** when a conflict encodes a genuine **product or design decision** — two intended behaviours that can't both be right, and picking one is a call the user must make. Mechanical conflicts (imports, formatting, adjacent edits, a rename vs. an edit) are yours to resolve.
+- On clean rebase → the branch is pushed together with any other fixes this pass (step 5). If the rebase is the *only* change, push it: `git push --force-with-lease`.
+
+> Fetch **only** `$TARGET_BRANCH`, never a bare `git fetch origin` — a bare fetch also updates `origin/<source_branch>`, which defeats the no-arg `--force-with-lease` (its expected value becomes whatever was just fetched, silently overwriting a teammate's push). If you must fetch the source branch, capture the pre-fetch SHA and push with `--force-with-lease=<branch>:<pre-fetch-sha>`.
+
+### 3. Fix failing CI
+
+If `head_pipeline.status` is `failed`, triage it (a red build blocks merge, so handle it this pass):
+
+Run `glab-pipeline inspect` and read `summary.txt` first (it points at the failed jobs and reasons), then the referenced `job-logs/`, `test-report.json`, or `merged.yml`.
+
+Diagnose each failure **critically — the log is a symptom, not a verdict**:
+
+- **Fixable** — compile error, lint/format/checkstyle, missing import, a test failing clearly because of *this MR's* diff, an assertion/snapshot that legitimately must change → fix it. **Verify locally when feasible** (run the failing test or the narrowest slice in the checked-out repo and confirm green) before pushing, rather than burning a full CI cycle on a blind push.
+- **Flaky / infra** — runner lost, network/timeout, OOM, a test unrelated to the diff → **not** a code fix. **Retry the job** (`glab ci retry <job-name>`) to try to get past it, but **complain loudly**: in the pass report, name the job, why you read it as flaky, and that you retried it — so the user can later decide whether it deserves a separate task (quarantine the test, fix the infra). Never paper over a flake with a code change. Cap retries at **2 per job signature** in this session; if it's still flaky after that, keep it in the loud report and stop retrying it. **A second failure of the *same* job is a signal to scrutinize, not to reflexively retry** — a "flake" that reproduces may be your own regression; bisect it before assuming infra.
+- **Judgment-heavy** — a behavioural test whose *correct* expectation is unclear, a failure rooted in code outside the MR's scope, an ambiguous root cause, or anything you're less than ~90% sure how to fix → surface it and add it to the judgment list (step 6).
+
+**Attempt cap.** Track, in this session, a stable **failure signature** per fixable failure (e.g. `test:<Class>#<method>`, `build:compile`, `lint:<rule>`) and how many times you've pushed a fix for it. After **2 attempts** on the same signature still failing → stop fixing it, surface it ("attempted twice, still red — over to you"), and stop the loop. This is what prevents a fix that never converges from churning CI forever.
+
+Fixes join step 5's single rebase + push.
+
+### 4. Address review comments
+
+Read the discussion threads with `glab-discussion read --dump` — one file per thread with resolved status, author, bot markers, and diff-note positions.
+
+A thread is **in scope** iff it is unresolved **and** the most recent non-system note's body does **not** end with the marker `<!-- babysit:auto-reply -->` (last-line equality, never a substring — AI review prose often quotes the marker in backticks). Skip threads where every note is a system note (label changes, commit-status updates).
+
+For each in-scope thread, reach **one of four outcomes** — critically evaluated, never a reflexive apply:
+
+- **Apply** — the finding is correct, the fix is sound, and it doesn't ripple into adjacent code that wasn't shown. Before applying: re-read the cited file/line yourself (AI quotes routinely misread context), check the fix doesn't contradict an earlier fix this run (oscillation), and confirm it's at the right layer (root cause, not symptom). → fix it (batched into step 5), reply linking the fix, resolve.
+- **Dismiss** — the finding is wrong, marginal, pedantic, or already covered. → reply with the *specific reasoned disagreement* ("line X does not say what the finding claims", or "applying this would break Y"), resolve.
+- **Judgment** — the finding is real but the fix needs a product or design decision (public API change, migration, behavioural tradeoff, off-by-one where the boundary is semantic, architecture pushback, "why did you…" questions). → collect it for step 6. **Do not stop the loop for it** — keep solving everything else. Post no marker, so it re-enters scope if the user later addresses it. A finding you've already deferred that the bot re-raises → dismiss with a reference to the standing deferral and resolve (don't re-surface the same call every pass).
+- **Skip this pass** — looks fine but you're not confident enough. → do nothing (no reply, no marker); it re-enters scope next pass.
+
+**Comment rules:**
+- Reply body must end with a blank line then `<!-- babysit:auto-reply -->` so handled threads aren't re-processed. Write multi-line bodies to a temp file (`/tmp/babysit-reply-<id>.md`) to avoid shell-quoting breakage, then `glab-discussion write --reply-to <id> --body - < /tmp/babysit-reply-<id>.md` and `glab-discussion resolve <id>`.
+- **Resolve only threads you fully handled** — one you applied a sound fix for, or dismissed with a reasoned reply. This includes a **human's** thread when it is *truly addressed* (the fix does exactly what they asked, or your reply squarely answers them). But hold back on a human thread when it's borderline: if the person may want to eyeball the fix, if your reply is a judgment call they might disagree with, or if you're unsure what they meant — leave it unresolved (or route it to Judgment) so they get the last word. Bot nits you fully handled always resolve.
+
+### 5. Commit, push & verify the push landed (once per pass per MR)
+
+If this pass produced any changes (a rebase, CI fixes, or applied comment fixes), batch them into a single push:
+
+- Re-read the diff yourself before pushing.
+- Commit with a clear conventional message. **Never** `--no-verify` and never bypass hooks — if a pre-commit hook fails, fix the underlying issue; skipping hooks to make an error go away is not allowed (this includes fixups and reverts). If a compound command like `git add -A && git commit …` is blocked or errors, run the steps separately and check each — don't assume it worked.
+- `git push --force-with-lease` if the parent chain was rewritten (rebase), otherwise `git push`. **Never** bare `--force`.
+- **Verify the push actually landed — never narrate a push as done without checking the remote.** After pushing, confirm `git rev-parse origin/<source_branch>` equals your local `HEAD`, and that the commit you intended is really there (`git log origin/<source_branch> -1` shows your subject; the files you changed are in `git show --stat`). This is the guard against the failure mode of reporting "fixed and pushed" when a blocked/failed command actually staged or pushed nothing. If the remote didn't advance, the push did **not** happen — diagnose and redo it before reporting.
+- Then post the per-thread replies and resolves from step 4 (reply first, then resolve; if a reply fails after one retry, do **not** resolve — surface it).
+
+### 6. Report (non-blocking) & end the pass
+
+Do one report for the whole pass, **without blocking** for a reply. For each MR, give a one-line **termination scorecard** so convergence is visible, plus what happened:
+
+```
+MR !123  green ✓ · quiet ✓ (3m) · threads ✓  → done
+MR !456  green ✗ (running) · quiet — · threads ✓  → waiting on pipeline
+```
+
+Include: what was rebased/fixed/applied (with commit SHA and the verified-landed remote SHA), what was dismissed, any flaky jobs you retried (loudly), and the running list of **judgment calls**. Then **end the pass** — do not sleep, poll, or wait; the native `/loop` re-runs the next pass in ~2 minutes (see "Driving the cadence"). A pass that pushed anything, or that found a pipeline still running/pending, has nothing more to do this cycle — the next pass re-checks at the gate once ~2 min have elapsed (enough for a pipeline to progress and an AI reviewer to post). If the termination condition below is met for **all** MRs, stop the loop instead of returning.
+
+## Termination
+
+**Stop the loop and hand back to the user** when **every MR in the set** satisfies **all** of these:
+
+1. The pipeline is **green** (`head_pipeline.status == "success"`).
+2. It has been **≥2 minutes quiet** since the pipeline finished — no new comments have appeared (gives an AI reviewer time to weigh in on the final commit).
+3. Every actionable comment has a reply, and every thread you handled is resolved.
+4. The only remaining open threads, if any, are **Judgment** calls or **Skips** (or human threads left for the human to close).
+
+On termination, present a final summary: the per-MR scorecard, what you did, each MR's state, and — as a clear list — every **judgment call** you deferred (thread location + quoted comment + your suggested reply or change), and ask the user how to proceed. The loop stopping is normal and expected once green+quiet — don't keep re-running "just in case."
+
+**Also stop early** (report and hand back) on any of: all MRs merged/closed; a rebase conflict that encodes a genuine product/design decision (mechanical conflicts you resolve yourself); a CI failure surfaced as judgment-heavy, or a fixable failure (or a flaky job) that hit its 2-attempt cap and is still red; a reply/resolve that kept failing after a retry; or oscillation (this pass's fix contradicting last pass's). A halt on one MR doesn't have to halt the others — keep babysitting the rest and report the one that needs you.
+
+$ARGUMENTS
