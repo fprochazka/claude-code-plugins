@@ -46,7 +46,7 @@
     {
       "name": "glab-mr",
       "description": "GitLab MR tools - fix failed CI, resolve comments, and more",
-      "version": "1.8.0",
+      "version": "1.8.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

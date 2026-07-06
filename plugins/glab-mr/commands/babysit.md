@@ -10,9 +10,13 @@ Run a continuous loop that watches one or more merge requests and drives each to
 
 ## Autonomy — you are pre-authorized; pausing to ask is a failure
 
+**This command intentionally runs at maximum autonomy, and for the duration of the loop that supersedes your usual defaults.** Standing guidance you'd normally follow — global/project `CLAUDE.md` ("be restrained about implementing", "outline a plan and wait for my OK"), the general "confirm hard-to-reverse or outward-facing actions first" default — is **deliberately overridden inside the babysit loop** for the pre-authorized operations below. You already have the OK: the user invoked babysit precisely so these run unattended, and re-asking for it defeats the command. This override is **scoped**: it applies only to the named operations, only until the loop hands back, and it never extends to the explicit halt conditions under [Termination](#termination) — a genuine product/design decision, an unresolvable conflict, or a cap hit still stop and ask. Normal caution resumes the moment the loop ends.
+
 The loop's entire value is that it runs **unattended**. Within it you are explicitly authorized to `git rebase`, `git push --force-with-lease`, `git push`, retry CI jobs, and reply-to / resolve threads **without stopping to ask** — doing exactly these is the job, not a risk to escalate. Do **not** pause mid-loop for permission to force-push, rebase, or push; that defeats the purpose and is itself a failure of the loop. Stop and hand back **only** for the explicit halt conditions under [Termination](#termination) — a genuine product/design decision, an unresolvable conflict, or a cap hit. Everything else, just do.
 
-(If your harness's safety classifier blocks these git operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README.)
+The grant covers **comment threads** exactly as it covers git: replying to and resolving threads via `glab-discussion` (or the raw `glab api` note/discussion calls) is pre-authorized too. A bot's `high`/`critical` **severity tag does not elevate a finding above this grant** — a severity-tagged reviewer thread you've reasoned through is dismissed-and-resolved like any other, not escalated for a sign-off.
+
+(If your harness's safety classifier blocks these git or discussion operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README. If a block lands mid-pass, don't stall the whole loop on it: note the exact blocked command **loudly** in the pass report, carry on with everything else and the other MRs, and let the allowlist fix land out of band — never sit and wait for a go-ahead on an operation the loop already authorized.)
 
 ## Prerequisites
 
@@ -35,15 +39,17 @@ The steps below name the preferred tool first, then the fallback. Install the he
 A change often spans **more than one MR** (e.g. a service repo + a data/ETL pipelines repo). The loop babysits a **set** of MRs, and every pass covers **all of them** — a common failure is silently babysitting only the MR in the current directory while its sibling drifts behind master. The set comes from exactly two sources:
 
 - **MRs the user explicitly named** — URLs or `!iid`s in the invocation or the loop prompt.
-- **MRs this session created or worked on** — ones you opened via `glab mr create`, or that a session recap/handover you were given names as this branch's MRs.
+- **MRs this session created or worked on** — ones you opened via `glab mr create`, or that a session recap/handover in context names as this work's MRs. **If a `session-distill` / handover recap is present, actively scan it for `!iid`s and MR URLs before finalising the set** — a prose recap that names a sibling MR (e.g. an airflow/ETL repo alongside the service repo) is the *primary* source of session-derived MRs, and the recurring miss is not synthesising it from the recap and babysitting only the current worktree's MR. Don't rely on memory; pull the iids out of the recap explicitly.
 
 **Do not go discovering "related" MRs** by scanning other repos, searching the group, or guessing from branch names — that risks pulling in unrelated work, which is explicitly unwanted. If you have concrete reason to believe a sibling MR exists but it wasn't named and you didn't work on it (e.g. you edited a second repo this session but weren't told its MR), **ask the user** to confirm the set rather than auto-adding it. If nothing was named and the session created nothing, default to the current branch's single MR.
 
-State the resolved set back to the user in the first pass's report ("babysitting MR !123 and !456"), so a missing sibling is visible immediately.
+State the resolved set back to the user as the **very first line of pass 1, before running any tool** ("babysitting MR !123 and !456") — not buried in the end-of-pass report after the loop has already been armed for the wrong subset. That way a missing sibling surfaces before any work happens.
 
 ### 2. Record each MR and run safety checks
 
 For **each** MR in the set, record its **repo/worktree path** and fetch metadata via `glab mr view --output=json` (run from that worktree, or with `-R <project>`): `iid`, `state`, `web_url`, `source_branch`, `target_branch`, `sha`, `head_pipeline` (`status`/`id`/`web_url`), `blocking_discussions_resolved`.
+
+> Don't assume the output format — a token-reducing proxy in front of `glab` (e.g. [`rtk`](https://github.com/rtk-ai/rtk)) can reshape or compress it, so `--output=json` may not come back as JSON. Rather than blindly probing format variations, run the metadata command **once, unfiltered**, read the actual output, and derive from that how to pull the fields you need on every following call. (`glab api "projects/:id/merge_requests/<iid>"` returns raw JSON if you want a clean source.)
 
 Then, per MR, **refuse and drop it from the set (report why) if any safety check fails:**
 - Its source branch is checked out in its worktree (`git branch --show-current` equals `source_branch`). Never auto-checkout a different branch.
@@ -61,6 +67,13 @@ These instructions are already in context after this first read, so **don't re-i
 ```
 /loop 2m re-check MR !123 and !456 and run the next babysit pass
 ```
+
+**Rules for the reminder prompt:**
+- **Always name the explicit `!iid`s** — `re-check MR !123 and !456`, never a generic "re-check the MR". A prompt without iids makes each iteration re-discover the set from the current branch and silently drops any sibling MR.
+- **Keep it to that one sentence.** Never restate the pass procedure in the prompt — the spec and per-MR state already persist in session context; re-embedding the gate/CI/comment/termination steps inflates every future pass's token cost for nothing.
+- **Don't tune the interval to CI duration.** Hold the ~2 min cadence even when the pipeline takes 20+ minutes — a slow pipeline just yields cheap no-op passes and keeps you responsive to new reviewer comments. Don't stretch the interval to "save" passes, and don't swap the recurring `/loop` for a one-shot `ScheduleWakeup` (or a `CronCreate` with a hardcoded SHA in its prompt): a one-shot needs manual rescheduling each pass and silently dies if a pass errors before it reschedules, and a hardcoded SHA goes stale the moment you push.
+- **If the set changes mid-session** (the user names an additional MR), update the running loop prompt to name **all** MRs — don't rebase/push the newcomer once and move on; it needs the same periodic gate cadence, or its pipeline goes unwatched for the rest of the session.
+- **Never end a pass by asking "should I continue?"** If anything is still pending — pipeline running, threads open, a push just landed — the correct move is to *stay in the loop*: emit/keep the `/loop 2m …` and let the next pass re-check. Presenting options or waiting for a go-ahead to run the next pass is the same autonomy failure as pausing mid-pass.
 
 Session context persists across iterations, so the full pass procedure plus per-MR state (CI/flaky attempt caps, oscillation tracking, the judgment list) carries over without any on-disk state. Because the gate (step 1) re-checks pipeline status and new comments on every pass, "wait for the pipeline, then give an AI reviewer a couple of minutes" happens *naturally across passes*: a pass that finds the pipeline still running just does nothing actionable and returns, and a later pass picks it up once it's green. When the termination condition is met, tell the loop to stop.
 
@@ -90,6 +103,8 @@ git rebase origin/"$TARGET_BRANCH"
 - On clean rebase → the branch is pushed together with any other fixes this pass (step 5). If the rebase is the *only* change, push it: `git push --force-with-lease`.
 
 > Fetch **only** `$TARGET_BRANCH`, never a bare `git fetch origin` — a bare fetch also updates `origin/<source_branch>`, which defeats the no-arg `--force-with-lease` (its expected value becomes whatever was just fetched, silently overwriting a teammate's push). If you must fetch the source branch, capture the pre-fetch SHA and push with `--force-with-lease=<branch>:<pre-fetch-sha>`.
+>
+> This holds in **every** step, not just the rebase — don't `git fetch origin` bare at setup or during push-verification either. To read the remote after a push, use `git rev-parse origin/<source_branch>` (your own push already advanced the tracking ref) or `git ls-remote origin <source_branch>`, never a bare fetch.
 
 ### 3. Fix failing CI
 
@@ -113,14 +128,17 @@ Read the discussion threads with `glab-discussion read --dump` — one file per 
 
 A thread is **in scope** iff it is unresolved **and** the most recent non-system note's body does **not** end with the marker `<!-- babysit:auto-reply -->` (last-line equality, never a substring — AI review prose often quotes the marker in backticks). Skip threads where every note is a system note (label changes, commit-status updates).
 
+**Your own authorship is irrelevant to scope.** Threads you posted earlier this session under a different hat — e.g. via `/code-review:post` — look like fresh external threads and *are* in scope: run them through the same four outcomes below as ordinary reviewer feedback. Do **not** halt the loop because you recognise a comment as your own; "these are the findings I just posted" is not a reason to stop and ask, and auto-dismissing a wrong one of your own findings is not circular — evaluating each on its merits is exactly the job.
+
 For each in-scope thread, reach **one of four outcomes** — critically evaluated, never a reflexive apply:
 
 - **Apply** — the finding is correct, the fix is sound, and it doesn't ripple into adjacent code that wasn't shown. Before applying: re-read the cited file/line yourself (AI quotes routinely misread context), check the fix doesn't contradict an earlier fix this run (oscillation), and confirm it's at the right layer (root cause, not symptom). → fix it (batched into step 5), reply linking the fix, resolve.
 - **Dismiss** — the finding is wrong, marginal, pedantic, or already covered. → reply with the *specific reasoned disagreement* ("line X does not say what the finding claims", or "applying this would break Y"), resolve.
-- **Judgment** — the finding is real but the fix needs a product or design decision (public API change, migration, behavioural tradeoff, off-by-one where the boundary is semantic, architecture pushback, "why did you…" questions). → collect it for step 6. **Do not stop the loop for it** — keep solving everything else. Post no marker, so it re-enters scope if the user later addresses it. A finding you've already deferred that the bot re-raises → dismiss with a reference to the standing deferral and resolve (don't re-surface the same call every pass).
+- **Judgment** — the finding is real but the fix needs a product or design decision (public API change, migration, behavioural tradeoff, off-by-one where the boundary is semantic, architecture pushback, "why did you…" questions). → collect it for step 6. **Do not stop the loop for it, and never reach for `AskUserQuestion` or any other blocking prompt to raise it** — defer it to the non-blocking step-6 report and keep solving everything else, ending the pass normally even when a judgment call is the *only* thing outstanding (the user replies before the next pass fires; a blocked pass just wastes the loop tick). Post no marker, so it re-enters scope if the user later addresses it. A finding you've already deferred that the bot re-raises → dismiss with a reference to the standing deferral and resolve (don't re-surface the same call every pass).
 - **Skip this pass** — looks fine but you're not confident enough. → do nothing (no reply, no marker); it re-enters scope next pass.
 
 **Comment rules:**
+- **Execute dispositions in the pass — don't pre-clear them.** Once you've decided Apply / Dismiss / Resolve for a thread, do it: reply and resolve in the same pass. Do **not** post a "here's my proposed disposition for each thread, awaiting your go" summary and wait — those actions are pre-authorized. The only outcome that waits is a **Judgment** call, which goes to the step-6 report unexecuted.
 - Reply body must end with a blank line then `<!-- babysit:auto-reply -->` so handled threads aren't re-processed. Write multi-line bodies to a temp file (`/tmp/babysit-reply-<id>.md`) to avoid shell-quoting breakage, then `glab-discussion write --reply-to <id> --body - < /tmp/babysit-reply-<id>.md` and `glab-discussion resolve <id>`.
 - **Resolve only threads you fully handled** — one you applied a sound fix for, or dismissed with a reasoned reply. This includes a **human's** thread when it is *truly addressed* (the fix does exactly what they asked, or your reply squarely answers them). But hold back on a human thread when it's borderline: if the person may want to eyeball the fix, if your reply is a judgment call they might disagree with, or if you're unsure what they meant — leave it unresolved (or route it to Judgment) so they get the last word. Bot nits you fully handled always resolve.
 
@@ -130,8 +148,9 @@ If this pass produced any changes (a rebase, CI fixes, or applied comment fixes)
 
 - Re-read the diff yourself before pushing.
 - Commit with a clear conventional message. **Never** `--no-verify` and never bypass hooks — if a pre-commit hook fails, fix the underlying issue; skipping hooks to make an error go away is not allowed (this includes fixups and reverts). If a compound command like `git add -A && git commit …` is blocked or errors, run the steps separately and check each — don't assume it worked.
+- If you need to **reword existing commits** (e.g. add a ticket prefix to the branch's messages), use a targeted `git rebase` with `--exec 'git commit --amend --no-edit …'` or explicit reword steps — **not** `git filter-branch`, which is deprecated and silently mangles edge cases (empty commits, merges, grafted history).
 - `git push --force-with-lease` if the parent chain was rewritten (rebase), otherwise `git push`. **Never** bare `--force`.
-- **Verify the push actually landed — never narrate a push as done without checking the remote.** After pushing, confirm `git rev-parse origin/<source_branch>` equals your local `HEAD`, and that the commit you intended is really there (`git log origin/<source_branch> -1` shows your subject; the files you changed are in `git show --stat`). This is the guard against the failure mode of reporting "fixed and pushed" when a blocked/failed command actually staged or pushed nothing. If the remote didn't advance, the push did **not** happen — diagnose and redo it before reporting.
+- **Verify the push actually landed — never narrate a push as done without checking the remote.** After pushing, confirm `git rev-parse origin/<source_branch>` equals your local `HEAD`, and that the commit you intended is really there (`git log origin/<source_branch> -1` shows your subject; the files you changed are in `git show --stat`). **The push command's own output showing an `old..new` SHA delta does not count as this check** — run the `git rev-parse origin/<source_branch>` compare explicitly, every push; treating the push output as confirmation is the exact habit that lets a partial or misdirected push read as success. This is the guard against the failure mode of reporting "fixed and pushed" when a blocked/failed command actually staged or pushed nothing. If the remote didn't advance, the push did **not** happen — diagnose and redo it before reporting.
 - Then post the per-thread replies and resolves from step 4 (reply first, then resolve; if a reply fails after one retry, do **not** resolve — surface it).
 
 ### 6. Report (non-blocking) & end the pass
