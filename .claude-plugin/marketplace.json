@@ -200,6 +200,18 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/code-review"
     },
     {
+      "name": "sdlc",
+      "description": "Software delivery workflow commands - gather context, write plans, file tickets, open MRs, and brief next steps",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/sdlc",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/sdlc"
+    },
+    {
       "name": "noisy-tools-in-subagent",
       "description": "Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens",
       "version": "0.3.0",

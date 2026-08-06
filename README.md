@@ -45,6 +45,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
 | [git](plugins/git/) | Git workflow skill and commit commands — atomic commits, refactor-first ordering, test-before-bugfix, and fixup-based history cleanup |
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, and git history reviewed in parallel |
+| [sdlc](plugins/sdlc/) | Software delivery workflow commands — gather context, write plans, file tickets, open MRs, and brief next steps |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
 
 ## Developing
