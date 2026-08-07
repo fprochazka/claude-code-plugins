@@ -190,7 +190,7 @@
     {
       "name": "code-review",
       "description": "Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, and git history reviewed in parallel",
-      "version": "1.5.0",
+      "version": "1.6.0",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

@@ -7,10 +7,38 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 ```
 /code-review:full [focus area or specific concerns]
 /code-review:post
+/code-review:watch [focus area or specific concerns]
 ```
 
 - `/code-review:full` — runs the multi-phase review and writes a report.
 - `/code-review:post` — posts the report from the current session to the GitLab MR as inline diff comments + one summary comment. Requires a `/code-review:full` run earlier in the same session. GitLab-only.
+- `/code-review:watch` — full + post, then follows the MR across review rounds until every blocker and suggestion is settled. GitLab-only.
+
+## Watching an MR across review rounds
+
+`/code-review:watch` reviews, posts, and then keeps following the MR until the findings are resolved. It is the **reviewer** side of an MR — the mirror image of `/glab-mr:babysit`, which is the author side. It never edits code, never commits, and never pushes.
+
+**The ticket status is the handshake.** After posting a round of findings, the command moves the ticket to the author's working state. Only when the author moves it back to the review state does the next round run. This keeps the review out of work-in-progress instead of commenting on every half-finished push. Projects without a ticket fall back to a push gate.
+
+```
+review → post → ticket to WORK_STATE → [wait] → author moves ticket to REVIEW_STATE
+   → sync the local branch onto the author's new head
+   → revisit every open thread, reply, resolve what is settled
+   → review the delta, post new findings
+   → anything still open? ticket back to WORK_STATE and wait again
+   → nothing open? stop
+```
+
+A cron job drives the cadence every 30 minutes. Most passes end at the gate and post nothing — a watch that stays quiet for hours is working correctly.
+
+Details worth knowing:
+
+- **Rebase is server-side and happens once.** If the MR is behind its target branch, the command triggers GitLab's own rebase through `glab mr rebase`. It never rebases locally. Any failure — conflicts, a fork without maintainer edits, a missing push permission — becomes a finding for the author.
+- **Reviews read `origin/<source_branch>`, not local `HEAD`**, so a stale or dirty checkout cannot corrupt a review. Each round also resets the local branch onto the author's head, guarded so it never runs over uncommitted work or local-only commits.
+- **Deltas use `git range-diff`, not `git diff`.** After a rebase, a plain diff mixes the author's edits with everything master gained. `range-diff` compares patch series, so carried-over commits show as unchanged and the author's real work stands out. What master brought in is checked separately, as its own question.
+- **Findings close on evidence, not assertion.** A reply saying "fixed" is a pointer to verify, not proof. Every round revisits every open finding, replies in its thread, and resolves only what it confirmed.
+- **State lives in a ledger** at `.claude/review-report/<topic>.watch.md`, so a round survives context compaction.
+- Only `Blocking` and `Suggestion` findings gate termination. Nitpicks never keep the watch alive.
 
 ## How it works
 
