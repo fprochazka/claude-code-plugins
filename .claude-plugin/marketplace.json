@@ -46,7 +46,7 @@
     {
       "name": "glab-mr",
       "description": "GitLab MR tools - fix failed CI, resolve comments, and more",
-      "version": "1.8.1",
+      "version": "2.0.0",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -79,7 +79,7 @@
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/web-researcher"
     },
-{
+    {
       "name": "migrate-to-uv",
       "description": "Skill for migrating Python projects from Poetry, pipx, or pip to uv",
       "version": "1.2.0",
@@ -190,7 +190,7 @@
     {
       "name": "code-review",
       "description": "Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, and git history reviewed in parallel",
-      "version": "1.6.0",
+      "version": "1.6.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -201,8 +201,8 @@
     },
     {
       "name": "sdlc",
-      "description": "Software delivery workflow commands - gather context, write plans, file tickets, open MRs, and brief next steps",
-      "version": "0.1.0",
+      "description": "Software delivery workflow commands - gather context, write plans, file tickets, open MRs, babysit them to green, and brief next steps",
+      "version": "0.2.0",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

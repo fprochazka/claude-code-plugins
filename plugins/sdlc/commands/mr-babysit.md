@@ -6,6 +6,8 @@ description: Babysit MR(s) — loop that rebases, fixes CI, resolves comments, a
 
 Run a continuous loop that watches one or more merge requests and drives each toward mergeable: keep it rebased, fix failing CI, resolve review comments that don't need product decisions, and wait for automated reviewers — passing back to the user only for genuine product/design calls or when everything solvable is solved.
 
+This command is the **author** side of an MR. It is the mirror image of `/code-review:watch`, which is the **reviewer** side and never changes code.
+
 **This is not a rubber stamp.** Review feedback — especially from AI review bots — is sometimes correct, sometimes wrong, sometimes pedantic, and sometimes proposes a fix that creates a new problem. Every finding is critically evaluated before any change lands.
 
 ## Autonomy — you are pre-authorized; pausing to ask is a failure

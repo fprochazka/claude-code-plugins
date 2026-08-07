@@ -19,7 +19,7 @@ review → post → ticket to WORK_STATE → [wait] → author moves ticket to R
    → nothing open? stop
 ```
 
-This command is the **reviewer** side of an MR. It is the mirror image of `/glab-mr:babysit`, which is the **author** side. The distinction matters and is enforced below: this command never edits, commits, pushes, or rebases locally, and never resolves the author's threads.
+This command is the **reviewer** side of an MR. It is the mirror image of `/sdlc:mr-babysit`, which is the **author** side. The distinction matters and is enforced below: this command never edits, commits, pushes, or rebases locally, and never resolves the author's threads.
 
 $ARGUMENTS
 
@@ -75,7 +75,7 @@ Then define, for this command and every phase it delegates to:
 - `REVIEW_BASE` = `origin/<target_branch>`
 - `REVIEW_HEAD` = `origin/<source_branch>`
 
-Fetching the source branch is safe here **because this command never pushes** — the `--force-with-lease` hazard that makes a source-branch fetch dangerous in `/glab-mr:babysit` does not apply to a read-only reviewer.
+Fetching the source branch is safe here **because this command never pushes** — the `--force-with-lease` hazard that makes a source-branch fetch dangerous in `/sdlc:mr-babysit` does not apply to a read-only reviewer.
 
 ### 0.4 Resolve the ticket and its workflow states
 

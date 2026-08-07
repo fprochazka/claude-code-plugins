@@ -16,7 +16,7 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 
 ## Watching an MR across review rounds
 
-`/code-review:watch` reviews, posts, and then keeps following the MR until the findings are resolved. It is the **reviewer** side of an MR — the mirror image of `/glab-mr:babysit`, which is the author side. It never edits code, never commits, and never pushes.
+`/code-review:watch` reviews, posts, and then keeps following the MR until the findings are resolved. It is the **reviewer** side of an MR — the mirror image of `/sdlc:mr-babysit`, which is the author side. It never edits code, never commits, and never pushes.
 
 **The ticket status is the handshake.** After posting a round of findings, the command moves the ticket to the author's working state. Only when the author moves it back to the review state does the next round run. This keeps the review out of work-in-progress instead of commenting on every half-finished push. Projects without a ticket fall back to a push gate.
 
