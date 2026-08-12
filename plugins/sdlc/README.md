@@ -18,6 +18,7 @@ claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 - `/sdlc:ticket-new [extra context]` — drafts a ticket from the conversation and files it in the issue tracker. Written from the product-engineer angle: business context and acceptance criteria, no solution dictated to the implementor.
 - `/sdlc:mr-open [ticket-id]` — opens a draft MR/PR for the current branch, then rewrites the title and description against the actual diff. The description targets the reviewer: why, gotchas, and where to focus.
 - `/sdlc:mr-babysit [MR refs]` — drives one or more MRs toward mergeable: keeps each rebased, fixes failing CI, and answers review comments, handing back only for genuine product decisions. GitLab-only. See below.
+- `/sdlc:wrap-up [ticket ref]` — closes finished work out. Posts a dense comment to the ticket — outcome, the production checks with their real numbers, findings the diff does not show, limits, possible follow-ups — then marks the ticket completed. It splits into several comments when one would bury its own best parts. Facts only: it never commits anyone to future work.
 - `/sdlc:brief-next-steps [scope hint or slug]` — compresses the session into one short briefing in `./.claude/plans/`: the final proposal in implementation order, plus the decisions you still owe. The conclusion, not the argument.
 
 ## Babysitting an MR to green

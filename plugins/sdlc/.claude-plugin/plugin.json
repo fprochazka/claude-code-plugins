@@ -1,5 +1,5 @@
 {
   "name": "sdlc",
-  "version": "0.2.0",
-  "description": "Software delivery workflow commands - gather context, write plans, file tickets, open MRs, babysit them to green, and brief next steps"
+  "version": "0.3.0",
+  "description": "Software delivery workflow commands - gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps"
 }
