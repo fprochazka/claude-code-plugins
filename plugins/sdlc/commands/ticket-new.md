@@ -35,6 +35,12 @@ Short, imperative, specific (e.g., "Add retry logic to payment webhook handler")
   - Acceptance criteria are written as still-open, never pre-checked.
   - If the session revealed a constraint or a code pointer worth keeping, state it as a technical note about the *system*, not as a report of what we tried.
 
+## Division of labor
+
+**You (the orchestrator) write the ticket body yourself — never a subagent.** The title and the description come from the conversation you are holding, and no subagent can see it.
+
+**A subagent does the issue tracker work** — resolving every identifier (team, status, priority, assignee, project, milestone, label) and the create call itself. That work is mechanical lookup against an API, it produces a lot of noise, and it must not eat the orchestrator's context.
+
 ## Process
 
 1. Synthesize what you know from the conversation into a ticket draft
@@ -47,4 +53,24 @@ Short, imperative, specific (e.g., "Add retry logic to payment webhook handler")
    - **Already started** — this session (or an earlier one) has changed code for this problem, or a branch or MR for it exists: create it **in progress and assigned to the user driving the session**, so the board is not lying about what is being worked on.
    - An explicit instruction from the user overrides both defaults.
    - The status field is where "we started" belongs. The description still reads as if nothing has been implemented — see Writing Style.
-7. Create the ticket in the issue tracker using the appropriate skill.
+7. Decide the metadata **in plain words** — team name, status name, priority name, assignee as a person, and nothing else unless the user asked for it. Do not look up a single ID yourself.
+8. Delegate the creation to ONE subagent (`model: sonnet`) — see below. Wait for it, then report the result to the user.
+
+## Creating the ticket
+
+Spawn one subagent to resolve the identifiers and create the ticket. Its prompt must open with a skill-load instruction naming the skill for the issue tracker in use — Linear, Jira, GitHub, GitLab, whatever is installed: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
+
+Give the subagent:
+
+- The **path to the description file**, and the instruction to read it. Never inline the description into the prompt.
+- The ticket **title**, verbatim.
+- The metadata **as plain words** — "team Platform, status In Progress, priority High, assign to <user>".
+
+Tell the subagent to:
+
+- **Resolve every identifier against the live tracker** — team, workflow state, priority, assignee, and any project or milestone the user asked for. Never guess an ID, never invent a status name that the team does not have. If a requested value has no match, pick the closest one the tracker really offers and say so in the report.
+- **Use the description file as the ticket body, byte for byte.** It must not rewrite, reformat, summarize, or "improve" the text. The body is the orchestrator's work product.
+- **Create the ticket**, then verify it by reading it back.
+- **Report back**: the ticket ID and URL, and the final shape of the metadata — which team, status, priority, assignee, project, milestone and labels the ticket really carries, each as the human-readable name. Also report anything it had to substitute or could not set. Keep the report short — no CLI transcripts, no raw JSON dumps.
+
+If the subagent reports a substitution that changes the meaning of the ticket, tell the user.
