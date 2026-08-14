@@ -33,6 +33,18 @@ Don't barrel into writing the plan while something material is unresolved. Plann
 
 Write the plan to the **plan file specified in the plan-mode system message** — a fresh file; don't append to or carry over a previous plan. The body should be organized as the ordered sequence of atomic-commit-sized steps from Step 1, each with: what changes, which files, why, how to verify, and the intended commit message.
 
+### Mark the phases and place the validation checkpoints
+
+The plan must say, in its own structure, where a **validation subagent** runs. Write these in as explicit numbered steps, so the executing agent cannot treat them as optional.
+
+- **Always end the plan with a final validation checkpoint**, after the last implementation step. This is not the same as the per-step inspection the main agent already does — it reviews the finished work as a whole, against the plan's intent.
+- **Insert an intermediate checkpoint at every real phase boundary.** A phase is not a commit. Three atomic commits may be three distinct phases or a single one — the count tells you nothing, and implementation steps and commits are usually more granular than the plan's high-level phases. Commits are split for **review**, phases are split for **risk** — a phase boundary is where the next block of work is built on the assumption that the previous block is already correct, so a defect there would be discovered late and expensively.
+  - Real boundaries: a schema or migration layer landing before the code that reads it, an abstraction being reshaped before features are built on it, a data backfill before the consumers of that data, one service's contract before the caller that depends on it.
+  - Not boundaries: counting commits and calling the number phases, a rename followed by its feature, tests split from the code they cover.
+  - If the whole plan is one coherent block of work, one final checkpoint is the right answer. Do not manufacture phases.
+- **Name the model for each checkpoint in the plan.** Use `fable` when the work carries real reasoning risk — concurrency, transaction and isolation behavior, subtle correctness, cross-system or cross-repo effects, a wide blast radius. Use `opus` for everything else. Do not spend `fable` by default.
+- For each checkpoint, write down **what it must confirm** — the acceptance criteria it covers, the steps it spans, and any specific risk this plan is worried about.
+
 ## Step 4 — Append the implementation protocol to the plan
 
 At the **end of the plan file**, append a verbatim "## Implementation Protocol" section so the execution rules travel with the plan and reinforce themselves. Use this content:
@@ -51,6 +63,25 @@ This plan is implemented by a **sequence of subagents**, run one at a time, neve
 - **If inspection turns up a problem, the main agent does NOT fix it itself — it dispatches a subagent to correct it** (re-instruct the same subagent, or spawn a fresh corrective one with the specifics). The main agent stays an orchestrator; fixing code inline between steps breaks that. The work is still uncommitted, so the corrective subagent just adjusts the staged changes — nothing to undo.
 - After committing, decide whether the next step's scope needs adjusting before launching the next subagent.
 - If a subagent discovers a needed prerequisite mid-step, pause, land the prerequisite as its own commit first, then resume — don't let it contaminate the in-progress change.
+
+### Validation checkpoints
+
+At every validation checkpoint marked in the plan above, run a **validation subagent** with the model the plan names for it. This is a separate pair of eyes on finished, committed work — not a repeat of the per-step inspection.
+
+- **The validator does not change code.** It reads and reports. Corrections are dispatched by the main agent to a normal implementation subagent, exactly like a problem found during inspection.
+- Give it: the **path to this plan file**, **which steps it covers**, the **commit range** to review, and any risk the plan told it to watch. Nothing pasted inline.
+- It checks the work against the plan's *intent*, not just against a green build: acceptance criteria actually met, steps quietly skipped or half-done, deviations from the plan that nobody decided, missing or vacuous tests, dead code left behind, and defects the implementing subagent could not see because it wrote the code itself.
+- It runs the real verification — build, lint, the relevant tests — and reports what it ran and what came back. A checkpoint that only reasons about the diff is not a checkpoint.
+- **An intermediate checkpoint gates the next phase.** Do not start the next phase until its findings are fixed or consciously accepted by the user. That is the whole reason the boundary is there.
+
+### After the final validation
+
+Unless the user says otherwise, the work does not stop at a green branch:
+
+1. Open the merge request with `/sdlc:mr-open`.
+2. Drive it to mergeable with `/sdlc:mr-babysit` on that MR.
+
+Confirm with the user before starting, and skip both if they want to handle the MR themselves.
 ```
 
 ## Step 5 — Get the user's approval
