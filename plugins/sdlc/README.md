@@ -52,7 +52,7 @@ uv tool install glab-pipeline glab-discussion
 
 ## Assumptions
 
-- **Subagent-driven execution.** The plan produced by `/sdlc:write-plan` expects a main agent that orchestrates and subagents that implement, one step at a time. Subagents stage their work and stop. The main agent inspects and owns the commit.
+- **Subagent-driven execution.** The plan produced by `/sdlc:write-plan` expects a main agent that orchestrates and one persistent implementation subagent that works step after step, keeping its repo exploration in context. The subagent stages its work and stops. The main agent checks every step — directly for trivial ones, through a fresh validation subagent for the rest — and owns the commit.
 - **A skill per external system.** Most commands never name a specific CLI. They tell the agent to load the skill for the system in play — your issue tracker, your git host, your chat tool — so install those separately. Two commands are deliberate exceptions: `/sdlc:write-plan` loads `git:git-workflow` by name for commit shaping, and `/sdlc:mr-babysit` is GitLab-only because its loop is built on `glab`.
 - **Plan files live in `./.claude/plans/`** in the working tree, not in the scratchpad. They are meant to survive the session.
 
