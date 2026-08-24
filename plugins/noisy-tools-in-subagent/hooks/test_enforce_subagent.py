@@ -3,11 +3,13 @@
 
 Two layers:
 
-* **Unit** — exercise `_check_argv` (WHITELIST matching) and
-  `_iter_command_argvs` (recursion into bash-classify's `inner_commands`).
-  These have no external dependencies and lock in the core behaviour: the
-  WHITELIST anchors on the real tool, and wrapped commands are reached by
-  walking inner commands rather than by parsing wrappers ourselves.
+* **Unit** — exercise `_check_argv` (WHITELIST matching), `_iter_command_argvs`
+  (recursion into bash-classify's `inner_commands`), and the exempt-agent
+  resolution (`_parse_exempt_option`, `_is_exempt_agent`). These have no
+  external dependencies and lock in the core behaviour: the WHITELIST anchors
+  on the real tool, wrapped commands are reached by walking inner commands
+  rather than by parsing wrappers ourselves, and only a declared `agent_type`
+  escapes the whitelist.
 
 * **End-to-end** — pipe a real hook payload through the script, which shells
   out to `bash-classify`. Skipped when `bash-classify` is not on PATH.
@@ -24,6 +26,7 @@ import shutil
 import subprocess
 import sys
 import unittest
+from unittest import mock
 
 HOOK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "enforce-subagent.py")
 HAVE_BASH_CLASSIFY = shutil.which("bash-classify") is not None
@@ -128,17 +131,81 @@ class IterCommandArgvsTest(unittest.TestCase):
         )
 
 
-def _run_hook(command: str, agent_id: str | None = None):
+class ExemptAgentTest(unittest.TestCase):
+    """`agent_type` is the only thing that escapes the WHITELIST."""
+
+    def _is_exempt(self, agent_type, option=None):
+        """Evaluate `_is_exempt_agent` with only the given plugin option set."""
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(enforce.EXEMPT_OPTION_ENV_VAR, None)
+            if option is not None:
+                os.environ[enforce.EXEMPT_OPTION_ENV_VAR] = option
+            return enforce._is_exempt_agent(agent_type)
+
+    def test_builtin_defaults(self):
+        for agent_type in ("noisy-tools-in-subagent:noisy-runner", "Explore", "Plan", "code-review:review-bugs"):
+            with self.subTest(agent_type=agent_type):
+                self.assertTrue(self._is_exempt(agent_type))
+
+    def test_non_exempt_agents(self):
+        for agent_type in (None, "", "general-purpose", "plugin-dev:agent-creator", "code-review"):
+            with self.subTest(agent_type=agent_type):
+                self.assertFalse(self._is_exempt(agent_type))
+
+    def test_patterns_must_match_the_whole_agent_type(self):
+        # A partial match would silently disable the plugin for that agent.
+        self.assertFalse(self._is_exempt("my-team:review-bugs", option="bugs"))
+        self.assertFalse(self._is_exempt("my-team:leaf-worker", option="leaf"))
+        self.assertTrue(self._is_exempt("my-team:leaf-worker", option="my-team:leaf-.*"))
+
+    def test_invalid_pattern_is_skipped_not_raised(self):
+        self.assertFalse(self._is_exempt("general-purpose", option="[unclosed"))
+        self.assertTrue(self._is_exempt("Explore", option="[unclosed"))
+
+    def test_option_serializations(self):
+        cases = {
+            '["a:one", "b:two"]': ["a:one", "b:two"],
+            '"a:one"': ["a:one"],
+            "a:one\nb:two": ["a:one", "b:two"],
+            "a:one,b:two": ["a:one", "b:two"],
+            "  a:one  ": ["a:one"],
+            "": [],
+            None: [],
+            "[not valid json": ["[not valid json"],
+        }
+        for raw, expected in cases.items():
+            with self.subTest(raw=raw):
+                self.assertEqual(enforce._parse_exempt_option(raw), expected)
+
+    def test_comma_bearing_regex_survives_on_its_own_line(self):
+        # Comma splitting would corrupt `a{1,3}`, so multi-line wins over commas.
+        self.assertEqual(
+            enforce._parse_exempt_option('["team:a{1,3}", "team:b"]'), ["team:a{1,3}", "team:b"]
+        )
+        self.assertEqual(
+            enforce._parse_exempt_option("team:a{1,3}\nteam:b"), ["team:a{1,3}", "team:b"]
+        )
+
+
+def _run_hook(command: str, agent_type: str | None = None, exempt_option: str | None = None):
     """Run the hook as a subprocess; return True if it denied the call."""
     payload = {"tool_name": "Bash", "tool_input": {"command": command}}
-    if agent_id is not None:
-        payload["agent_id"] = agent_id
+    if agent_type is not None:
+        # A real subagent payload carries both; `agent_id` is what marks it as a
+        # subagent, but only `agent_type` decides the exemption.
+        payload["agent_id"] = "a0123456789abcdef"
+        payload["agent_type"] = agent_type
+    env = dict(os.environ)
+    env.pop(enforce.EXEMPT_OPTION_ENV_VAR, None)
+    if exempt_option is not None:
+        env[enforce.EXEMPT_OPTION_ENV_VAR] = exempt_option
     result = subprocess.run(
         [sys.executable, HOOK_PATH],
         input=json.dumps(payload),
         capture_output=True,
         text=True,
         timeout=15,
+        env=env,
     )
     return '"permissionDecision": "deny"' in result.stdout
 
@@ -178,10 +245,19 @@ class EndToEndTest(unittest.TestCase):
             with self.subTest(command=command):
                 self.assertFalse(_run_hook(command), f"expected PASS: {command}")
 
-    def test_subagent_calls_bypass(self):
-        # A call originating from a subagent (agent_id present) is never blocked,
-        # even for an otherwise-noisy command.
-        self.assertFalse(_run_hook("pytest", agent_id="agent-123"))
+    def test_ordinary_subagents_are_blocked(self):
+        # A subagent that can delegate gets the same treatment as the main
+        # thread, at every nesting depth.
+        self.assertTrue(_run_hook("pytest", agent_type="general-purpose"))
+
+    def test_exempt_agents_bypass(self):
+        for agent_type in ("noisy-tools-in-subagent:noisy-runner", "Explore", "code-review:review-bugs"):
+            with self.subTest(agent_type=agent_type):
+                self.assertFalse(_run_hook("pytest", agent_type=agent_type))
+
+    def test_configured_exempt_agent_bypasses(self):
+        self.assertTrue(_run_hook("pytest", agent_type="my-team:leaf"))
+        self.assertFalse(_run_hook("pytest", agent_type="my-team:leaf", exempt_option="my-team:.*"))
 
 
 if __name__ == "__main__":

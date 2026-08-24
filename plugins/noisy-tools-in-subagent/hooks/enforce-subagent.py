@@ -10,8 +10,9 @@ output in its own context and reports back a concise summary.
 
 Behavior:
 - Only acts on Bash tool calls (matcher handles this, but we double-check).
-- If the call originates from a subagent (hook payload has `agent_id`),
-  pass through unconditionally — subagents are allowed to run anything.
+- Passes through when the payload's `agent_type` matches an exempt pattern
+  (the built-in defaults plus the `exempt_agent_types` plugin option). Every
+  other agent is subject to the whitelist, at any nesting depth.
 - Parses the bash command using `bash-classify` (tree-sitter based) to walk
   every command in pipelines / subshells / chains. Matches each command's
   argv against a regex whitelist.
@@ -35,6 +36,7 @@ the aggregation and actually block the tool call.
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -127,12 +129,46 @@ WHITELIST: list[re.Pattern[str]] = [
 ]
 
 
-REJECT_MESSAGE_TEMPLATE = """\
-Noisy command (matched `{matched_argv}`) — delegate to the `noisy-runner` subagent.
+# ---------------------------------------------------------------------------
+# Agents exempt from the whitelist.
+#
+# A blocked agent has to be able to delegate, and some cannot: the noisy-runner
+# is the delegation target itself, several agents omit the Agent tool from
+# their definition, and an agent at the subagent nesting limit is not offered
+# the Agent tool at all.
+#
+# None of that is visible to a hook. Claude Code builds hook input from a fixed
+# key set — session_id, transcript_path, cwd, prompt_id, permission_mode,
+# agent_id, agent_type, effort — and routes spawn depth and parentAgentId only
+# to OpenTelemetry spans and the x-claude-code-parent-agent-id API header. So
+# the exempt set is declared, not derived.
+#
+# Patterns must match the whole `agent_type` (`re.fullmatch`). An over-broad
+# pattern silently disables the plugin for that agent, while a missing one
+# costs a single denied turn, so the stricter match is the safer default.
+# ---------------------------------------------------------------------------
 
-Call the Task tool with:
+DEFAULT_EXEMPT_AGENT_TYPES = (
+    "noisy-tools-in-subagent:noisy-runner",
+    "Explore",
+    "Plan",
+    "code-review:review-.*",
+)
+
+# `userConfig.exempt_agent_types` in plugin.json reaches a shell-form hook only
+# through the environment: `${user_config.*}` substitution is rejected for
+# shell-form hook commands.
+EXEMPT_OPTION_ENV_VAR = "CLAUDE_PLUGIN_OPTION_EXEMPT_AGENT_TYPES"
+
+
+REJECT_MESSAGE_TEMPLATE = """\
+Noisy command (matched `{matched_argv}`) — run it in the noisy-runner subagent, not here.
+
+Agent tool:
   subagent_type: "noisy-tools-in-subagent:noisy-runner"
-  prompt: the plain command(s) you want to run"""
+  prompt: the command(s), verbatim
+
+If you have no Agent tool, report this back to your caller instead. Do not retry the command."""
 
 BASH_CLASSIFY_MISSING_MESSAGE = """\
 The noisy-tools-in-subagent plugin requires `bash-classify` but it is not on \
@@ -255,6 +291,59 @@ def _check_argv(argv: "list[str]") -> "tuple[re.Pattern[str], str] | None":
     return None
 
 
+def _parse_exempt_option(raw: "str | None") -> "list[str]":
+    """Split the plugin option's raw env value into individual patterns.
+
+    A `multiple` userConfig option has no documented serialization, so accept
+    the three plausible shapes: a JSON array, one pattern per line, or a
+    comma-separated list. JSON and newlines are tried first because a regex may
+    legitimately contain a comma (`a{1,3}`); such a pattern must be written as
+    JSON or on its own line.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return []
+
+    if raw[0] in "[\"":
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            data = None
+        if isinstance(data, list):
+            return [str(item).strip() for item in data if str(item).strip()]
+        if isinstance(data, str):
+            raw = data.strip()
+
+    lines = [line.strip() for line in raw.splitlines() if line.strip()]
+    if len(lines) > 1:
+        return lines
+    return [part.strip() for part in raw.split(",") if part.strip()]
+
+
+def _exempt_patterns() -> "list[re.Pattern[str]]":
+    """Compile the built-in exempt patterns plus any the user configured.
+
+    An invalid user pattern is skipped rather than raised: a hook that crashes
+    on bad config would block every Bash call in the session.
+    """
+    compiled = []
+    for pattern in list(DEFAULT_EXEMPT_AGENT_TYPES) + _parse_exempt_option(
+        os.environ.get(EXEMPT_OPTION_ENV_VAR)
+    ):
+        try:
+            compiled.append(re.compile(pattern))
+        except re.error:
+            continue
+    return compiled
+
+
+def _is_exempt_agent(agent_type: "str | None") -> bool:
+    """Whether `agent_type` names an agent that is allowed to run noisy commands."""
+    if not agent_type:
+        return False
+    return any(pattern.fullmatch(agent_type) for pattern in _exempt_patterns())
+
+
 def main() -> "None":
     try:
         payload = json.load(sys.stdin)
@@ -267,11 +356,9 @@ def main() -> "None":
     if payload.get("tool_name") != "Bash":
         _passthrough()
 
-    # If this call originates from any subagent, allow it unconditionally.
-    # See research in conversation history: PreToolUse payloads include
-    # `agent_id` (and `agent_type`) iff fired from inside a Task-spawned
-    # subagent. The presence check on `agent_id` is the canonical detection.
-    if "agent_id" in payload and payload.get("agent_id"):
+    # Agents that cannot delegate are exempt. Everything else is enforced,
+    # whether it is the main thread or a subagent at any nesting depth.
+    if _is_exempt_agent(payload.get("agent_type")):
         _passthrough()
 
     tool_input = payload.get("tool_input") or {}
