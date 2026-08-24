@@ -214,7 +214,7 @@
     {
       "name": "noisy-tools-in-subagent",
       "description": "Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

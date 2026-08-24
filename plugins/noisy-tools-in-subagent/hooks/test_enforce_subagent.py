@@ -143,7 +143,8 @@ class ExemptAgentTest(unittest.TestCase):
             return enforce._is_exempt_agent(agent_type)
 
     def test_builtin_defaults(self):
-        for agent_type in ("noisy-tools-in-subagent:noisy-runner", "Explore", "Plan", "code-review:review-bugs"):
+        for agent_type in ("noisy-tools-in-subagent:noisy-runner", "Explore", "Plan",
+                           "code-review:review-bugs", "searxngcli:agent", "web-researcher:agent"):
             with self.subTest(agent_type=agent_type):
                 self.assertTrue(self._is_exempt(agent_type))
 
