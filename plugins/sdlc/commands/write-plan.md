@@ -20,16 +20,20 @@ If the Scope is empty, use the current conversation context (e.g. a pre-plan bri
 
 Invoke the `git:git-workflow` skill first, and apply its rules to shape the plan around the **ideal git history** rather than the order code happens to get written. The concrete tie-in for this command: **each step in the plan maps onto one intended atomic commit** (or a small, named group), so the plan's structure already encodes the commit sequence.
 
-## Step 2 — Enter plan mode and front-load every decision
+## Step 2 — Front-load every decision, before plan mode
 
-**Enter plan mode now.** The plan you write will be executed with minimal supervision — the user may not be at the keyboard while it runs. So the bar is not "do I know enough to start writing": it is **"have I surfaced every decision the user would otherwise be asked mid-implementation"**. A question asked now costs one AskUserQuestion; the same question at step 7 stalls the whole run.
+**Do not enter plan mode yet.** Plan mode restricts what the permission system lets you run, and this phase may still need real work — subagent explorations, data checks, queries against external systems. Enter plan mode only in Step 3, when the only work left is writing.
+
+The plan you write will be executed with minimal supervision — the user may not be at the keyboard while it runs. So the bar is not "do I know enough to start writing": it is **"have I surfaced every decision the user would otherwise be asked mid-implementation"**. A question asked now costs one AskUserQuestion; the same question at step 7 stalls the whole run.
 
 - Walk the intended steps and hunt for the decisions hiding inside them: user-facing naming, product behavior at edge cases, scope trade-offs, anything irreversible. Ask about all of it now (AskUserQuestion) — the goal is that the executing agent never has to stop for a decision.
 - Genuine knowledge gaps in the code → fill with targeted, delegated exploration (subagents, not inline spelunking) — only for the gaps, not a fresh sweep.
 
-Don't barrel into writing the plan while something material is unresolved. Planning only; do not start implementing.
+Don't move on to Step 3 while something material is unresolved.
 
-## Step 3 — Write the plan
+## Step 3 — Enter plan mode and write the plan
+
+**Enter plan mode now.** Everything is decided and explored, so the plan should come out final — the user reviews it, adjusts at most small details, approves, and lets execution run unattended. Planning only; do not start implementing.
 
 Write the plan to the **plan file specified in the plan-mode system message** — a fresh file; don't append to or carry over a previous plan. The body is the ordered sequence of atomic-commit-sized steps from Step 1, each with: what changes, which files, why, how to verify, the intended commit message, and the step's **check tier** (below).
 
