@@ -13,11 +13,12 @@ claude plugin install git@fprochazka-claude-code-plugins --scope user
 
 ## Highlights
 
-- **Atomic commits** — each commit solves exactly one thing
-- **Refactor-first ordering** — prerequisites and refactorings at the start of the branch, feature/fix code last
-- **Test-before-bugfix** — capture broken behavior first, fix in the next commit
-- **Fixups for review feedback** — never standalone "address review" commits
-- **Plan the history before coding** — cleanup as an afterthought is a waste of time
+- **The sibling/ancestor test** — the one rule that decides every commit boundary. Siblings stay separate; ancestors collapse into one commit
+- **Vertical-slice atomic commits** — migration + domain logic + endpoint + generated client + UI + tests ship together, because the order work *gets done* is not the order it should be committed
+- **Fixups, with a mechanical trigger** — if a change touches a file an unpushed commit already touched, it's a fixup, not a commit
+- **Found bug vs introduced bug** — a pre-existing defect earns its own commit; repairing your own draft does not
+- **Dependency ordering, not ritual** — prerequisites first only when they *are* prerequisites; never manufacture a refactor commit
+- **Plan the history before coding** — write the MR-title sentence first, then ask what is genuinely separate from it
 
 Full rules and rationale in [`skills/git-workflow/SKILL.md`](skills/git-workflow/).
 

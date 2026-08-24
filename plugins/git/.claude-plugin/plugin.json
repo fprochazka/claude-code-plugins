@@ -1,5 +1,5 @@
 {
   "name": "git",
-  "version": "0.2.0",
-  "description": "Git workflow skill and commit commands for atomic commits, refactor-first ordering, and fixup-based history cleanup"
+  "version": "0.3.0",
+  "description": "Git workflow skill and commit commands — vertical-slice atomic commits, fixups over correction commits, and dependency-ordered branch history"
 }
