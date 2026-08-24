@@ -15,7 +15,7 @@ claude plugin install git@fprochazka-claude-code-plugins --scope user
 
 - **The sibling/ancestor test** — the one rule that decides every commit boundary. Siblings stay separate; ancestors collapse into one commit
 - **Vertical-slice atomic commits** — migration + domain logic + endpoint + generated client + UI + tests ship together, because the order work *gets done* is not the order it should be committed
-- **Fixups, with a mechanical trigger** — if a change touches a file an unpushed commit already touched, it's a fixup, not a commit
+- **Fixups, with a mechanical trigger** — would an earlier commit on this branch have looked different had you known this? Then it's a fixup, not a commit. Branch history stays rewritable until merge, pushed or not
 - **Found bug vs introduced bug** — a pre-existing defect earns its own commit; repairing your own draft does not
 - **Dependency ordering, not ritual** — prerequisites first only when they *are* prerequisites; never manufacture a refactor commit
 - **Plan the history before coding** — write the MR-title sentence first, then ask what is genuinely separate from it
