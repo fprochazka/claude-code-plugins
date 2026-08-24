@@ -50,8 +50,9 @@ This phase exists so the next phase can be split into focused per-subdomain dive
 
 For each subdomain from Phase 3, spawn a separate subagent (`subagent_type: Explore`, breadth: `very thorough`).
 
-- Run them **one by one, sequentially** — never in parallel, never in the background. The user wants visibility into what each subagent is doing.
-- After each dive, decide whether the next dive's scope should be adjusted based on what was just learned.
+- The phase boundary is what must stay serial: deep dives start only after the Phase 3 surface map exists — the map is what makes them focused.
+- Within the phase, **group the dives by overlap**. Dives into subdomains that barely touch each other can run **in parallel** to save wall-clock time. Dives that do overlap — shared code, one subdomain calling into another, or one dive's findings likely to reshape another's scope — run **sequentially**, so the later dive is steered by what the earlier one found.
+- After each dive or parallel batch, decide whether the remaining dives' scopes need adjusting based on what was just learned.
 
 Each subagent's goal: deeply understand the relevant code in that subdomain — what it does today, where the change pressure is, gotchas, edge cases, related tests. Return concrete file paths, function names, and current behavior.
 
@@ -70,6 +71,6 @@ Omit sections that have nothing to say. No filler.
 ## Hard rules
 
 - Do NOT write a plan. Do NOT enter plan mode. Do NOT start implementing.
-- Do NOT run subagents in parallel or in the background.
+- Phases run strictly in order — never overlap them. Parallelism is allowed only inside Phase 4, and only for deep dives that barely overlap. No background subagents.
 - Do NOT skip Phase 3 to jump straight into deep dives — the surface map is what makes the deep dives focused.
 - Present the briefing and stop. Wait for the user to discuss before doing anything else.
