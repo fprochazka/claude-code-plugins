@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "noisy-tools-in-subagent",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens.",
   "author": {
     "name": "Filip Procházka",

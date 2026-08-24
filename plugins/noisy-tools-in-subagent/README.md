@@ -31,7 +31,9 @@ Two pieces:
 
 Net effect: when the main agent wants `./mvnw test`, it gets redirected into a "3 tests failed at X:42, Y:87, Z:12 because …, full logs at /tmp/…" summary instead of a flood of output.
 
-The whitelist and its tuning live in `hooks/enforce-subagent.py`. Small introspection commands (`mvn help:*`, `gradle tasks`, `mvn dependency:tree`) pass through — only the heavy lifecycle phases are blocked.
+The whitelist and its tuning live in `hooks/enforce-subagent.py`. It covers Maven and Gradle lifecycle phases and static-analysis tasks (`checkstyleMain`, `spotbugsMain`, `jacocoTestReport`), Node build/test/lint scripts, the Python, Rust and Go toolchains, and `kubectl logs`. A wrapper counts whether it is invoked as `./gradlew` or by absolute path.
+
+Introspection stays out of the way. `mvn help:*`, `mvn dependency:tree`, `gradle tasks`, `gradle projects`, `dependencies`, `dependencyInsight` and `kubectl get` all pass through.
 
 ## Which agents are exempt
 

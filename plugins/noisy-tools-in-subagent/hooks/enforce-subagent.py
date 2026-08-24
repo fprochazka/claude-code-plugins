@@ -55,19 +55,37 @@ import sys
 # phases so those small introspection commands pass through.
 # ---------------------------------------------------------------------------
 
+# `compile\w*` covers the per-language variants Gradle generates (`compileJava`,
+# `compileTestJava`, `compileKotlin`). The suffixed `test*` and `install*` task
+# names are listed one by one instead: a blanket `test\w*` also matches project
+# paths like `:testing-typed-ids:dependencies`, which must stay unblocked.
 _MVN_GRADLE_PHASES = (
     r"\b("
-    r"clean|compile|package|install|deploy|site|"
-    r"build|assemble|jar|war|shadowJar|bootJar|"
-    r"test|verify|check|integrationTest|functionalTest|e2e|"
+    r"clean|compile\w*|package|install|installDist|deploy|site|"
+    r"build|assemble|jar|war|shadowJar|bootJar|publishToMavenLocal|"
+    r"test|testClasses|testCodeCoverageReport|verify|check|"
+    r"integrationTest|functionalTest|e2e|"
     r"javadoc|dokka"
     r")\b"
 )
 
+# Static analysis runs as ordinary tasks, not lifecycle phases, so it needs its
+# own list. The `\w*` tail catches the per-source-set names Gradle derives
+# (`checkstyleMain`, `checkstyleTest`, `spotbugsMain`, `jacocoTestReport`).
+_JVM_ANALYSIS_TASKS = (
+    r"\b("
+    r"checkstyle|spotbugs|pmd|detekt|ktlint|jacoco|sonarqube"
+    r")\w*\b"
+)
+
+# Wrappers are invoked by absolute path as often as by `./`, especially from a
+# git worktree or a parent directory.
+_WRAPPER_PATH = r"(?:\S*/)?"
+
 _NODE_KEYWORDS = (
     r"\b("
-    r"build|test|lint|check|typecheck|tsc|"
-    r"e2e|unit|integration|coverage|"
+    r"build|test|lint|check|typecheck|tsc|tscheck|tsCheck|"
+    r"e2e|unit|integration|coverage|prettier|"
     r"vitest|jest|karma|cypress|playwright"
     r")\b"
 )
@@ -86,13 +104,13 @@ _NX_TARGETS = (
 
 WHITELIST: list[re.Pattern[str]] = [
     # --- Maven / Gradle (JVM) — only on lifecycle phases ---
-    re.compile(rf"^mvn\s+.*{_MVN_GRADLE_PHASES}"),
-    re.compile(rf"^(?:\./)?mvnw\s+.*{_MVN_GRADLE_PHASES}"),
-    re.compile(rf"^gradle\s+.*{_MVN_GRADLE_PHASES}"),
-    re.compile(rf"^(?:\./)?gradlew\s+.*{_MVN_GRADLE_PHASES}"),
+    re.compile(rf"^mvn\s+.*(?:{_MVN_GRADLE_PHASES}|{_JVM_ANALYSIS_TASKS})"),
+    re.compile(rf"^{_WRAPPER_PATH}mvnw\s+.*(?:{_MVN_GRADLE_PHASES}|{_JVM_ANALYSIS_TASKS})"),
+    re.compile(rf"^gradle\s+.*(?:{_MVN_GRADLE_PHASES}|{_JVM_ANALYSIS_TASKS})"),
+    re.compile(rf"^{_WRAPPER_PATH}gradlew\s+.*(?:{_MVN_GRADLE_PHASES}|{_JVM_ANALYSIS_TASKS})"),
 
     # --- Node / JS / TS ---
-    re.compile(rf"^(?:npm|pnpm|yarn)\s+.*{_NODE_KEYWORDS}"),
+    re.compile(rf"^(?:npm|pnpm|yarn|npx)\s+.*{_NODE_KEYWORDS}"),
     # Nx invoked via its own binary or npx. The yarn/npm/pnpm-prefixed forms
     # (`yarn nx test`) already match the node pattern above; these catch the
     # bare `nx test` and `npx nx test` invocations.
@@ -121,6 +139,11 @@ WHITELIST: list[re.Pattern[str]] = [
     # --- Go ---
     re.compile(r"^go\s+(?:build|test|vet|generate)\b"),
     re.compile(r"^golangci-lint(?:\s|$)"),
+
+    # --- Kubernetes ---
+    # Only `logs`. `kubectl get/describe` is usually a short status check the
+    # caller reads directly.
+    re.compile(r"^kubectl\s+logs\b"),
 
     # --- Make / Bazel / generic ---
     re.compile(r"^make(?:\s|$)"),

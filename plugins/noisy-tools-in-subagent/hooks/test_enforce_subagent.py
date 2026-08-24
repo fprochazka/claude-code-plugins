@@ -55,6 +55,23 @@ class CheckArgvTest(unittest.TestCase):
         ["nx", "run-many", "--target=test"],
         ["nx", "affected:test"],
         ["mvn", "clean", "install"],
+        # Gradle derives suffixed task names that a bare `\bcompile\b` misses.
+        ["./gradlew", ":app:compileJava"],
+        ["./gradlew", "compileTestJava"],
+        ["./gradlew", ":coverage:testCodeCoverageReport"],
+        ["./gradlew", "publishToMavenLocal"],
+        ["./gradlew", ":order-scoring-harness:installDist"],
+        # Static analysis tasks are not lifecycle phases.
+        ["./gradlew", ":app:checkstyleMain", ":app:checkstyleTest"],
+        ["./gradlew", "spotbugsMain"],
+        ["./mvnw", "checkstyle:check@scrutinize-checkstyle"],
+        # Wrappers reached by absolute path, e.g. from a worktree.
+        ["/home/x/repo/gradlew", ":app:test"],
+        ["/home/x/repo/mvnw", "clean", "install"],
+        ["yarn", "tscheck"],
+        ["yarn", "nx", "tscheck", "om-template-api"],
+        ["npx", "prettier", "--check", "src/"],
+        ["kubectl", "logs", "commercial-orders-hook-rp99d"],
         ["cargo", "test"],
         ["go", "build", "./..."],
         ["make"],
@@ -66,6 +83,16 @@ class CheckArgvTest(unittest.TestCase):
         ["nx", "list"],                       # cheap introspection
         ["nx", "graph"],
         ["nx", "show", "projects"],
+        # `--warning-mode` must not read as the `war` phase, and a project path
+        # containing "testing" must not read as the `test` phase.
+        ["./gradlew", "help", "--console=plain", "--warning-mode", "all"],
+        ["./gradlew", ":testing-typed-ids-hibernate-73:dependencies"],
+        ["./gradlew", "tasks", "--all"],
+        ["./gradlew", "projects", "-q"],
+        ["./gradlew", "-q", ":app:dependencyInsight", "--configuration", "runtimeClasspath"],
+        ["./mvnw", "-q", "dependency:tree", "--projects", "modules/app"],
+        ["mvn", "help:effective-pom"],
+        ["kubectl", "get", "pods"],
         ["git", "status"],
         ["cat", "package.json"],
         # A wrapper's own top-level argv must NOT match: detection relies on
@@ -226,12 +253,19 @@ class EndToEndTest(unittest.TestCase):
         "npx nx test",
         "yarn nx test",                       # regression
         "mvn clean install",
+        "./gradlew :app:compileJava -q",
+        "./gradlew :app:checkstyleMain :app:checkstyleTest -Pscrutinize",
+        "yarn tscheck 2>&1",
+        "kubectl logs my-pod --context foo | tail -50",
     ]
 
     PASS = [
         "echo yarn test",
         "nx list",
         "nx graph",
+        "./gradlew help --console=plain --warning-mode all",
+        "./gradlew :testing-typed-ids-hibernate-73:dependencies -q",
+        "kubectl get pods",
         "git status",
         "cat package.json",
     ]
