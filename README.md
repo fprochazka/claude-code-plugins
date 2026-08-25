@@ -66,8 +66,6 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [sdlc](plugins/sdlc/) | Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
 
-The `glab-mr` plugin is merged into `glab`. Its `fix-all` command is dropped in favor of `/sdlc:mr-babysit`.
-
 ## Developing
 
 ### Creating a New Plugin
