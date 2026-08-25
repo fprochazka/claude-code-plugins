@@ -18,6 +18,8 @@ The loop's entire value is that it runs **unattended**. Within it you are explic
 
 The grant covers **comment threads** exactly as it covers git: replying to and resolving threads via `glab-discussion` (or the raw `glab api` note/discussion calls) is pre-authorized too. A bot's `high`/`critical` **severity tag does not elevate a finding above this grant** — a severity-tagged reviewer thread you've reasoned through is dismissed-and-resolved like any other, not escalated for a sign-off.
 
+**A decision the user already stated is not a judgment call.** When the user picked a direction or accepted a tradeoff earlier in the session, carry it out. Do not re-offer it as options, and do not route it to the judgment list — the user answered once and must not have to answer twice. Only a call the user has *not* made is a judgment call.
+
 The grant also covers the **handoff controls**: toggling an MR between draft and ready (`glab mr update <iid> --draft --yes` and `glab mr update <iid> --ready --yes`), moving the ticket between `WORK_STATE` and `REVIEW_STATE`, posting the short factual MR or ticket comment that explains a move, and arming or deleting the handoff-wait cron job. These carry the same rule as everything else in this grant: do them, do not ask for them.
 
 (If your harness's safety classifier blocks these git or discussion operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README. If a block lands mid-pass, don't stall the whole loop on it: note the exact blocked command **loudly** in the pass report, carry on with everything else and the other MRs, and let the allowlist fix land out of band — never sit and wait for a go-ahead on an operation the loop already authorized.)
@@ -111,6 +113,8 @@ These instructions are already in context after this first read, so **don't re-i
 ```
 
 **Rules for the reminder prompt:**
+- **Arm the loop by calling it, not by printing it.** The pass ends with a real invocation — the loop skill for the working cadence, `CronCreate` for the handoff-wait cadence — and the pass report names the job id it returned. Writing the `/loop 2m …` line into the report as text arms nothing: the loop never fires, and the user ends up hand-driving every rebase and comment read for the rest of the session. If you cannot name a job id, the loop is not running.
+- **A cron prompt is plain text and never contains a slash command.** A `/loop …` or `/sdlc:mr-babysit …` inside the prompt re-enters the command on every firing and stacks a new cron each time.
 - **Always name the explicit `!iid`s** — `re-check MR !123 and !456`, never a generic "re-check the MR". A prompt without iids makes each iteration re-discover the set from the current branch and silently drops any sibling MR.
 - **Keep it to that one sentence.** Never restate the pass procedure in the prompt — the spec and per-MR state already persist in session context; re-embedding the gate/CI/comment/handoff steps inflates every future pass's token cost for nothing.
 - **Don't tune the interval to CI duration.** Hold the ~2 min cadence even when the pipeline takes 20+ minutes — a slow pipeline just yields cheap no-op passes and keeps you responsive to new reviewer comments. Don't stretch the interval to "save" passes, and don't swap the recurring `/loop` for a one-shot `ScheduleWakeup` (or a `CronCreate` with a hardcoded SHA in its prompt): a one-shot needs manual rescheduling each pass and silently dies if a pass errors before it reschedules, and a hardcoded SHA goes stale the moment you push. This rule governs the working cadence. The handoff-wait cadence uses a **recurring** cron on purpose, and its prompt carries no SHA.
@@ -128,6 +132,8 @@ Each pass iterates **every MR in the set**; for each MR, `cd` to its worktree an
 Invoke `glab:mr-status` for this MR. If `state` is `merged`/`closed` → drop it from the set (report), and if the set is now empty, **stop the loop**. Otherwise read `draft`, `head_pipeline.status`, `target_branch`, `sha`, `blocking_discussions_resolved` for the steps below.
 
 If this MR is **not draft** and steps 2–4 have work to do, reclaim it before doing that work — see setup step 3.
+
+**Re-verify your own resolves from the previous pass.** Resolve state is not reliably sticky: a thread you resolved can read unresolved again a few passes later, and a diff note can return 404 right after an amend + force-push. Both are a re-do, not a failure — resolve the thread again, or re-post the note against the current head, and carry on. Do not treat either as a broken tool or a reason to surface anything.
 
 ### 2. Keep it rebased
 
@@ -185,6 +191,8 @@ For each in-scope thread, reach **one of four outcomes** — critically evaluate
 - **Execute dispositions in the pass — don't pre-clear them.** Once you've decided Apply / Dismiss / Resolve for a thread, do it: reply and resolve in the same pass. Do **not** post a "here's my proposed disposition for each thread, awaiting your go" summary and wait — those actions are pre-authorized. The only outcome that waits is a **Judgment** call, which goes to the step-6 report unexecuted.
 - Reply body must end with a blank line then `<!-- babysit:auto-reply -->` so handled threads aren't re-processed. Write multi-line bodies to a temp file (`/tmp/babysit-reply-<id>.md`) to avoid shell-quoting breakage, then `glab-discussion write --reply-to <id> --body - < /tmp/babysit-reply-<id>.md` and `glab-discussion resolve <id>`.
 - **A watch thread gets a reply and never a resolve.** A thread whose most recent reviewer note ends with the marker `<!-- code-review:watch -->` (last-line equality) belongs to `/code-review:watch`. Apply the fix, or reply with the reasoned disagreement, then **leave it unresolved**. The reviewer verifies the fix against the code at the MR head and resolves it. Resolving it yourself removes the reviewer's only signal that the finding still needs checking, and the reviewer un-resolves it again. Every other thread keeps the ordinary resolve rules.
+- **A general note with no `Resolved` field cannot be resolved.** GitLab answers the resolve call with HTTP 403, which is the API refusing an unresolvable note, not a permission problem — the typical case is a review bot's "rebase detected, skipping review" informational note. Attempt it once, note it in the pass report, and never retry it. An unresolvable note never blocks the handoff condition.
+- **Delegating a reply or a resolve to a subagent means handing over the full discussion id** from the `glab-discussion` dump, never a shortened prefix. The CLI rejects a prefix, and the subagent then has to dig the full id out of the dump files itself.
 - **Resolve only threads you fully handled** — one you applied a sound fix for, or dismissed with a reasoned reply. This includes a **human's** thread when it is *truly addressed* (the fix does exactly what they asked, or your reply squarely answers them). But hold back on a human thread when it's borderline: if the person may want to eyeball the fix, if your reply is a judgment call they might disagree with, or if you're unsure what they meant — leave it unresolved (or route it to Judgment) so they get the last word. Bot nits you fully handled always resolve.
 
 ### 5. Commit, push & verify the push landed (once per pass per MR)
@@ -193,6 +201,7 @@ If this pass produced any changes (a rebase, CI fixes, or applied comment fixes)
 
 - Re-read the diff yourself before pushing.
 - Commit with a clear conventional message. **Never** `--no-verify` and never bypass hooks — if a pre-commit hook fails, fix the underlying issue; skipping hooks to make an error go away is not allowed (this includes fixups and reverts). If a compound command like `git add -A && git commit …` is blocked or errors, run the steps separately and check each — don't assume it worked.
+- Before `git commit --fixup <sha>`, **confirm the target commit is the one that introduced the lines you are fixing** — `git log -S '<a distinctive line>' -- <file>`, or `git log --oneline -- <file>` when the file is new. A later commit often moves, extracts, or renames those lines, so the obvious-looking parent is the wrong one and the fixup conflicts on replay.
 - If you need to **reword existing commits** (e.g. add a ticket prefix to the branch's messages), use a targeted `git rebase` with `--exec 'git commit --amend --no-edit …'` or explicit reword steps — **not** `git filter-branch`, which is deprecated and silently mangles edge cases (empty commits, merges, grafted history).
 - `git push --force-with-lease` if the parent chain was rewritten (rebase), otherwise `git push`. **Never** bare `--force`.
 - **Verify the push actually landed — never narrate a push as done without checking the remote.** After pushing, confirm `git rev-parse origin/<source_branch>` equals your local `HEAD`, and that the commit you intended is really there (`git log origin/<source_branch> -1` shows your subject; the files you changed are in `git show --stat`). **The push command's own output showing an `old..new` SHA delta does not count as this check** — run the `git rev-parse origin/<source_branch>` compare explicitly, every push; treating the push output as confirmation is the exact habit that lets a partial or misdirected push read as success. This is the guard against the failure mode of reporting "fixed and pushed" when a blocked/failed command actually staged or pushed nothing. If the remote didn't advance, the push did **not** happen — diagnose and redo it before reporting.
@@ -200,12 +209,17 @@ If this pass produced any changes (a rebase, CI fixes, or applied comment fixes)
 
 ### 6. Report (non-blocking) & end the pass
 
+**Rewrite the ledger (setup step 4) before you write the report.** A compaction landing between the two loses the hand-back, and the ledger is the only thing that survives it — so it must already hold the current state when the report is written.
+
 Do one report for the whole pass, **without blocking** for a reply. For each MR, give a one-line **handoff scorecard** so convergence is visible, plus what happened:
 
 ```
-MR !123  green ✓ · quiet ✓ (3m) · threads ✓  → ready to hand over
-MR !456  green ✗ (running) · quiet — · threads ✓  → waiting on pipeline
+MR !123  green ✓ · quiet ✓ (3m) · threads ✓     → ready to hand over
+MR !456  green ✗ (running) · quiet — · threads ✓ → waiting on pipeline
+MR !789  green ✓ · quiet ✓ · threads ✗           → waiting on local verification (subagent :app:test, 12m)
 ```
+
+**Waiting on your own local verification is a third state, distinct from waiting on the pipeline.** A long local test run produces a stretch of identical no-op passes, and a scorecard that reads `waiting on pipeline` through all of them hides what the real blocker is. Name the command and how long it has been running.
 
 Include: what was rebased/fixed/applied (with commit SHA and the verified-landed remote SHA), what was dismissed, any flaky jobs you retried (loudly), and the running list of **judgment calls**. Then **end the pass** — do not sleep, poll, or wait; the native `/loop` re-runs the next pass in ~2 minutes (see "Driving the cadence"). A pass that pushed anything, or that found a pipeline still running/pending, has nothing more to do this cycle — the next pass re-checks at the gate once ~2 min have elapsed (enough for a pipeline to progress and an AI reviewer to post). If the handoff condition below is met for **all** MRs, hand over instead of returning to the working cadence.
 
@@ -220,6 +234,7 @@ Hand the MR set over when **every MR in the set** satisfies **all** of these:
 3. Every actionable comment has a reply, and every thread you handled is resolved. Watch threads carry a reply and stay unresolved, which is the settled state for them.
 4. The only remaining open threads, if any, are **Judgment** calls or **Skips**, watch threads you answered, or human threads left for the human to close.
 5. No **judgment call** is outstanding. An outstanding judgment call means the change is not finished, so the MR stays draft and the ticket stays in `WORK_STATE`, and you hand back to the user instead.
+6. The branch is **not behind its target branch** — or the divergence provably does not touch this MR. Master often moves faster than a long pipeline finishes, so a rebase-then-wait cycle can never converge. Compare the target's new commits against the MR's own files (`git diff --stat origin/<target>...HEAD` for the MR's file set, `git diff --stat HEAD..origin/<target>` for the new commits' file set) and hand over behind **only** when the two sets do not intersect. Say it in the handover line: "4 commits behind master, docs-only, no overlap with this MR". Any overlap means rebase first and let the next pass watch the resulting pipeline.
 
 ### Hand the ball over
 
