@@ -33,7 +33,7 @@ The subagent must:
 - **Dump all findings into `./.claude/plans/pre-plan-<ticket-slug>-ticket.md`** (create the directory if missing) as a single markdown file. Include: full ticket content (title, description, all comments verbatim or near-verbatim where they carry real information), summarized linked context per link, a list of every concrete code/file/system reference found, and a list of any unresolved questions or ambiguities spotted in the ticket.
 - **Return ONLY the path to that file** (plus a 2-3 sentence high-level gist). Do NOT inline the full dump into the subagent's reply — the orchestrator will read the file as needed.
 
-The subagent prompt must open with a skill-load instruction so it doesn't waste turns guessing CLI syntax. Name the skill that covers the issue tracker in use — whatever is installed for Linear, Jira, GitHub, GitLab, and so on: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
+The subagent prompt must open with a skill-load instruction so it doesn't waste turns guessing CLI syntax. Resolve the tracker with the `sdlc:team-workflow-identify` skill first, then name the installed skill that covers that tracker: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
 
 Do the same for every other system the subagent has to read. If the ticket links to chat threads, add the instruction for the chat tool's skill as well.
 

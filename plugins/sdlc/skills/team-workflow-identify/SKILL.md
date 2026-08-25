@@ -14,10 +14,10 @@ The output is the block in "Output contract" below. Print it, and the calling co
 
 The order is fixed. Do not skip ahead.
 
-1. **Context already loaded.** `CLAUDE.md`, `AGENTS.md`, and any memory file already in context. These are free to read and they are the place a team writes its own conventions down. Grep them before anything else:
+1. **Context already loaded.** `CLAUDE.md`, `AGENTS.md`, everything they pull in through `@` includes, and any memory already in context. These are free to read and they are the place a team writes its own conventions down. Search the context you already hold first — a `CLAUDE.md` that is a single `@README.md` line answers nothing on disk while its included content sits in your context. Grep the files on disk as a supplement, and follow every `@` include you find:
 
    ```bash
-   grep -rniE 'linear|jira|gitlab issue|github issue|team (key|id)|status|workflow|ticket|branch nam' CLAUDE.md AGENTS.md 2>/dev/null | head -30
+   grep -rniE 'linear|jira|gitlab issue|github issue|team (key|id)|status|workflow|ticket|branch nam|^@' CLAUDE.md AGENTS.md 2>/dev/null | head -30
    ```
 
 2. **The repo `README.md`.** Many repos repeat the tracker facts there.
@@ -66,7 +66,7 @@ If a recorded value and the tracker API disagree — a different team id, a stat
 ## Gotchas
 
 - **Read the top-level status field on an issue payload.** In Linear, nested `state` blocks belong to sub-issues. Reading one mixes a sub-issue's status into the parent's.
-- **Load the project's tracker skill for command syntax** — for example `linear-mcp-cli` for Linear, `glab` for GitLab issues, `gh` for GitHub issues. The exact commands live in those skills, never here.
+- **Load the skill that matches the resolved tracker for command syntax.** Once this skill has named the tracker, look through the installed skills for the one that covers it and invoke it before the first tracker call. The exact commands live in that skill, never here.
 - **No tracker is a valid answer.** Report `tracker: none` and let the caller fall back. `/code-review:watch`, for example, paces itself on the MR head SHA instead of a ticket status.
 
 ## Output contract
@@ -79,7 +79,7 @@ team: <name> (<key>, <id>)
 ticket pattern: <regex or example>
 branch convention: <pattern or none>
 WORK_STATE: <name>   REVIEW_STATE: <name>   DEPLOY_STATE: <name|none>   terminal: <names>
-source: <CLAUDE.md path | AGENTS.md path | README.md | API + persisted to <where>>
+source: <every file that answered, comma-separated | API + persisted to <where>>
 ```
 
-The `source` line matters as much as the values. It tells the user whether the run trusted a recorded convention or went to the API, and where a fresh answer landed.
+The `source` line matters as much as the values. It tells the user whether the run trusted a recorded convention or went to the API, and where a fresh answer landed. When two files answered and agreed, list both. When they disagree, the run has already stopped under "Disagreement stops the run".

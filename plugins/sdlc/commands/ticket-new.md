@@ -58,7 +58,7 @@ Short, imperative, specific (e.g., "Add retry logic to payment webhook handler")
 
 ## Creating the ticket
 
-Spawn one subagent to resolve the identifiers and create the ticket. Its prompt must open with a skill-load instruction naming the skill for the issue tracker in use — Linear, Jira, GitHub, GitLab, whatever is installed: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
+Spawn one subagent to resolve the identifiers and create the ticket. Its prompt must open with a skill-load instruction naming the installed skill that covers the tracker resolved by `sdlc:team-workflow-identify`: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
 
 Give the subagent:
 
