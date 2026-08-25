@@ -16,6 +16,8 @@ Prefer `glab-discussion read --dump` for all comment data. It writes one file pe
 
 **Read the latest summary verdict per reviewer, plus the count of currently unresolved threads. Never infer "this MR has problems" from the presence of historical finding notes.** A reviewer can post major findings on Monday, see them fixed on Tuesday, and post a clean summary on Wednesday. The old notes stay in the thread list forever. Counting them as live problems produces a false "found issues" status. Exactly two signals are authoritative: the newest summary verdict per reviewer, and the number of threads whose header says `Resolved: no`.
 
+**Finding the newest verdict is not the same as finding the newest thread.** A reviewer keeps its summary in one thread and either edits that note or appends to it, so the summary thread is usually one of the oldest on the MR while it holds the freshest verdict. Sorting threads by their timestamp and reading the newest one therefore returns a finding note, and reading a thread from the top returns round one of a summary rewritten many times since. Locate the reviewer's summary thread by kind, then read its **last** note. `references/gitlab-commands.md` §5 has the recipe.
+
 ## Inputs
 
 Normalize every MR reference to `<repo-path>!<iid>`:
@@ -36,20 +38,21 @@ A set of MRs can span repos. One change often needs an MR in the service repo an
 6. **Approvals** — who approved, and how many approvals are still required.
 7. **Size** — added and removed lines, and the file count. A reader needs the scale of the change.
 8. **AI reviewers** — one entry per reviewer found on the MR. See the next section.
-9. **Human review** — did a real person open a thread or comment? Exclude every AI reviewer identity. **Separate reviewer threads from the MR author's own comments.** Authors post acceptance reports and self-notes, and those are not review. Count resolved and unresolved separately. Human approvals come from the approvals endpoint, not from the threads.
+9. **Human review** — did a real person open a thread or comment? Exclude every AI reviewer identity. **Separate reviewer threads from the MR author's own comments.** Authors post acceptance reports and self-notes, and those are not review. Count resolved and unresolved separately. **Count who wrote notes, not only who opened threads.** A reviewer who never opens a thread but argues inside an AI reviewer's threads is invisible to a per-thread-author count, and that reply is often the most substantive review on the MR. Human approvals come from the approvals endpoint, not from the threads.
 10. **Merge gate** — what blocks the merge right now: red CI, draft status, unresolved threads, conflicts, a missing approval, a blocking review. And **whose court the ball is in**: the author fixes, rebases or replies, or the reviewer reviews and approves.
 
 Be economical. Filter threads by author and by resolved state before reading bodies. Read a full note only to get the verdict text out of it.
 
 ## AI reviewers — profile each one, assume nothing
 
-An MR carries zero, one, or several AI reviewers, and they do not behave alike. Identify each reviewer present on the MR at hand, then derive its behavior from its own threads before reading any verdict. Answer five questions per reviewer.
+An MR carries zero, one, or several AI reviewers, and they do not behave alike. Identify each reviewer present on the MR at hand, then derive its behavior from its own threads before reading any verdict. Answer six questions per reviewer.
 
 1. **What does it post?** Inline finding threads, one summary comment, or both.
 2. **How does it maintain the summary?** Updated in place, or re-posted once per pass. This decides where the latest verdict lives — the newest note by that author that carries a verdict, or the single edited note.
 3. **Does it post non-verdict notes?** Some reviewers post an acknowledgement, or a "review skipped, no code change since the last pass" note after a rebase. Those are not verdicts. Walk back to the newest note that carries a real one.
 4. **Does it read replies?** A reviewer that reads replies and interacts with threads turns an unresolved thread with a substantive human reply into an active dialogue, not a missed finding. A reviewer that does not read replies makes a reply worth nothing — the finding clears only when the code or the documentation changes and a human then resolves the thread. Getting this backwards either invents a blocker or hides one.
-5. **How do you identify it?** By `author.name`, by the username, or by a `[BOT]` marker in the dump. **Record the exact string observed on this MR.** A service-account username can be an opaque hash, and the `author.bot` flag is not reliably set. Match on what you saw, never on what you expected.
+5. **How do you identify it?** By `author.name`, by the username, or by a `[BOT]` marker in the dump. **Record the exact string observed on this MR.** A service-account username can be an opaque hash, the `author.bot` flag is not reliably set, and a reviewer can post through an account carrying no marker at all. A marker-only search reports an MR as unreviewed while a bot verdict sits in its thread list, so cross-check the thread authors against the MR author and the assigned humans as well. Match on what you saw, never on what you expected.
+6. **Does the verdict name the commit it reviewed?** When it does, compare that commit with the current head, exactly as item 5 of the data list does for the pipeline. **A verdict on a superseded head is stale evidence, not the current state of the MR.** A reviewer that names no commit gives a verdict that cannot be dated against the head at all — say so instead of treating it as current.
 
 ### Persist the profile
 
@@ -65,6 +68,7 @@ posts: inline findings + one summary comment
 summary: re-posted per pass — take the newest note that carries a verdict line
 non-verdict notes: "review skipped, head unchanged" after a rebase
 reads replies: no — a finding clears by a code change plus a manual resolve
+verdict names its head: yes — trailing "reviewed <short-sha>", compare it with the current head
 verdict vocabulary: "Ready to merge" / "Needs work" / "No blocking findings"
 ```
 
