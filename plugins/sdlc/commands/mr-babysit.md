@@ -12,11 +12,13 @@ This command is the **author** side of an MR. It is the mirror image of `/code-r
 
 ## Autonomy — you are pre-authorized; pausing to ask is a failure
 
-**This command intentionally runs at maximum autonomy, and for the duration of the loop that supersedes your usual defaults.** Standing guidance you'd normally follow — global/project `CLAUDE.md` ("be restrained about implementing", "outline a plan and wait for my OK"), the general "confirm hard-to-reverse or outward-facing actions first" default — is **deliberately overridden inside the babysit loop** for the pre-authorized operations below. You already have the OK: the user invoked babysit precisely so these run unattended, and re-asking for it defeats the command. This override is **scoped**: it applies only to the named operations, only until the loop hands back, and it never extends to the explicit halt conditions under [Termination](#termination) — a genuine product/design decision, an unresolvable conflict, or a cap hit still stop and ask. Normal caution resumes the moment the loop ends.
+**This command intentionally runs at maximum autonomy, and for the duration of the loop that supersedes your usual defaults.** Standing guidance you'd normally follow — global/project `CLAUDE.md` ("be restrained about implementing", "outline a plan and wait for my OK"), the general "confirm hard-to-reverse or outward-facing actions first" default — is **deliberately overridden inside the babysit loop** for the pre-authorized operations below. You already have the OK: the user invoked babysit precisely so these run unattended, and re-asking for it defeats the command. This override is **scoped**: it applies only to the named operations, only until the loop hands back, and it never extends to the explicit halt conditions under [Stopping instead of handing over](#stopping-instead-of-handing-over) — a genuine product/design decision, an unresolvable conflict, or a cap hit still stop and ask. Normal caution resumes the moment the loop ends.
 
-The loop's entire value is that it runs **unattended**. Within it you are explicitly authorized to `git rebase`, `git push --force-with-lease`, `git push`, retry CI jobs, and reply-to / resolve threads **without stopping to ask** — doing exactly these is the job, not a risk to escalate. Do **not** pause mid-loop for permission to force-push, rebase, or push; that defeats the purpose and is itself a failure of the loop. Stop and hand back **only** for the explicit halt conditions under [Termination](#termination) — a genuine product/design decision, an unresolvable conflict, or a cap hit. Everything else, just do.
+The loop's entire value is that it runs **unattended**. Within it you are explicitly authorized to `git rebase`, `git push --force-with-lease`, `git push`, retry CI jobs, and reply-to / resolve threads **without stopping to ask** — doing exactly these is the job, not a risk to escalate. Do **not** pause mid-loop for permission to force-push, rebase, or push; that defeats the purpose and is itself a failure of the loop. Stop and hand back **only** for the explicit halt conditions under [Stopping instead of handing over](#stopping-instead-of-handing-over) — a genuine product/design decision, an unresolvable conflict, or a cap hit. Everything else, just do.
 
 The grant covers **comment threads** exactly as it covers git: replying to and resolving threads via `glab-discussion` (or the raw `glab api` note/discussion calls) is pre-authorized too. A bot's `high`/`critical` **severity tag does not elevate a finding above this grant** — a severity-tagged reviewer thread you've reasoned through is dismissed-and-resolved like any other, not escalated for a sign-off.
+
+The grant also covers the **handoff controls**: toggling an MR between draft and ready (`glab mr update <iid> --draft --yes` and `glab mr update <iid> --ready --yes`), moving the ticket between `WORK_STATE` and `REVIEW_STATE`, posting the short factual MR or ticket comment that explains a move, and arming or deleting the handoff-wait cron job. These carry the same rule as everything else in this grant: do them, do not ask for them.
 
 (If your harness's safety classifier blocks these git or discussion operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README. If a block lands mid-pass, don't stall the whole loop on it: note the exact blocked command **loudly** in the pass report, carry on with everything else and the other MRs, and let the allowlist fix land out of band — never sit and wait for a go-ahead on an operation the loop already authorized.)
 
@@ -49,9 +51,11 @@ State the resolved set back to the user as the **very first line of pass 1, befo
 
 ### 2. Record each MR and run safety checks
 
-For **each** MR in the set, record its **repo/worktree path** and fetch metadata via `glab mr view --output=json` (run from that worktree, or with `-R <project>`): `iid`, `state`, `web_url`, `source_branch`, `target_branch`, `sha`, `head_pipeline` (`status`/`id`/`web_url`), `blocking_discussions_resolved`.
+For **each** MR in the set, record its **repo/worktree path**, then invoke the `glab:mr-status` skill to read that MR's state (run from that worktree, or with the repo named explicitly). Carry these fields: `iid`, `state`, `draft`, `web_url`, `source_branch`, `target_branch`, `sha`, `head_pipeline` (`status`/`id`/`web_url`), `blocking_discussions_resolved`.
 
-> Don't assume the output format — a token-reducing proxy in front of `glab` (e.g. [`rtk`](https://github.com/rtk-ai/rtk)) can reshape or compress it, so `--output=json` may not come back as JSON. Rather than blindly probing format variations, run the metadata command **once, unfiltered**, read the actual output, and derive from that how to pull the fields you need on every following call. (`glab api "projects/:id/merge_requests/<iid>"` returns raw JSON if you want a clean source.)
+Record `draft` on **every** read of an MR, here and at each pass gate. It is one half of the handshake in setup step 3, and a pass that forgets it hands the ball over with the wrong signal.
+
+> Don't assume the output format of any `glab` call — a token-reducing proxy in front of `glab` (e.g. [`rtk`](https://github.com/rtk-ai/rtk)) can reshape or compress it, so `--output=json` may not come back as JSON. Rather than blindly probing format variations, run a command **once, unfiltered**, read the actual output, and derive from that how to pull the fields you need on every following call. (`glab api "projects/:id/merge_requests/<iid>"` returns raw JSON if you want a clean source.)
 
 Then, per MR, **refuse and drop it from the set (report why) if any safety check fails:**
 - Its source branch is checked out in its worktree (`git branch --show-current` equals `source_branch`). Never auto-checkout a different branch.
@@ -60,9 +64,45 @@ Then, per MR, **refuse and drop it from the set (report why) if any safety check
 
 Drop any MR whose `state` is `merged`/`closed`. If the set is empty after this, report and stop.
 
+### 3. Resolve the ticket and its workflow states
+
+Invoke the `sdlc:team-workflow-identify` skill and carry its output block for the whole run. It names the tracker, the ticket ID pattern, and the state names this command moves the ticket between. Then load the installed skill that covers the resolved tracker — that skill holds the command syntax, and this command names no tracker CLI of its own.
+
+Take the ticket from the MR title, the branch name, or the MR description, using the ticket pattern from the block. Several MRs in the set usually share one ticket.
+
+**The handshake invariant.** Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together. Whoever hands the ball over sets both.
+
+`/code-review:watch` is the other half of that handshake. It reads both flags before it reviews, so a half-set handshake either starts a review of work in progress or leaves a finished MR unreviewed.
+
+**Reclaim an MR that is not draft while work is pending.** At setup, and again at each pass gate, an MR that is **not draft** while this pass has work to do — behind its target branch, red pipeline, or open in-scope threads — is claimed back before that work starts:
+
+```bash
+glab mr update <iid> --draft --yes
+```
+
+Move the ticket to `WORK_STATE` in the same step, and post one MR comment stating the reason in one line (for example "taken back to draft: pipeline is red on `<sha>`"). State the fact and nothing else — promise no fix, no timeline, and no follow-up.
+
+If the block says `tracker: none`, or no ticket is identifiable, the handshake **degrades to the draft flag alone**. Everything below still runs, and every ticket move is skipped rather than faked.
+
+### 4. Write the babysit ledger
+
+Write `./.claude/review-report/<topic>.babysit.md`, and rewrite it at the end of every pass. It holds only what must survive a context compaction or a fresh cron firing — the working state stays in session context.
+
+```markdown
+# Babysit ledger: <topic> (MR !<iid>, !<iid>)
+
+- MRs: <repo!iid — worktree path — draft yes|no> (one line each)
+- Ticket: <TICKET-ID> (<url>) — handshake: ticket+draft | draft-only
+- Work state: <WORK_STATE> · Review state: <REVIEW_STATE>
+- Mode: working (`/loop` 2m) | handoff-wait (cron <id>)
+- Last pass: <UTC timestamp>
+```
+
 ## Driving the cadence
 
 **Do not sleep, poll, or wait inside a pass, and do not use the Monitor tool.** Run **exactly one pass** (covering every MR in the set), then return. Re-running every ~2 minutes is delegated to the native `/loop`.
+
+The command runs at **two cadences**. This section describes the **working cadence** — a `/loop` every ~2 minutes while there is anything to rebase, fix, or answer. Once every MR is handed over, the loop switches to the slower **handoff-wait cadence** under [Handoff](#handoff).
 
 These instructions are already in context after this first read, so **don't re-invoke the whole command** each cycle — that re-injects the entire spec for nothing. Instead kick off the loop with a lightweight reminder prompt naming the MRs:
 
@@ -72,12 +112,12 @@ These instructions are already in context after this first read, so **don't re-i
 
 **Rules for the reminder prompt:**
 - **Always name the explicit `!iid`s** — `re-check MR !123 and !456`, never a generic "re-check the MR". A prompt without iids makes each iteration re-discover the set from the current branch and silently drops any sibling MR.
-- **Keep it to that one sentence.** Never restate the pass procedure in the prompt — the spec and per-MR state already persist in session context; re-embedding the gate/CI/comment/termination steps inflates every future pass's token cost for nothing.
-- **Don't tune the interval to CI duration.** Hold the ~2 min cadence even when the pipeline takes 20+ minutes — a slow pipeline just yields cheap no-op passes and keeps you responsive to new reviewer comments. Don't stretch the interval to "save" passes, and don't swap the recurring `/loop` for a one-shot `ScheduleWakeup` (or a `CronCreate` with a hardcoded SHA in its prompt): a one-shot needs manual rescheduling each pass and silently dies if a pass errors before it reschedules, and a hardcoded SHA goes stale the moment you push.
+- **Keep it to that one sentence.** Never restate the pass procedure in the prompt — the spec and per-MR state already persist in session context; re-embedding the gate/CI/comment/handoff steps inflates every future pass's token cost for nothing.
+- **Don't tune the interval to CI duration.** Hold the ~2 min cadence even when the pipeline takes 20+ minutes — a slow pipeline just yields cheap no-op passes and keeps you responsive to new reviewer comments. Don't stretch the interval to "save" passes, and don't swap the recurring `/loop` for a one-shot `ScheduleWakeup` (or a `CronCreate` with a hardcoded SHA in its prompt): a one-shot needs manual rescheduling each pass and silently dies if a pass errors before it reschedules, and a hardcoded SHA goes stale the moment you push. This rule governs the working cadence. The handoff-wait cadence uses a **recurring** cron on purpose, and its prompt carries no SHA.
 - **If the set changes mid-session** (the user names an additional MR), update the running loop prompt to name **all** MRs — don't rebase/push the newcomer once and move on; it needs the same periodic gate cadence, or its pipeline goes unwatched for the rest of the session.
 - **Never end a pass by asking "should I continue?"** If anything is still pending — pipeline running, threads open, a push just landed — the correct move is to *stay in the loop*: emit/keep the `/loop 2m …` and let the next pass re-check. Presenting options or waiting for a go-ahead to run the next pass is the same autonomy failure as pausing mid-pass.
 
-Session context persists across iterations, so the full pass procedure plus per-MR state (CI/flaky attempt caps, oscillation tracking, the judgment list) carries over without any on-disk state. Because the gate (step 1) re-checks pipeline status and new comments on every pass, "wait for the pipeline, then give an AI reviewer a couple of minutes" happens *naturally across passes*: a pass that finds the pipeline still running just does nothing actionable and returns, and a later pass picks it up once it's green. When the termination condition is met, tell the loop to stop.
+Session context persists across iterations, so the full pass procedure plus per-MR state (CI/flaky attempt caps, oscillation tracking, the judgment list) carries over. The ledger from setup step 4 holds only the handful of facts that must outlive a compaction or a fresh cron firing. Because the gate (step 1) re-checks pipeline status and new comments on every pass, "wait for the pipeline, then give an AI reviewer a couple of minutes" happens *naturally across passes*: a pass that finds the pipeline still running just does nothing actionable and returns, and a later pass picks it up once it's green. When the handoff condition is met, stop the `/loop` and switch to the handoff-wait cadence.
 
 ## The loop — one pass
 
@@ -85,7 +125,9 @@ Each pass iterates **every MR in the set**; for each MR, `cd` to its worktree an
 
 ### 1. Gate
 
-`glab mr view --output=json` for this MR. If `state` is `merged`/`closed` → drop it from the set (report), and if the set is now empty, **stop the loop**. Otherwise read `head_pipeline.status`, `target_branch`, `sha`, `blocking_discussions_resolved` for the steps below.
+Invoke `glab:mr-status` for this MR. If `state` is `merged`/`closed` → drop it from the set (report), and if the set is now empty, **stop the loop**. Otherwise read `draft`, `head_pipeline.status`, `target_branch`, `sha`, `blocking_discussions_resolved` for the steps below.
+
+If this MR is **not draft** and steps 2–4 have work to do, reclaim it before doing that work — see setup step 3.
 
 ### 2. Keep it rebased
 
@@ -142,6 +184,7 @@ For each in-scope thread, reach **one of four outcomes** — critically evaluate
 **Comment rules:**
 - **Execute dispositions in the pass — don't pre-clear them.** Once you've decided Apply / Dismiss / Resolve for a thread, do it: reply and resolve in the same pass. Do **not** post a "here's my proposed disposition for each thread, awaiting your go" summary and wait — those actions are pre-authorized. The only outcome that waits is a **Judgment** call, which goes to the step-6 report unexecuted.
 - Reply body must end with a blank line then `<!-- babysit:auto-reply -->` so handled threads aren't re-processed. Write multi-line bodies to a temp file (`/tmp/babysit-reply-<id>.md`) to avoid shell-quoting breakage, then `glab-discussion write --reply-to <id> --body - < /tmp/babysit-reply-<id>.md` and `glab-discussion resolve <id>`.
+- **A watch thread gets a reply and never a resolve.** A thread whose most recent reviewer note ends with the marker `<!-- code-review:watch -->` (last-line equality) belongs to `/code-review:watch`. Apply the fix, or reply with the reasoned disagreement, then **leave it unresolved**. The reviewer verifies the fix against the code at the MR head and resolves it. Resolving it yourself removes the reviewer's only signal that the finding still needs checking, and the reviewer un-resolves it again. Every other thread keeps the ordinary resolve rules.
 - **Resolve only threads you fully handled** — one you applied a sound fix for, or dismissed with a reasoned reply. This includes a **human's** thread when it is *truly addressed* (the fix does exactly what they asked, or your reply squarely answers them). But hold back on a human thread when it's borderline: if the person may want to eyeball the fix, if your reply is a judgment call they might disagree with, or if you're unsure what they meant — leave it unresolved (or route it to Judgment) so they get the last word. Bot nits you fully handled always resolve.
 
 ### 5. Commit, push & verify the push landed (once per pass per MR)
@@ -157,26 +200,70 @@ If this pass produced any changes (a rebase, CI fixes, or applied comment fixes)
 
 ### 6. Report (non-blocking) & end the pass
 
-Do one report for the whole pass, **without blocking** for a reply. For each MR, give a one-line **termination scorecard** so convergence is visible, plus what happened:
+Do one report for the whole pass, **without blocking** for a reply. For each MR, give a one-line **handoff scorecard** so convergence is visible, plus what happened:
 
 ```
-MR !123  green ✓ · quiet ✓ (3m) · threads ✓  → done
+MR !123  green ✓ · quiet ✓ (3m) · threads ✓  → ready to hand over
 MR !456  green ✗ (running) · quiet — · threads ✓  → waiting on pipeline
 ```
 
-Include: what was rebased/fixed/applied (with commit SHA and the verified-landed remote SHA), what was dismissed, any flaky jobs you retried (loudly), and the running list of **judgment calls**. Then **end the pass** — do not sleep, poll, or wait; the native `/loop` re-runs the next pass in ~2 minutes (see "Driving the cadence"). A pass that pushed anything, or that found a pipeline still running/pending, has nothing more to do this cycle — the next pass re-checks at the gate once ~2 min have elapsed (enough for a pipeline to progress and an AI reviewer to post). If the termination condition below is met for **all** MRs, stop the loop instead of returning.
+Include: what was rebased/fixed/applied (with commit SHA and the verified-landed remote SHA), what was dismissed, any flaky jobs you retried (loudly), and the running list of **judgment calls**. Then **end the pass** — do not sleep, poll, or wait; the native `/loop` re-runs the next pass in ~2 minutes (see "Driving the cadence"). A pass that pushed anything, or that found a pipeline still running/pending, has nothing more to do this cycle — the next pass re-checks at the gate once ~2 min have elapsed (enough for a pipeline to progress and an AI reviewer to post). If the handoff condition below is met for **all** MRs, hand over instead of returning to the working cadence.
 
-## Termination
+## Handoff
 
-**Stop the loop and hand back to the user** when **every MR in the set** satisfies **all** of these:
+### The handoff condition
 
-1. The pipeline is **green** (`head_pipeline.status == "success"`).
+Hand the MR set over when **every MR in the set** satisfies **all** of these:
+
+1. The pipeline is **green** (`head_pipeline.status == "success"`). `canceled`, `manual` and `skipped` are not green.
 2. It has been **≥2 minutes quiet** since the pipeline finished — no new comments have appeared (gives an AI reviewer time to weigh in on the final commit).
-3. Every actionable comment has a reply, and every thread you handled is resolved.
-4. The only remaining open threads, if any, are **Judgment** calls or **Skips** (or human threads left for the human to close).
+3. Every actionable comment has a reply, and every thread you handled is resolved. Watch threads carry a reply and stay unresolved, which is the settled state for them.
+4. The only remaining open threads, if any, are **Judgment** calls or **Skips**, watch threads you answered, or human threads left for the human to close.
+5. No **judgment call** is outstanding. An outstanding judgment call means the change is not finished, so the MR stays draft and the ticket stays in `WORK_STATE`, and you hand back to the user instead.
 
-On termination, present a final summary: the per-MR scorecard, what you did, each MR's state, and — as a clear list — every **judgment call** you deferred (thread location + quoted comment + your suggested reply or change), and ask the user how to proceed. The loop stopping is normal and expected once green+quiet — don't keep re-running "just in case."
+### Hand the ball over
 
-**Also stop early** (report and hand back) on any of: all MRs merged/closed; a rebase conflict that encodes a genuine product/design decision (mechanical conflicts you resolve yourself); a CI failure surfaced as judgment-heavy, or a fixable failure (or a flaky job) that hit its 2-attempt cap and is still red; a reply/resolve that kept failing after a retry; or oscillation (this pass's fix contradicting last pass's). A halt on one MR doesn't have to halt the others — keep babysitting the rest and report the one that needs you.
+Set both halves of the handshake. Mark every MR in the set ready:
+
+```bash
+glab mr update <iid> --ready --yes
+```
+
+Move the ticket to `REVIEW_STATE` **once**, when every MR on that ticket qualifies. One MR going green while its sibling is still red is not a handover — the reviewer would read a half-finished change. Post one short MR comment per MR saying it is ready and what the last pass changed. State facts only, and promise nothing.
+
+Then update the ledger and **do not stop**. The reviewer now has the ball, and the reviewer hands it back through the same two flags.
+
+### The handoff-wait cadence
+
+Delete the 2-minute `/loop` and arm a recurring `CronCreate` every 30 minutes on an off-minute, so the fleet does not synchronize:
+
+- `cron`: `"13,43 * * * *"`
+- `recurring`: `true`
+- `prompt`: one sentence naming the MRs, the ticket, and that this is a wait pass — for example:
+
+  ```
+  Run the next /sdlc:mr-babysit handoff-wait pass for MR !123 and !456 / ticket TEAM-789 using ledger ./.claude/review-report/<topic>.babysit.md
+  ```
+
+Record the returned job id in the ledger. Never restate the pass procedure in the prompt, and never put a SHA in it.
+
+**Each wait pass re-derives state and does one of four things:**
+
+- **The ticket is back in `WORK_STATE`, or any MR is draft again** → the reviewer handed it back. Delete the cron job, re-arm the 2-minute `/loop` with the same MR set, and run a normal working pass. New reviewer threads are ordinary in-scope threads under step 4.
+- **All MRs are still ready and the ticket is still in `REVIEW_STATE`** → nothing to do. Update `Last pass` in the ledger and return with no user-facing message. A wait mode that is silent for hours is working correctly.
+- **Every MR is merged or closed, or the ticket reached a terminal state** → delete the cron job, write the final ledger, report, and stop for good.
+- **A new comment thread appeared while the flags did not move** → an AI reviewer or a person commented without handing the work back. Treat it as a normal working pass for that thread only: re-arm the working cadence, answer it, and hand over again when the set is quiet.
+
+When `tracker: none` degraded the handshake to the draft flag alone, the wait pass reads only the draft flag: any MR back in draft re-arms the working cadence.
+
+The user can opt out of the wait with an explicit "stop after handoff". Then the handover is the last thing this command does — report and end, arming no cron job.
+
+### Stopping instead of handing over
+
+**Stop and hand back to the user** (report, arm no cron job) on any of: all MRs merged/closed; a rebase conflict that encodes a genuine product/design decision (mechanical conflicts you resolve yourself); a CI failure surfaced as judgment-heavy, or a fixable failure (or a flaky job) that hit its 2-attempt cap and is still red; a reply/resolve that kept failing after a retry; oscillation (this pass's fix contradicting last pass's); or an outstanding judgment call with nothing else left to solve. A halt on one MR doesn't have to halt the others — keep babysitting the rest and report the one that needs you.
+
+Whenever you stop this way, the MRs concerned stay **draft** and the ticket stays in `WORK_STATE`. The work is not ready, so the handshake must not say it is.
+
+Present a final summary: the per-MR scorecard, what you did, each MR's state, whether you handed over or stopped, and — as a clear list — every **judgment call** you deferred (thread location + quoted comment + your suggested reply or change), and ask the user how to proceed.
 
 $ARGUMENTS

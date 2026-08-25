@@ -17,14 +17,13 @@ claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 - `/sdlc:write-plan [topic, ticket ref, or briefing path]` — enters plan mode and writes an implementation plan whose steps map onto the intended atomic commits. Appends an implementation protocol so the execution rules travel with the plan file. Normally run after `/sdlc:pre-plan` and a design discussion.
 - `/sdlc:ticket-new [extra context]` — drafts a ticket from the conversation and files it in the issue tracker. Written from the product-engineer angle: business context and acceptance criteria, no solution dictated to the implementor.
 - `/sdlc:mr-open [ticket-id]` — opens a draft MR/PR for the current branch, then rewrites the title and description against the actual diff. The description targets the reviewer: why, gotchas, and where to focus.
-- `/sdlc:mr-babysit [MR refs]` — drives one or more MRs toward mergeable: keeps each rebased, fixes failing CI, and answers review comments, handing back only for genuine product decisions. GitLab-only. See below.
+- `/sdlc:mr-babysit [MR refs]` — drives one or more MRs toward mergeable: keeps each rebased, fixes failing CI, and answers review comments, handing back only for genuine product decisions. When the set is green and settled it marks the MRs ready, moves the ticket to the review state, and keeps waiting on a slow cron in case the reviewer hands the work back. GitLab-only. See below.
 - `/sdlc:wrap-up [ticket ref]` — closes finished work out. Posts a dense comment to the ticket — outcome, the production checks with their real numbers, findings the diff does not show, limits, possible follow-ups — then marks the ticket completed. It splits into several comments when one would bury its own best parts. Facts only: it never commits anyone to future work.
 - `/sdlc:brief-next-steps [scope hint or slug]` — compresses the session into one short briefing in `./.claude/plans/`: the final proposal in implementation order, plus the decisions you still owe. The conclusion, not the argument.
 
 ## Skills
 
 - `sdlc:team-workflow-identify` — resolves the issue tracker, the team, the ticket ID pattern, the branch convention and the workflow state names, then prints them as one block the calling command carries. Reads `CLAUDE.md` / `AGENTS.md` first, the repo `README.md` second, and asks before it falls back to the tracker API — so the answer gets written down instead of rediscovered every run. It hardcodes no team or status name. See [`skills/team-workflow-identify/SKILL.md`](skills/team-workflow-identify/).
-- `sdlc:mr-status` — reads the real review-and-merge state of one MR or a whole set: draft, rebase distance, pipeline, approvals, size, every AI reviewer's latest verdict, human threads, and what blocks the merge right now. It profiles each AI reviewer from its own threads instead of assuming how a bot behaves, and it reads the newest verdict plus the currently unresolved threads rather than counting old finding notes as live problems. In overview mode it runs as a subagent and keeps one status file up to date across refreshes. See [`skills/mr-status/SKILL.md`](skills/mr-status/).
 
 ## Babysitting an MR to green
 
@@ -44,10 +43,20 @@ If your permission setup makes Claude Code prompt for those git operations, allo
 
 ```jsonc
 // .claude/settings.json → "permissions": { "allow": [ ... ] }
-"Bash(git push:*)", "Bash(git rebase:*)", "Bash(git fetch:*)", "Bash(glab ci retry:*)"
+"Bash(git push:*)", "Bash(git rebase:*)", "Bash(git fetch:*)", "Bash(glab ci retry:*)", "Bash(glab mr update:*)"
 ```
 
-Review feedback is evaluated, never rubber-stamped. Every thread reaches one of four outcomes — apply, dismiss with a reasoned reply, defer as a judgment call, or skip this pass. A bot's `critical` tag does not exempt a finding from that judgment.
+Review feedback is evaluated, never rubber-stamped. Every thread reaches one of four outcomes — apply, dismiss with a reasoned reply, defer as a judgment call, or skip this pass. A bot's `critical` tag does not exempt a finding from that judgment. One thread type is the exception to the resolve rules: a thread whose last reviewer note is marked `<!-- code-review:watch -->` gets the fix and a reply, and stays unresolved. The reviewer verifies it against the code and resolves it.
+
+### The handshake with the reviewer
+
+Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together, and whoever hands the ball over sets both. `/code-review:watch` reads the same two flags and sets them the same way, so a half-set handshake either starts a review of work in progress or leaves a finished MR unreviewed.
+
+`/sdlc:mr-babysit` claims an MR back to draft whenever a pass finds work to do on it — behind its target branch, red pipeline, or open threads. When everything is green, quiet and settled with no judgment call outstanding, it marks the MRs ready and moves the ticket to `REVIEW_STATE`.
+
+Then it does not stop. It swaps the 2-minute `/loop` for a recurring cron every 30 minutes and waits. If the reviewer hands the work back — ticket in `WORK_STATE` or the MR in draft again — it deletes the cron, re-arms the fast loop, and runs a normal pass. It stops for good when the MRs merge or the ticket reaches a terminal state. Say "stop after handoff" to opt out of the wait.
+
+The workflow state names are never hardcoded. Both commands resolve them at run time through the `sdlc:team-workflow-identify` skill, and both read MR state through the `glab:mr-status` skill from the **glab** plugin. With no tracker, the handshake degrades to the draft flag alone.
 
 Two optional CLIs make it cleaner, and it falls back to raw `glab` without them:
 
