@@ -6,17 +6,20 @@ disable-model-invocation: true
 
 # Watch the MR Until the Review Is Settled
 
-Run a full code review of the current branch's merge request, post it, hand the ticket back to the author, and then watch on a schedule until every blocking finding and every suggestion has been **addressed in code** or **refuted with a reply**.
+Run a full code review of the current branch's merge request, post it, hand the work back to the author, and then watch on a schedule until every blocking finding and every suggestion has been **addressed in code** or **refuted with a reply**.
 
-The **ticket status is the handshake.** After posting a round of findings, move the ticket to the author's working state. Only when the author moves it back to the review state does the next round run. This keeps the review out of work-in-progress instead of commenting on every half-finished push.
+**The handshake invariant.** Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together. Whoever hands the ball over sets both.
+
+That is what paces this command. After posting a round of findings, hand the work back — ticket to `WORK_STATE`, MR to draft. Only when both flags say ready-for-review again does the next round run. This keeps the review out of work-in-progress instead of commenting on every half-finished push.
 
 ```
-review → post → ticket to WORK_STATE → [wait] → author moves ticket to REVIEW_STATE
+review → post → ticket to WORK_STATE + MR to draft → [wait]
+   → author sets MR ready + ticket to REVIEW_STATE
    → sync the local branch onto the author's new head
    → revisit every open thread, reply, resolve what is settled
    → review the delta, post new findings
-   → anything still open? ticket back to WORK_STATE and wait again
-   → nothing open? stop
+   → anything still open? ticket to WORK_STATE + MR to draft, wait again
+   → nothing open? leave it ready in REVIEW_STATE and stop
 ```
 
 This command is the **reviewer** side of an MR. It is the mirror image of `/sdlc:mr-babysit`, which is the **author** side. The distinction matters and is enforced below: this command never edits, commits, pushes, or rebases locally, and never resolves the author's threads.
@@ -31,16 +34,16 @@ For the whole lifetime of this command, including every cron pass:
 - **Never resolve a thread the author opened.** You may resolve **your own** finding threads, and only once you have verified in the diff that the finding is genuinely addressed.
 - **Never promise anything on the MR.** Comment bodies state findings, facts, verification results, and open questions. They do not say "we will fix", "a follow-up is coming", "this will be improved", or any softer paraphrase. If a fix belongs in the picture, describe it as an option in the comment and raise the commitment question with the user in the conversation instead.
 
-Exactly **two** kinds of write are authorized:
+Exactly **two** kinds of write to git are authorized (the MR draft flag and the ticket status are metadata, not code — see the autonomy grant below):
 
 1. The server-side rebase via `glab mr rebase` — Phase 1, once, never repeated.
 2. The guarded `git reset --hard` of [the local sync procedure](#the-local-sync-procedure) — after that rebase, and again at the start of every follow-up round. It fast-forwards the checkout onto the author's current head so re-reviews read fresh code. It never runs over a dirty tree or over local-only commits.
 
-Nothing else writes. Note what the sync is **not**: it moves the branch pointer to match the remote. It never creates a commit, never pushes, and never changes a line the author did not write.
+Nothing else writes to git. Note what the sync is **not**: it moves the branch pointer to match the remote. It never creates a commit, never pushes, and never changes a line the author did not write.
 
 ## Autonomy — scoped grant
 
-These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, resolving your own threads, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, and arming or deleting the cron job. This override is scoped to those operations and ends when the watch ends.
+These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, resolving your own threads, **un-resolving your own threads**, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, **toggling the MR between draft and ready** (`glab mr update <iid> --draft --yes` and `glab mr update <iid> --ready --yes`), commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, and arming or deleting the cron job. This override is scoped to those operations and ends when the watch ends.
 
 Stop and hand back only for the halt conditions under [Termination](#termination).
 
@@ -50,17 +53,15 @@ Stop and hand back only for the halt conditions under [Termination](#termination
 
 Invoke the `glab` skill and the `glab-discussion` skill before making any GitLab calls. If `glab-discussion` is unavailable, fall back to raw `glab api` calls for discussions (`projects/:id/merge_requests/<iid>/discussions`). If `glab` itself is unavailable, stop and tell the user.
 
+This command also uses two skills from other plugins: `glab:mr-status` for MR state (0.2, 7.1) and `sdlc:team-workflow-identify` for the tracker and its state names (0.4). If either is unavailable, say so in one line and carry the work yourself — read the MR through `glab mr view --output=json`, and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
+
 ### 0.2 Identify the MR and its refs
 
-The MR is the one for the branch currently checked out. Fetch its metadata once, unfiltered, and read the actual output before assuming a format (a token-reducing proxy in front of `glab` can reshape it):
-
-```bash
-glab mr view --output=json
-```
-
-Record: `iid`, `state`, `web_url`, `source_branch`, `target_branch`, `sha`, `head_pipeline.status`, `blocking_discussions_resolved`.
+The MR is the one for the branch currently checked out. Invoke the `glab:mr-status` skill to read its state, and record: `iid`, `state`, `draft`, `web_url`, `source_branch`, `target_branch`, `sha`, `head_pipeline.status`, `blocking_discussions_resolved`.
 
 Stop and report if there is no MR for this branch, or if `state` is `merged` or `closed`. This command has nothing to watch in those cases.
+
+**If the MR is already `draft` at invocation, warn and proceed.** A draft MR means the author has not handed the work over, so the review reads code they may still be changing. Say so in one line, then run the initial review anyway — the user asked for it explicitly. From Phase 4 onward the draft flag becomes yours to set, and the gate in 7.2 enforces the invariant for every later round.
 
 ### 0.3 Define the review refs
 
@@ -79,16 +80,13 @@ Fetching the source branch is safe here **because this command never pushes** �
 
 ### 0.4 Resolve the ticket and its workflow states
 
-The watch is paced by the **ticket status**, not by pushes, so resolve the ticket now and fail fast if you cannot.
+The watch is paced by the handshake, not by pushes, so resolve the ticket now and fail fast if you cannot.
 
-1. Extract the ticket ID from the MR title, the branch name, or the MR description (`TEAM-123`, `#123`, a tracker URL).
-2. Load the skill or CLI the project uses for its issue tracker, then fetch the ticket.
-3. **List the tracker's actual workflow states — do not guess their names.** Every tracker and team names them differently. Then map exactly two roles:
-   - **`WORK_STATE`** — where the ticket sits while the author is working. Typically "In Progress" / "In Development" / "Doing".
-   - **`REVIEW_STATE`** — where the ticket sits when the author says it is ready to look at. Typically "In Review" / "Review" / "Ready for Review".
-4. Record both state names and the ticket ID. If the tracker exposes several plausible candidates and the mapping is genuinely ambiguous, ask the user once, here, before posting anything.
+Invoke the `sdlc:team-workflow-identify` skill and carry its output block for the whole watch, every cron pass included. It names the tracker, the ticket ID pattern, and the `WORK_STATE` / `REVIEW_STATE` names this command moves the ticket between, and it asks the user once when a role has several plausible names. Then load the installed skill that covers the resolved tracker — that skill holds the command syntax, and this command names no tracker CLI of its own.
 
-If no ticket is identifiable, or the project has no tracker, say so and fall back to the **push gate**: the follow-up pass then triggers on a new MR head SHA instead of a status change. Everything else in this command is unchanged.
+Take the ticket from the MR title, the branch name, or the MR description, using the ticket pattern from the block. Record the ticket ID and both state names in the ledger.
+
+If the block says `tracker: none`, or no ticket is identifiable, say so and fall back to the **push gate**: the follow-up pass then triggers on the MR being not draft with a new head SHA, instead of on a status change. Everything else in this command is unchanged.
 
 ## Phase 1 — Rebase gate (server-side, exactly once)
 
@@ -189,6 +187,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/commands/full.md` and execute it, with these substit
 
 Add any Phase 1 rebase failure to the report's **Blocking** section.
 
+**A head pipeline that is not green is itself a Blocking finding.** Read `head_pipeline.status` on `REVIEW_HEAD`. The accepted-green set is `success` alone, as `glab:mr-status` states — `canceled` ran nothing to completion, `manual` is an unfinished blocking gate, and `skipped` means no pipeline ran for this head. Any other value gets a Blocking finding titled "head pipeline is not green", naming the status, the SHA, and the pipeline URL. `running` and `pending` are not a verdict yet: note the pipeline is still in flight and re-check it in the next round rather than filing the finding. Do not diagnose the failure and do not propose the fix — that is the author's side.
+
 ## Phase 3 — Post the review
 
 Read `${CLAUDE_PLUGIN_ROOT}/commands/post.md` and execute it against the report you just produced. Two additions:
@@ -200,18 +200,22 @@ Read `${CLAUDE_PLUGIN_ROOT}/commands/post.md` and execute it against the report 
   <!-- code-review:watch -->
   ```
 
-## Phase 4 — Hand the ticket back to the author
+## Phase 4 — Hand the work back to the author
 
-Once the comments are posted, move the ticket from `REVIEW_STATE` to `WORK_STATE`.
+Once the comments are posted, set **both** halves of the handshake: move the ticket from `REVIEW_STATE` to `WORK_STATE`, and mark the MR draft.
 
-The ticket status is the handshake between you and the author. `WORK_STATE` means "the ball is with the author"; `REVIEW_STATE` means "the author says it is ready to look at again". This is what stops the watch from commenting into work-in-progress.
+```bash
+glab mr update "$IID" --draft --yes
+```
 
-- Move the ticket **only after** every comment from Phase 3 has actually posted. A ticket handed back before the findings are visible tells the author nothing.
+Back-to-work means the MR is draft AND the ticket is in `WORK_STATE`. Setting one and not the other leaves the author reading two contradictory signals, and it leaves the 7.2 gate unable to tell a handover from a stale state.
+
+- Set both **only after** every comment from Phase 3 has actually posted. Work handed back before the findings are visible tells the author nothing.
 - Add a short tracker comment naming the MR and pointing at the review summary comment. State the findings count by severity. **Do not promise anything** in it — no "we will re-review", no timelines.
-- If the ticket is already in `WORK_STATE`, leave it and note that.
-- If the move fails (permissions, a workflow transition the tracker forbids), do not fight it. Record the failure in the ledger, tell the user, and fall back to the **push gate** for this watch.
+- If the ticket is already in `WORK_STATE`, or the MR is already draft, leave that half alone and note it.
+- If the ticket move fails (permissions, a workflow transition the tracker forbids), do not fight it. Record the failure in the ledger, tell the user, and fall back to the **push gate** for this watch. Still set the draft flag — it carries the push gate on its own.
 
-Skip this phase entirely when Phase 0.4 found no ticket.
+Skip the ticket half entirely when Phase 0.4 found no ticket. The draft half always runs.
 
 ## Phase 5 — Build the finding ledger
 
@@ -222,10 +226,11 @@ Write a ledger next to the review report, at `./.claude/review-report/<topic>.wa
 
 - MR: <web_url>
 - Target: <target_branch>
-- Ticket: <TICKET-ID> (<url>) — gate: ticket-status | push
+- Ticket: <TICKET-ID> (<url>) — gate: ticket-status + draft | draft-only
 - Work state: <WORK_STATE> · Review state: <REVIEW_STATE>
 - Last reviewed SHA: <sha>
 - Last seen ticket state: <state>
+- Last seen draft: <yes|no>
 - Rounds completed: <n>
 - Last pass: <UTC timestamp>
 - Cron job id: <id>
@@ -268,28 +273,27 @@ Each firing runs exactly **one** pass and returns. Never sleep or poll inside a 
 
 ### 7.1 Re-derive state from scratch
 
-Do not trust what you believed last pass. Re-read the ledger, then:
+Do not trust what you believed last pass. Re-read the ledger, then invoke `glab:mr-status` for the MR and fetch the refs:
 
 ```bash
-glab mr view --output=json
 git fetch origin "$TARGET_BRANCH" "$SOURCE_BRANCH"
 ```
 
-If `state` is `merged` or `closed` → delete the cron job, report, and stop.
+Record `state`, `draft`, `sha` and `head_pipeline.status`. If `state` is `merged` or `closed` → delete the cron job, report, and stop.
 
-### 7.2 The ticket-status gate — check this before anything else
+### 7.2 The handshake gate — check this before anything else
 
-Fetch the ticket's current status.
+Fetch the ticket's current status, and read the `draft` flag from 7.1.
 
-**If the ticket is not in `REVIEW_STATE`, the pass ends here.** The author is still working, and commenting into work-in-progress is exactly what this gate exists to prevent. Do not read threads, do not diff, do not post, do not re-review. Update `Last pass` in the ledger and return silently, with no user-facing message.
+**The gate opens only when the ticket is in `REVIEW_STATE` AND the MR is not draft.** Both halves, every pass. Then the author is handing the work back — run the rest of the pass (7.3 onward), record the transition in the ledger, and increment `Rounds completed`.
 
-This is the normal outcome of most passes. A watch that produces no output for hours is working correctly.
+**Anything else ends the pass here.** The author is still working, and commenting into work-in-progress is exactly what this gate exists to prevent. Do not read threads, do not diff, do not post, do not re-review. Update `Last pass` and `Last seen draft` in the ledger and return silently, with no user-facing message. This includes the half-set case: a ticket in `REVIEW_STATE` while the MR is still draft is **not** ready, and it is a silent no-op like any other closed gate — do not comment on the mismatch and do not fix it for the author.
 
-**If the ticket has moved back to `REVIEW_STATE`**, the author is handing it back — run the rest of the pass (7.3 onward). Record the transition in the ledger and increment `Rounds completed`.
+A closed gate is the normal outcome of most passes. A watch that produces no output for hours is working correctly.
 
-**Watch for a stale review state.** If the ticket is in `REVIEW_STATE` but the MR head SHA still equals `Last reviewed SHA` and no thread has a new reply, the author changed nothing since your last round. Do not re-review the same code and do not re-post. Reply once in the summary thread naming the findings still `open`, then move the ticket back to `WORK_STATE` and return.
+**Watch for a stale review state.** If the gate opens but the MR head SHA still equals `Last reviewed SHA` and no thread has a new reply, the author changed nothing since your last round. Do not re-review the same code and do not re-post. Reply once in the summary thread naming the findings still `open`, then hand the work back as in Phase 4 — ticket to `WORK_STATE` and MR to draft — and return.
 
-**Push-gate fallback.** When Phase 0.4 found no ticket, or the Phase 4 status move failed, substitute this gate: the pass proceeds only when the MR head SHA differs from `Last reviewed SHA`. Otherwise it is a silent no-op, exactly as above.
+**Push-gate fallback.** When Phase 0.4 found no ticket, or the Phase 4 ticket move failed, substitute this gate: the pass proceeds only when the MR is **not draft** and its head SHA differs from `Last reviewed SHA`. Otherwise it is a silent no-op, exactly as above.
 
 ### 7.3 Sync the local branch to the author's latest push
 
@@ -320,6 +324,13 @@ Read all threads with `glab-discussion read --dump`. Then, for **each** ledger r
 | `still open` | State precisely what is still missing — the line, the case, the counter-argument. Never a bare "still open" | **No** |
 
 - **Resolve only your own threads**, and only on a verdict of `addressed`, `refuted`, or `superseded`. Never resolve a thread the author opened — that is theirs to close.
+- **Un-resolve your own thread when it was resolved over a problem that is still there.** A verdict of `still open` on a thread that shows as resolved means somebody closed it without the code satisfying it. Re-open it and reply naming the exact line at `REVIEW_HEAD` that still shows the problem:
+
+  ```bash
+  glab-discussion resolve <discussion_id> --unresolve
+  ```
+
+  `/sdlc:mr-babysit` replies to a `<!-- code-review:watch -->` thread but never resolves one, so a resolved watch thread is a **human's** action. Treat it as such: the un-resolve reply addresses a person who read the finding and judged it done, so it states the evidence and nothing sharper. Un-resolve on evidence only, never to keep a thread alive out of doubt.
 - **Never resolve without a reply.** A silently resolved thread destroys the record of why the finding went away.
 - **One reply per thread per round.** Do not re-state an unchanged verdict every round — a thread that was `still open` last round and is unchanged this round gets one fresh reply only if the author changed something in it or in the code it points at. Otherwise leave it and let the round's summary comment carry the status.
 - Reply bodies state findings and verification results. **They never promise anything** — no "we will re-check", no timelines. End every body with a blank line and `<!-- code-review:watch -->`.
@@ -371,13 +382,13 @@ Then post the update, following `post.md`:
 - Post **one** summary comment for this round, with: the round number, the SHA range reviewed, whether the branch was rebased and onto what, the round's new findings not anchored to the diff, and a status table of every gating finding (`addressed` / `refuted` / `open`).
 - Add the new findings to the ledger as `open` rows.
 
-### 7.6 Hand the ticket back, update the ledger, end the pass
+### 7.6 Hand the work back, update the ledger, end the pass
 
-If any gating finding is still `open` — carried over or newly found — move the ticket back to `WORK_STATE`. The ball returns to the author, and the next round waits for them to move it to `REVIEW_STATE` again. Skip this when the push gate is in use.
+If any gating finding is still `open` — carried over or newly found — hand the work back as in Phase 4: ticket to `WORK_STATE` **and** `glab mr update "$IID" --draft --yes`. The ball returns to the author, and the next round waits for them to set both flags to ready-for-review again. Under the push gate, set only the draft flag.
 
-If nothing is left open, do not move the ticket: leave it in `REVIEW_STATE` and go to [Termination](#termination).
+If nothing is left open, set neither flag back: leave the MR ready and the ticket in `REVIEW_STATE`, and go to [Termination](#termination).
 
-Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new last-seen ticket state, the round count, and the new `Last pass` timestamp. Then end the pass. The cron fires again in ~30 minutes.
+Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new last-seen ticket state and draft flag, the round count, and the new `Last pass` timestamp. Then end the pass. The cron fires again in ~30 minutes.
 
 Report to the user only when something changed: what the author pushed, which findings moved status, what you posted and resolved. A gated no-op pass needs no user-facing message.
 
@@ -387,7 +398,7 @@ Report to the user only when something changed: what the author pushed, which fi
 
 Open `Nitpick` rows never keep the watch alive.
 
-On a clean termination: leave the ticket in `REVIEW_STATE`, and post one final summary comment on the MR stating that every gating finding is settled, with the outcome per finding.
+On a clean termination: leave the MR **ready** and the ticket in `REVIEW_STATE`, and post one final summary comment on the MR stating that every gating finding is settled, with the outcome per finding. The handshake stays on ready-for-review because the review is what finished, not the merge — the MR is now a human's to approve and merge.
 
 **Also stop early**, deleting the cron job and reporting, on any of:
 

@@ -1,13 +1,21 @@
 {
   "name": "code-review",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, and git history reviewed in parallel",
   "author": {
     "name": "Filip Prochazka"
   },
   "repository": "https://github.com/fprochazka/claude-code-plugins",
   "license": "MIT",
-  "keywords": ["code-review", "multi-agent", "conventions", "security", "architecture", "design", "performance"],
+  "keywords": [
+    "code-review",
+    "multi-agent",
+    "conventions",
+    "security",
+    "architecture",
+    "design",
+    "performance"
+  ],
   "dependencies": [
     "glab",
     {
