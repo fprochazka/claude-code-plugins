@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "noisy-tools-in-subagent",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens.",
   "author": {
     "name": "Filip Procházka",
@@ -16,5 +16,11 @@
       "title": "Exempt agent types",
       "description": "Agent types allowed to run noisy commands directly. Use for agents that cannot delegate, because their definition omits the Agent tool or they run at the subagent nesting limit. Each entry is a regex that must match the whole agent type, for example my-plugin:leaf-worker."
     }
-  }
+  },
+  "dependencies": [
+    {
+      "name": "bash-classify-hook",
+      "marketplace": "fprochazka-bash-classify"
+    }
+  ]
 }
