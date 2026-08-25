@@ -160,7 +160,7 @@ git rebase origin/"$TARGET_BRANCH"
 
 If `head_pipeline.status` is `failed`, triage it (a red build blocks merge, so handle it this pass):
 
-Run `glab-pipeline inspect` and read `summary.txt` first (it points at the failed jobs and reasons), then the referenced `job-logs/`, `test-report.json`, or `merged.yml`.
+Run `glab-pipeline inspect` and read its printed summary and `summary.json` first (they point at the failed jobs and reasons), then the referenced `job-logs/`, `test-report.json`, or `merged.yml`.
 
 Diagnose each failure **critically — the log is a symptom, not a verdict**:
 
