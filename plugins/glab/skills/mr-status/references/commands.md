@@ -19,7 +19,7 @@ ENC="${REPO//\//%2F}"                  # url-encoded repo path for glab api
 URL="https://$HOST/$REPO/-/merge_requests/$IID"
 ```
 
-**Every call below names the host.** `glab mr` takes it inside `-R` as `-R "$HOST/$REPO"`. `glab api` takes it as `--hostname "$HOST"`. A call that omits the host silently hits the default host and returns a wrong answer rather than an error: `glab mr diff` prints an empty diff, and `glab mr view ... | jq .author.username` returns `null`, which then labels every human thread as a reviewer. Shell exports do not survive between tool calls, so do not rely on `GITLAB_HOST` — put the flag on each command.
+**Every call below names the host.** `glab mr` takes it inside `-R` as `-R "$HOST/$REPO"`. `glab api` takes it as `--hostname "$HOST"`. Inside a git repository `glab` autodetects the host from the remote, but a status check often runs from another directory or covers MRs across repos, and there a call that omits the host silently hits the default host and returns a wrong answer rather than an error: `glab mr diff` prints an empty diff, and `glab mr view ... | jq .author.username` returns `null`, which then labels every human thread as a reviewer. Shell exports do not survive between tool calls, so do not rely on `GITLAB_HOST` — put the flag on each command.
 
 ## 1. Metadata, draft, author, branches, size
 

@@ -123,7 +123,7 @@
     {
       "name": "glab",
       "description": "GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
