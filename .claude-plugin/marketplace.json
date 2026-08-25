@@ -171,7 +171,7 @@
     {
       "name": "use-libsrc-mcp",
       "description": "Blocks direct access to dependency caches (~/.m2/repository, etc.) and redirects to the libsrc MCP tool for source inspection",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

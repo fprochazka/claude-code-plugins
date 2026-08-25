@@ -27,16 +27,16 @@ run_test() {
 echo "=== Bash: blocked (source extraction) ==="
 
 run_test "jar tf in .m2/repository → blocked" 2 \
-  '{"tool_name":"Bash","tool_input":{"command":"jar tf ~/.m2/repository/cz/rohlik/foo/1.0/foo-1.0.jar"}}'
+  '{"tool_name":"Bash","tool_input":{"command":"jar tf ~/.m2/repository/com/example/foo/1.0/foo-1.0.jar"}}'
 
 run_test "jar xf in .m2/repository → blocked" 2 \
-  '{"tool_name":"Bash","tool_input":{"command":"jar xf ~/.m2/repository/cz/rohlik/foo/1.0/foo-1.0.jar"}}'
+  '{"tool_name":"Bash","tool_input":{"command":"jar xf ~/.m2/repository/com/example/foo/1.0/foo-1.0.jar"}}'
 
 run_test "unzip in .m2/repository → blocked" 2 \
-  '{"tool_name":"Bash","tool_input":{"command":"unzip -p ~/.m2/repository/cz/rohlik/foo/1.0/foo-1.0.jar META-INF/services/com.google.errorprone.bugpatterns.BugChecker"}}'
+  '{"tool_name":"Bash","tool_input":{"command":"unzip -p ~/.m2/repository/com/example/foo/1.0/foo-1.0.jar META-INF/services/com.google.errorprone.bugpatterns.BugChecker"}}'
 
 run_test "zipinfo in .m2/repository → blocked" 2 \
-  '{"tool_name":"Bash","tool_input":{"command":"zipinfo ~/.m2/repository/cz/rohlik/foo/1.0/foo-1.0.jar"}}'
+  '{"tool_name":"Bash","tool_input":{"command":"zipinfo ~/.m2/repository/com/example/foo/1.0/foo-1.0.jar"}}'
 
 echo ""
 echo "=== Bash: allowed (reads, cleanup, no .m2) ==="
@@ -54,7 +54,7 @@ run_test "ls in .m2/repository → allowed" 0 \
   '{"tool_name":"Bash","tool_input":{"command":"ls ~/.m2/repository/org/springframework/"}}'
 
 run_test "rm -rf .m2/repository artifact → allowed" 0 \
-  '{"tool_name":"Bash","tool_input":{"command":"rm -rf ~/.m2/repository/cz/rohlik/commercial-orders-errorprone-checks"}}'
+  '{"tool_name":"Bash","tool_input":{"command":"rm -rf ~/.m2/repository/com/example/errorprone-checks"}}'
 
 run_test "git status (no .m2) → allowed" 0 \
   '{"tool_name":"Bash","tool_input":{"command":"git status"}}'
