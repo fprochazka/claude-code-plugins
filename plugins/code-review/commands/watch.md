@@ -330,7 +330,7 @@ Read all threads with `glab-discussion read --dump`. Then, for **each** ledger r
   glab-discussion resolve <discussion_id> --unresolve
   ```
 
-  `/sdlc:mr-babysit` replies to a `<!-- code-review:watch -->` thread but never resolves one, so a resolved watch thread is a **human's** action. Treat it as such: the un-resolve reply addresses a person who read the finding and judged it done, so it states the evidence and nothing sharper. Un-resolve on evidence only, never to keep a thread alive out of doubt.
+  `/sdlc:mr-babysit` replies to a `<!-- code-review:watch -->` thread but never resolves one on its own. You resolve the threads you verified. A watch thread that shows as resolved without a verdict of yours behind it was therefore closed on a **human's decision** — the person resolved it, or told the author agent to. Treat it as such: the un-resolve reply addresses a person who read the finding and judged it done, so it states the evidence and nothing sharper. Un-resolve on evidence only, never to keep a thread alive out of doubt.
 - **Never resolve without a reply.** A silently resolved thread destroys the record of why the finding went away.
 - **One reply per thread per round.** Do not re-state an unchanged verdict every round — a thread that was `still open` last round and is unchanged this round gets one fresh reply only if the author changed something in it or in the code it points at. Otherwise leave it and let the round's summary comment carry the status.
 - Reply bodies state findings and verification results. **They never promise anything** — no "we will re-check", no timelines. End every body with a blank line and `<!-- code-review:watch -->`.

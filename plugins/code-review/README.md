@@ -22,7 +22,7 @@ Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STAT
 
 After posting a round of findings, the watch sets the MR to draft and moves the ticket to `WORK_STATE`. Every cron pass then checks both flags and does nothing until both say ready-for-review. A ticket in the review state while the MR is still draft is not a handover, and the pass stays silent. This is what keeps the review out of half-finished pushes.
 
-The author side replies to a `<!-- code-review:watch -->` thread but never resolves one, so a resolved watch thread is a human's action. When the code at the MR head still shows the problem, the watch un-resolves the thread and names the line that still shows it.
+The author side replies to a `<!-- code-review:watch -->` thread but never resolves one on its own. The watch resolves the threads it verified, so a watch thread resolved without its verdict was closed on a human's decision — by the person, or by the author agent on the person's instruction. When the code at the MR head still shows the problem, the watch un-resolves the thread and names the line that still shows it.
 
 The tracker and its state names are never hardcoded. The command resolves them at run time through the `sdlc:team-workflow-identify` skill, and reads MR state through the `glab:mr-status` skill. Install the **sdlc** and **glab** plugins alongside this one for the full watch. Without them the command falls back to reading the MR through `glab` and listing the tracker's states itself. With no tracker at all it falls back to a push gate on the draft flag plus a new head SHA.
 
