@@ -195,7 +195,7 @@
     {
       "name": "sdlc",
       "description": "Software delivery workflow commands - gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
