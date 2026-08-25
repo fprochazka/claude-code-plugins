@@ -16,6 +16,25 @@ Then install plugins:
 claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins --scope user
 ```
 
+### Plugin dependencies
+
+Some plugins declare `dependencies` in their `plugin.json`. Installing such a plugin installs its dependencies too. Dependencies that live in another marketplace resolve only when that marketplace is already added, so add these before you install `sdlc`, `code-review`, `glab-mr`, or `noisy-tools-in-subagent`:
+
+```bash
+claude plugin marketplace add fprochazka/glab-discussion --scope user
+claude plugin marketplace add fprochazka/glab-pipeline --scope user
+claude plugin marketplace add fprochazka/bash-classify --scope user
+```
+
+A dependency installed this way is a Claude Code plugin (skill, hook, agent). It does not install the CLI binary the plugin wraps — `glab`, `jq`, `glab-discussion`, `glab-pipeline`, and `bash-classify` stay a manual install, see each plugin's README.
+
+| Plugin | Depends on |
+|--------|-----------|
+| `sdlc` | `git`, `code-review`, `glab-discussion`, `glab-pipeline` |
+| `code-review` | `glab-discussion` |
+| `glab-mr` | `glab-discussion` |
+| `noisy-tools-in-subagent` | `bash-classify-hook` |
+
 ## Upgrading
 
 To upgrade installed plugins to the latest version:

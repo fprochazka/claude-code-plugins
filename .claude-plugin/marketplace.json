@@ -6,6 +6,11 @@
     "name": "Filip Procházka",
     "url": "https://github.com/fprochazka"
   },
+  "allowCrossMarketplaceDependenciesOn": [
+    "fprochazka-glab-discussion",
+    "fprochazka-glab-pipeline",
+    "fprochazka-bash-classify"
+  ],
   "plugins": [
     {
       "name": "skill-keyword-reminder",
