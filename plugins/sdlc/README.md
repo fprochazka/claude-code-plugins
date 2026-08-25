@@ -24,6 +24,7 @@ claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 ## Skills
 
 - `sdlc:team-workflow-identify` — resolves the issue tracker, the team, the ticket ID pattern, the branch convention and the workflow state names, then prints them as one block the calling command carries. Reads `CLAUDE.md` / `AGENTS.md` first, the repo `README.md` second, and asks before it falls back to the tracker API — so the answer gets written down instead of rediscovered every run. It hardcodes no team or status name. See [`skills/team-workflow-identify/SKILL.md`](skills/team-workflow-identify/).
+- `sdlc:mr-status` — reads the real review-and-merge state of one MR or a whole set: draft, rebase distance, pipeline, approvals, size, every AI reviewer's latest verdict, human threads, and what blocks the merge right now. It profiles each AI reviewer from its own threads instead of assuming how a bot behaves, and it reads the newest verdict plus the currently unresolved threads rather than counting old finding notes as live problems. In overview mode it runs as a subagent and keeps one status file up to date across refreshes. See [`skills/mr-status/SKILL.md`](skills/mr-status/).
 
 ## Babysitting an MR to green
 
