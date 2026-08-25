@@ -5,6 +5,7 @@
   "dependencies": [
     "git",
     "code-review",
+    "glab",
     {
       "name": "glab-discussion",
       "marketplace": "fprochazka-glab-discussion"

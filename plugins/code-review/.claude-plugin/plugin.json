@@ -9,6 +9,7 @@
   "license": "MIT",
   "keywords": ["code-review", "multi-agent", "conventions", "security", "architecture", "design", "performance"],
   "dependencies": [
+    "glab",
     {
       "name": "glab-discussion",
       "marketplace": "fprochazka-glab-discussion"

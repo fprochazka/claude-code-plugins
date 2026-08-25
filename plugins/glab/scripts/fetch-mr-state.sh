@@ -89,7 +89,7 @@ glab_api_paginated_with_retry() {
 
 setup_output_directory() {
     local mr_id="$1"
-    OUTPUT_DIR="${TMPDIR:-/tmp}/glab-mr-${mr_id}-$(date +%Y%m%d_%H%M%S)"
+    OUTPUT_DIR="${TMPDIR:-/tmp}/glab-state-${mr_id}-$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$OUTPUT_DIR"
 
     MR_INFO_FILE="$OUTPUT_DIR/mr-info.txt"

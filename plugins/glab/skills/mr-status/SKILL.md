@@ -8,7 +8,7 @@ trigger-keywords: mr status, merge request status, review queue, mr overview, is
 
 Determine the review-and-merge status of one merge request, or of a set of them. Is it rebased, is CI green, who reviewed it, what is still unresolved, and what blocks the merge right now. Every value is read at run time from the host API and from the MR threads.
 
-Load the **glab** skill and the **glab-discussion** skill before the first call. The command recipes live in [`references/gitlab-commands.md`](references/gitlab-commands.md). Read that file before running anything. One reference file per git host, so a `github-commands.md` can sit beside it later.
+Load the **glab** skill and the **glab-discussion** skill before the first call. The command recipes live in [`references/commands.md`](references/commands.md). Read that file before running anything. This skill covers GitLab, because it ships in the **glab** plugin. The GitHub equivalent lives in a `gh` plugin.
 
 Prefer `glab-discussion read --dump` for all comment data. It writes one file per thread and it handles pagination. The raw discussions API is the fallback when that CLI is absent.
 
@@ -16,7 +16,7 @@ Prefer `glab-discussion read --dump` for all comment data. It writes one file pe
 
 **Read the latest summary verdict per reviewer, plus the count of currently unresolved threads. Never infer "this MR has problems" from the presence of historical finding notes.** A reviewer can post major findings on Monday, see them fixed on Tuesday, and post a clean summary on Wednesday. The old notes stay in the thread list forever. Counting them as live problems produces a false "found issues" status. Exactly two signals are authoritative: the newest summary verdict per reviewer, and the number of threads whose header says `Resolved: no`.
 
-**Finding the newest verdict is not the same as finding the newest thread.** A reviewer keeps its summary in one thread and either edits that note or appends to it, so the summary thread is usually one of the oldest on the MR while it holds the freshest verdict. Sorting threads by their timestamp and reading the newest one therefore returns a finding note, and reading a thread from the top returns round one of a summary rewritten many times since. Locate the reviewer's summary thread by kind, then read its **last** note. `references/gitlab-commands.md` §5 has the recipe.
+**Finding the newest verdict is not the same as finding the newest thread.** A reviewer keeps its summary in one thread and either edits that note or appends to it, so the summary thread is usually one of the oldest on the MR while it holds the freshest verdict. Sorting threads by their timestamp and reading the newest one therefore returns a finding note, and reading a thread from the top returns round one of a summary rewritten many times since. Locate the reviewer's summary thread by kind, then read its **last** note. `references/commands.md` §5 has the recipe.
 
 ## Inputs
 

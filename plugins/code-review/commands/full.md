@@ -23,7 +23,7 @@ If the project uses a code hosting platform with MR/PR workflows, load the MR/PR
 - All comment threads (resolved and unresolved) — pay close attention to **unresolved threads**, reviewers may have already flagged issues
 - Pipeline/CI status
 
-Use the appropriate skill or CLI for the platform (e.g., `/glab-mr:overview` for GitLab, `gh pr view` for GitHub).
+Use the appropriate skill or CLI for the platform (e.g., `/glab:overview` for GitLab, `gh pr view` for GitHub).
 
 If there is no MR/PR, fall back to `master` or `main` (whichever exists) as the base branch.
 

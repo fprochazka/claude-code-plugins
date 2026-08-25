@@ -18,7 +18,7 @@ claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins --sc
 
 ### Plugin dependencies
 
-Some plugins declare `dependencies` in their `plugin.json`. Installing such a plugin installs its dependencies too. Dependencies that live in another marketplace resolve only when that marketplace is already added, so add these before you install `sdlc`, `code-review`, `glab-mr`, or `noisy-tools-in-subagent`:
+Some plugins declare `dependencies` in their `plugin.json`. Installing such a plugin installs its dependencies too. Dependencies that live in another marketplace resolve only when that marketplace is already added, so add these before you install `sdlc`, `code-review`, `glab`, or `noisy-tools-in-subagent`:
 
 ```bash
 claude plugin marketplace add fprochazka/glab-discussion --scope user
@@ -30,9 +30,9 @@ A dependency installed this way is a Claude Code plugin (skill, hook, agent). It
 
 | Plugin | Depends on |
 |--------|-----------|
-| `sdlc` | `git`, `code-review`, `glab-discussion`, `glab-pipeline` |
-| `code-review` | `glab-discussion` |
-| `glab-mr` | `glab-discussion` |
+| `sdlc` | `git`, `code-review`, `glab`, `glab-discussion`, `glab-pipeline` |
+| `code-review` | `glab`, `glab-discussion` |
+| `glab` | `glab-discussion`, `glab-pipeline` |
 | `noisy-tools-in-subagent` | `bash-classify-hook` |
 
 ## Upgrading
@@ -51,9 +51,8 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [gemini-cli](plugins/gemini-cli/) | Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
 | [gemini-deep-research](plugins/gemini-deep-research/) | Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent |
-| [glab](plugins/glab/) | Skill for interacting with GitLab using the glab CLI |
+| [glab](plugins/glab/) | GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill |
 | [glab-discussion](https://github.com/fprochazka/glab-discussion) | Standalone CC plugin + CLI for reading and managing GitLab MR discussion threads |
-| [glab-mr](plugins/glab-mr/) | GitLab MR tools - fix failed CI, resolve comments, and more |
 | [ai-tool-use-validator](plugins/ai-tool-use-validator/) | AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness |
 | [slackcli](https://github.com/fprochazka/slackcli) | Standalone CC plugin + CLI for interacting with Slack workspaces |
 | [migrate-to-uv](plugins/migrate-to-uv/) | Skill for migrating Python projects from Poetry, pipx, or pip to uv |
@@ -66,6 +65,8 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, and git history reviewed in parallel |
 | [sdlc](plugins/sdlc/) | Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
+
+The `glab-mr` plugin is merged into `glab`. Its `fix-all` command is dropped in favor of `/sdlc:mr-babysit`.
 
 ## Developing
 
