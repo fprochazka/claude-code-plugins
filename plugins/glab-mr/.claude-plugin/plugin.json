@@ -1,6 +1,12 @@
 {
   "name": "glab-mr",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "GitLab MR tools - fix failed CI, resolve comments, and more",
-  "commands": "./commands/"
+  "commands": "./commands/",
+  "dependencies": [
+    {
+      "name": "glab-discussion",
+      "marketplace": "fprochazka-glab-discussion"
+    }
+  ]
 }
