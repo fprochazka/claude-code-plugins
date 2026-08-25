@@ -1,6 +1,6 @@
 {
   "name": "glab",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill",
   "skills": "./skills/",
   "commands": "./commands/",

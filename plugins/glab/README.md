@@ -8,7 +8,9 @@ Claude Code plugin for GitLab through the [glab CLI](https://gitlab.com/gitlab-o
 - `glab` CLI installed, on PATH, and authenticated via `glab auth login`
 - `jq` for JSON processing
 - [`glab-discussion`](https://github.com/fprochazka/glab-discussion) for discussion handling (`uv tool install glab-discussion`)
-- [`glab-pipeline`](https://github.com/fprochazka/glab-pipeline) for pipeline triage (`uv tool install glab-pipeline`)
+- [`glab-pipeline`](https://github.com/fprochazka/glab-pipeline) for pipeline dumps and triage (`uv tool install glab-pipeline`)
+
+The plugin declares `glab-discussion` and `glab-pipeline` as plugin dependencies, so their skills load alongside it. The script fails with an install hint when either CLI is missing.
 
 ## Installation
 
@@ -35,6 +37,8 @@ Add the following to `~/.claude/settings.json` to allow the skill to load and au
 
 The skill's `allowed-tools` frontmatter auto-allows read-only commands (`mr list`, `mr view`, `mr diff`, `ci status`, `ci get`, `ci trace`, etc.) and `--help` for all subcommands. Write operations (`mr create`, `mr update`, `mr merge`, `mr note`, `ci run`, `ci retry`, etc.) require manual approval.
 
+The `/glab:overview` and `/glab:pipeline` commands carry `Bash(glab-pipeline:*)` in their own `allowed-tools`, so pipeline inspection needs no extra approval.
+
 ## Skills
 
 - `glab:glab` — the CLI reference. Merge requests, discussions, pipelines, issues, repositories, releases, variables, schedules, labels, milestones, and the raw API with pagination and GraphQL.
@@ -46,7 +50,7 @@ Each command auto-detects the MR from the current git branch and dumps its state
 
 ### `/glab:overview`
 
-Fetches the full MR state — pipeline, comments, external statuses — and presents a status overview without taking any action.
+Fetches the full MR state — pipeline, comments, external statuses — and presents a status overview without taking any action. Pipeline triage reads the `glab-pipeline` summary and opens a job log only when a job failed.
 
 ### `/glab:comments`
 
@@ -54,7 +58,7 @@ Fetches only MR comments, analyzes them, and proposes what to do about the unres
 
 ### `/glab:pipeline`
 
-Fetches only the pipeline status and the job logs, triages the failures, and proposes fixes.
+Dumps the pipeline through `glab-pipeline inspect`, triages the failed jobs, and proposes fixes. The command tells Claude to read the summary first and then only the job logs, test report, or lint output that the summary points at.
 
 ## How it works
 
@@ -63,14 +67,15 @@ Fetches only the pipeline status and the job logs, triages the failures, and pro
 1. Auto-detects the MR from the current git branch
 2. Fetches MR info via `glab mr view`
 3. Delegates discussion fetching to `glab-discussion read --dump` (per-thread files with incremental updates, bot detection, diff note positions)
-4. Fetches pipeline status, job details, and logs in parallel with retry
+4. Delegates the pipeline to `glab-pipeline inspect --mr-url <url>` (jobs, every job trace, and the conditional lint, test-report, and downstream fetches)
+5. Adds the external commit statuses, which live on the commit rather than in the pipeline, so `glab-pipeline` does not report them
 
-Output:
+Output, in `/tmp/glab-state-<id>-<timestamp>/`:
 
-- `mr-info.txt` — full MR details, in `/tmp/glab-state-<id>-<timestamp>/`
+- `mr-info.txt` — full MR details
+- `full-pipeline-summary.txt` — the `glab-pipeline` summary plus the external commit statuses
+- `pipeline/` — the `glab-pipeline` dump: `summary.json`, `pipeline.json`, `jobs.json`, `job-logs/<stage>-<name>-<id>.log`, and `lint.json`, `merged.yml`, `test-report.json`, `downstream/` when they apply
 - `/tmp/glab-discussion/<host>/mr-<iid>/*.txt` — one file per discussion thread, managed by `glab-discussion`
-- `full-pipeline-summary.txt` — pipeline status and all jobs
-- `job-logs/` — one log file per job
 
 ## Related
 

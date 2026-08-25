@@ -5,15 +5,13 @@
 # Fetches comprehensive merge request information including:
 # - MR details (description, link, author, etc.)
 # - All comments and notes (split by resolved/unresolved, human/bot)
-# - Latest pipeline status and job details
-# - Job logs (fetched in parallel with retry)
+# - Latest pipeline state: jobs, every job trace, lint, test report, downstream pipelines
 #
 
 set -euo pipefail
 
 MAX_RETRIES=5
 INITIAL_RETRY_DELAY=1
-MAX_PARALLEL_JOBS=10
 
 # ==============================================================================
 # Utility Functions
@@ -27,32 +25,6 @@ die() {
 fix_paginated_json() {
     # Merge multiple JSON arrays from paginated output into one
     jq -s 'add // []'
-}
-
-sanitize_filename() {
-    echo "$1" | sed 's/[^a-zA-Z0-9._-]/_/g'
-}
-
-glab_api_with_retry() {
-    local url="$1"
-    local output_file="$2"
-    local retry=0
-    local delay=$INITIAL_RETRY_DELAY
-
-    while (( retry < MAX_RETRIES )); do
-        if glab api "$url" > "$output_file" 2>/dev/null; then
-            return 0
-        fi
-        retry=$((retry + 1))
-        if (( retry < MAX_RETRIES )); then
-            local jitter=$(( RANDOM % (delay / 2 + 1) ))
-            sleep $(( delay + jitter ))
-            delay=$(( delay * 2 ))
-        fi
-    done
-
-    echo "ERROR: Failed to fetch $url after $MAX_RETRIES retries" > "$output_file"
-    return 1
 }
 
 # Fetches a paginated API endpoint with retry, merges arrays, and validates JSON.
@@ -94,8 +66,7 @@ setup_output_directory() {
 
     MR_INFO_FILE="$OUTPUT_DIR/mr-info.txt"
     PIPELINE_SUMMARY_FILE="$OUTPUT_DIR/full-pipeline-summary.txt"
-    JOBS_DIR="$OUTPUT_DIR/job-logs"
-    mkdir -p "$JOBS_DIR"
+    PIPELINE_DUMP_DIR="$OUTPUT_DIR/pipeline"
 }
 
 # ==============================================================================
@@ -201,136 +172,67 @@ fetch_comments() {
 # ==============================================================================
 
 fetch_pipeline_info() {
-    local pipeline_json=$(echo "$MR_JSON" | jq '.head_pipeline // null')
+    local pipeline_json
+    pipeline_json=$(echo "$MR_JSON" | jq '.head_pipeline // null')
 
     if [[ "$pipeline_json" == "null" ]]; then
         PIPELINE_STATUS=""
         return
     fi
 
-    local pipeline_id=$(echo "$pipeline_json" | jq -r '.id')
-    local pipeline_sha=$(echo "$pipeline_json" | jq -r '.sha')
     PIPELINE_STATUS=$(echo "$pipeline_json" | jq -r '.status')
+    local pipeline_sha
+    pipeline_sha=$(echo "$pipeline_json" | jq -r '.sha')
 
-    local jobs_json
-    if ! jobs_json=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/pipelines/$pipeline_id/jobs?per_page=100"); then
-        echo "Warning: Could not fetch jobs after $MAX_RETRIES retries" >&2
+    # glab-pipeline owns the pipeline dump: jobs, every job trace, and the conditional
+    # lint / test-report / downstream fetches that a failed pipeline needs.
+    if ! glab-pipeline inspect --mr-url "$MR_URL" --output-dir "$PIPELINE_DUMP_DIR" > "$PIPELINE_SUMMARY_FILE" 2>&1; then
+        echo "Warning: glab-pipeline inspect failed, see $PIPELINE_SUMMARY_FILE" >&2
         return
     fi
 
-    JOBS_JSON="$jobs_json"
-    local jobs_count=$(echo "$jobs_json" | jq 'length')
+    PIPELINE_SUMMARY_JSON="$PIPELINE_DUMP_DIR/summary.json"
 
-    # Fetch external commit statuses (e.g. SonarQube)
-    local commit_statuses="[]"
-    if [[ -n "$pipeline_sha" && "$pipeline_sha" != "null" ]]; then
-        commit_statuses=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/repository/commits/$pipeline_sha/statuses?per_page=100" 2>/dev/null || echo "[]")
-        # Filter to only external statuses (not from pipeline jobs)
-        local job_names
-        job_names=$(echo "$jobs_json" | jq -r '[.[].name] | .[]')
-        EXTERNAL_STATUSES=$(echo "$commit_statuses" | jq --argjson jobs "$(echo "$jobs_json" | jq '[.[].name]')" '[.[] | select(.name as $n | $jobs | index($n) | not)]')
-    fi
-
-    # Write pipeline summary
-    {
-        echo "PIPELINE SUMMARY"
-        echo "================"
-        echo
-        echo "Pipeline ID: $(echo "$pipeline_json" | jq -r '.id')"
-        echo "Status: $(echo "$pipeline_json" | jq -r '.status')"
-        echo "Ref: $(echo "$pipeline_json" | jq -r '.ref')"
-        echo "Created: $(echo "$pipeline_json" | jq -r '.created_at')"
-        echo "Web URL: $(echo "$pipeline_json" | jq -r '.web_url')"
-        echo
-        echo "JOBS ($jobs_count total)"
-        echo "========================"
-        echo
-
-        while IFS= read -r job; do
-            local job_id=$(echo "$job" | jq -r '.id')
-            local job_name=$(echo "$job" | jq -r '.name')
-            local job_status=$(echo "$job" | jq -r '.status')
-            local stage=$(echo "$job" | jq -r '.stage')
-            local safe_name=$(sanitize_filename "$job_name")
-
-            echo "Job: $job_name"
-            echo "  ID: $job_id"
-            echo "  Status: $job_status"
-            echo "  Stage: $stage"
-            echo "  Web URL: $(echo "$job" | jq -r '.web_url')"
-            echo "  Log File: $JOBS_DIR/${safe_name}-${job_id}.log"
-            echo
-        done < <(echo "$jobs_json" | jq -c '.[]')
-
-        # Print external commit statuses if any
-        local external_count
-        external_count=$(echo "${EXTERNAL_STATUSES:-[]}" | jq 'length')
-        if (( external_count > 0 )); then
-            echo "EXTERNAL COMMIT STATUSES ($external_count)"
-            echo "=========================================="
-            echo
-
-            while IFS= read -r ext; do
-                local ext_name=$(echo "$ext" | jq -r '.name // "Unknown"')
-                local ext_status=$(echo "$ext" | jq -r '.status // "unknown"')
-                local ext_desc=$(echo "$ext" | jq -r '.description // ""')
-                local ext_url=$(echo "$ext" | jq -r '.target_url // ""')
-
-                echo "Status: $ext_name"
-                echo "  Result: $ext_status"
-                [[ -n "$ext_desc" && "$ext_desc" != "null" ]] && echo "  Description: $ext_desc"
-                [[ -n "$ext_url" && "$ext_url" != "null" ]] && echo "  URL: $ext_url"
-                echo
-            done < <(echo "$EXTERNAL_STATUSES" | jq -c '.[]')
-        fi
-    } > "$PIPELINE_SUMMARY_FILE"
+    fetch_external_statuses "$pipeline_sha"
 }
 
-fetch_single_job_log() {
-    local job_json="$1"
-    local job_id=$(echo "$job_json" | jq -r '.id')
-    local job_name=$(echo "$job_json" | jq -r '.name')
-    local job_status=$(echo "$job_json" | jq -r '.status')
-    local stage=$(echo "$job_json" | jq -r '.stage')
-    local safe_name=$(sanitize_filename "$job_name")
-    local log_file="$JOBS_DIR/${safe_name}-${job_id}.log"
+# External commit statuses (for example SonarQube) live outside the pipeline, so glab-pipeline
+# does not report them. Job names from the dump filter out the statuses that pipeline jobs post.
+fetch_external_statuses() {
+    local pipeline_sha="$1"
 
-    local temp_trace=$(mktemp)
-    glab_api_with_retry "projects/$PROJECT_ID/jobs/$job_id/trace" "$temp_trace"
+    EXTERNAL_STATUSES="[]"
+    [[ -z "$pipeline_sha" || "$pipeline_sha" == "null" ]] && return 0
+
+    local commit_statuses
+    commit_statuses=$(glab_api_paginated_with_retry "projects/$PROJECT_ID/repository/commits/$pipeline_sha/statuses?per_page=100") || return 0
+
+    local job_names="[]"
+    [[ -f "$PIPELINE_DUMP_DIR/jobs.json" ]] && job_names=$(jq '[.[].name]' "$PIPELINE_DUMP_DIR/jobs.json")
+
+    EXTERNAL_STATUSES=$(echo "$commit_statuses" | jq --argjson jobs "$job_names" '[.[] | select(.name as $n | $jobs | index($n) | not)]')
+
+    local external_count
+    external_count=$(echo "$EXTERNAL_STATUSES" | jq 'length')
+    (( external_count == 0 )) && return 0
 
     {
-        echo "Job: $job_name"
-        echo "ID: $job_id"
-        echo "Status: $job_status"
-        echo "Stage: $stage"
-        echo "================"
         echo
-        cat "$temp_trace"
-    } > "$log_file"
+        echo "EXTERNAL COMMIT STATUSES ($external_count)"
+        echo "=========================================="
+        echo
 
-    rm -f "$temp_trace"
-}
-
-fetch_job_logs() {
-    [[ -z "${JOBS_JSON:-}" ]] && return
-
-    local jobs_count=$(echo "$JOBS_JSON" | jq 'length')
-    (( jobs_count == 0 )) && return
-
-    export PROJECT_ID JOBS_DIR MAX_RETRIES INITIAL_RETRY_DELAY
-    export -f glab_api_with_retry sanitize_filename fetch_single_job_log
-
-    local running=0
-    while IFS= read -r job; do
-        while (( running >= MAX_PARALLEL_JOBS )); do
-            wait -n 2>/dev/null || true
-            running=$((running - 1))
-        done
-        fetch_single_job_log "$job" &
-        running=$((running + 1))
-    done < <(echo "$JOBS_JSON" | jq -c '.[]')
-
-    wait
+        while IFS= read -r ext; do
+            echo "Status: $(echo "$ext" | jq -r '.name // "Unknown"')"
+            echo "  Result: $(echo "$ext" | jq -r '.status // "unknown"')"
+            local ext_desc ext_url
+            ext_desc=$(echo "$ext" | jq -r '.description // ""')
+            ext_url=$(echo "$ext" | jq -r '.target_url // ""')
+            [[ -n "$ext_desc" && "$ext_desc" != "null" ]] && echo "  Description: $ext_desc"
+            [[ -n "$ext_url" && "$ext_url" != "null" ]] && echo "  URL: $ext_url"
+            echo
+        done < <(echo "$EXTERNAL_STATUSES" | jq -c '.[]')
+    } >> "$PIPELINE_SUMMARY_FILE"
 }
 
 # ==============================================================================
@@ -365,22 +267,18 @@ print_summary() {
     fi
 
     if [[ "$show_pipeline" == true ]]; then
-        [[ -n "${PIPELINE_STATUS:-}" ]] && echo "  Pipeline:              $PIPELINE_SUMMARY_FILE (status: $PIPELINE_STATUS)"
+        [[ -n "${PIPELINE_STATUS:-}" ]] && echo "  Pipeline summary:          $PIPELINE_SUMMARY_FILE (status: $PIPELINE_STATUS)"
+        [[ -d "${PIPELINE_DUMP_DIR:-}" ]] && echo "  Pipeline dump:             $PIPELINE_DUMP_DIR/ (summary.json, pipeline.json, jobs.json, job-logs/)"
 
         # Show failed jobs
-        if [[ -n "${JOBS_JSON:-}" ]]; then
-            local failed_jobs=$(echo "$JOBS_JSON" | jq -c '[.[] | select(.status == "failed")]')
-            local failed_count=$(echo "$failed_jobs" | jq 'length')
+        if [[ -f "${PIPELINE_SUMMARY_JSON:-}" ]]; then
+            local failed_count
+            failed_count=$(jq '.failed_jobs | length' "$PIPELINE_SUMMARY_JSON")
 
             if (( failed_count > 0 )); then
                 echo
                 echo "Failed Jobs ($failed_count):"
-                while IFS= read -r job; do
-                    local job_id=$(echo "$job" | jq -r '.id')
-                    local job_name=$(echo "$job" | jq -r '.name')
-                    local safe_name=$(sanitize_filename "$job_name")
-                    echo "  $job_name: $JOBS_DIR/${safe_name}-${job_id}.log"
-                done < <(echo "$failed_jobs" | jq -c '.[]')
+                jq -r '.failed_jobs[] | "  \(.name) [\(.stage)] \(.failure_reason // "unknown"): \(.log // "no log")"' "$PIPELINE_SUMMARY_JSON"
             fi
         fi
 
@@ -428,6 +326,17 @@ main() {
         exit 1
     fi
 
+    if ! command -v glab-pipeline &>/dev/null; then
+        echo ""
+        echo "ERROR: glab-pipeline is not installed!"
+        echo ""
+        echo "Please ask the user to install it:"
+        echo "  uv tool install glab-pipeline"
+        echo ""
+        echo "More info: https://github.com/fprochazka/glab-pipeline"
+        exit 1
+    fi
+
     local fetch_comments_flag=false
     local fetch_pipeline_flag=false
 
@@ -455,7 +364,6 @@ main() {
 
     if [[ "$fetch_pipeline_flag" == true ]]; then
         fetch_pipeline_info
-        fetch_job_logs
     fi
 
     print_summary "$fetch_comments_flag" "$fetch_pipeline_flag"
