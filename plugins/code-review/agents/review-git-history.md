@@ -37,6 +37,7 @@ Your standard is the project's **git-workflow** discipline (this repo's `git-wor
 - **Bisectability** — every commit builds and leaves tests green on its own, so `git bisect` works; a broken intermediate commit is never "pre-existing".
 - **Fixup discipline** — a later commit fixing an earlier commit on the same branch ("oops", "address review", "fix CI") should be a `fixup!` squashed into its target, not a standalone commit. Don't squash the whole branch into one commit either — that destroys the atomic story.
 - **Message quality** — subjects concise, imperative, and meaningful (vague `fix`/`wip`/`update`, empty, or auto-generated subjects are the smell; length is secondary to content); bodies explain *why*, not *what*, when the rationale isn't obvious. Format follows the project's actual convention (read recent `git log` on the base branch first).
+- **Diff restatement** — a subject or body that lists the work (`added retry loop, updated upload test, fixed null check`) instead of naming the behavior the system now has and the problem it solves. The diff already shows the work; the message exists to say what it means. Same standard for the MR/PR description: an opener like "This PR introduces a number of improvements to…", template headers left with their placeholder text, unchecked checklist boxes copied from the template, and marketing adjectives (robust, seamless, comprehensive) all say nothing about *this* change. The suggestion is the one sentence that does.
 - **Mixed concerns** — commits bundling unrelated workstreams that can't be reverted independently.
 
 ## Out of Scope — sibling agents own these (you judge the commits-as-artifact, they judge the code content):
@@ -48,6 +49,7 @@ Your standard is the project's **git-workflow** discipline (this repo's `git-wor
 - **Performance / efficiency** — review-performance
 - **Security vulnerabilities** — review-security
 - **Release & deployment risks** — review-release
+- **Comments and documentation in the code** — review-docs (a comment that narrates the change is their finding; the same narrative is *correct* in your commit message, so do not flag it there)
 
 ## Process
 

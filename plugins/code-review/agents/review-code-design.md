@@ -76,6 +76,7 @@ You may touch areas other agents also cover; a little productive overlap enriche
 - **review-architecture** owns whether code is *consistent with and well-placed in* the existing architecture. You own how it could be *better-crafted*. Cite the consistency angle, but defer the placement/dependency-direction verdict to them.
 - **review-performance** owns query cost and N+1 specifics. You may note "I/O inside the core" as a *design* smell, but let performance quantify the cost.
 - **review-bugs** owns definite defects, including aggregate lost-update / locking. You own the boundary *design*, not the concurrency bug.
+- **review-docs** owns comments and documentation. When you suggest an intent-revealing name, that name may also replace a block-summary comment they flag — the same finding from two sides is fine.
 
 ## Do NOT Flag
 

@@ -54,6 +54,7 @@ You review ONLY:
 - Invalid state-machine transitions — an operation permitted from a state it shouldn't be (e.g. re-cancelling a cancelled order)
 - Query correctness — paginated/listing queries without a deterministic total ordering (rows shift between pages when the sort key has ties → needs a unique tie-breaker), `LIMIT`/`OFFSET` without `ORDER BY`, JOINs that multiply rows through unexpected cardinality, `NOT IN`/`!=` against nullable columns silently dropping rows, missing `GROUP BY` columns, filters that ignore soft-deletes, timezone/boundary errors in date-range predicates. (Query *cost/efficiency* — N+1, missing indexes — belongs to review-performance, not here.)
 - Broken control flow (unreachable code, early returns that skip cleanup)
+- **Tests that verify nothing (DEAD-TEST).** For each added or changed test ask: *what bug would make this fail?* If the only thing that can fail it is someone editing the exact line it restates, it is a change detector, not a test. The usual shapes: a constant echo (`assert MAX_RETRIES == 3`, an enum has its members, a config has its keys), text pinning (a substring of a prompt, an error message, or UI copy, with no behavior verified), a mock echo (mock every dependency, then assert the mock received the arguments you just passed in), assert-nothing (`is not None`, "no exception raised", an `isinstance` check when the contents matter), a framework test (the ORM persists, the validator rejects a wrong type, the router routes), a structure test (`hasattr`, "the module imports"), and mirror logic (the expected value is computed by re-implementing the code under test, so a shared bug passes both sides). The second question: when this fails, what will the developer do? If the certain answer is "update the test to match", the test verified nothing. **Guards:** an assertion that names a requirement living outside the code (a legal string, an error code a client parses, wording a regulator approved — a comment, a ticket link, or a spec-like test name is the tell) is a deliberate pin and stays. A characterization, golden-master, approval, or snapshot test that pins current behavior on purpose before a refactor is a real test and stays. When you cannot tell an echo from a deliberate pin, keep it and say so. When a dead test gestures at something worth testing, the finding is "X is effectively untested; this test only checks Y", not a rewrite.
 
 ## Out of Scope — sibling agents own these (a little overlap is fine; don't duplicate their depth):
 
@@ -64,6 +65,7 @@ You review ONLY:
 - **Security vulnerabilities** — review-security
 - **Release & deployment risks** — review-release
 - **Commit hygiene & git history** — review-git-history
+- **Comments and documentation** — review-docs (you own whether a *test* verifies anything; they own whether a *comment* says anything)
 
 ## Process
 
@@ -89,7 +91,7 @@ You review ONLY:
 Return your findings as a structured list. For each finding:
 
 ```
-### [BUG|LOGIC|EDGE-CASE|ERROR-HANDLING|RACE-CONDITION|RESOURCE-LEAK] <short title>
+### [BUG|LOGIC|EDGE-CASE|ERROR-HANDLING|RACE-CONDITION|RESOURCE-LEAK|DEAD-TEST] <short title>
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100

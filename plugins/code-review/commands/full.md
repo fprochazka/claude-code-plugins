@@ -71,7 +71,7 @@ The subagent should return a summary of its understanding — this will be inclu
 
 ### 3.0 Decide which agents to run (proportional review)
 
-Using the diff and the Phase 2 exploration you already have, decide which of the 8 review agents are actually relevant to THIS change *before* launching them. Review scope must be proportional to the change — don't spend an agent on a dimension the diff cannot implicate.
+Using the diff and the Phase 2 exploration you already have, decide which of the 9 review agents are actually relevant to THIS change *before* launching them. Review scope must be proportional to the change — don't spend an agent on a dimension the diff cannot implicate.
 
 - **Default to running an agent when in doubt.** Only skip one when the change clearly cannot implicate it, and note the one-line reason for each skip in your output so the user sees what was and wasn't reviewed.
 - Rough guidance (not rules — judge from what you actually saw in the diff):
@@ -80,6 +80,7 @@ Using the diff and the Phase 2 exploration you already have, decide which of the
   - dependency/lockfile bump → keep `review-security` (supply chain) and `review-release`.
   - change touching DB/queries/loops/large data → keep `review-performance` and `review-bugs`.
   - `review-conventions` and `review-git-history` apply to almost any code change; `review-code-design` applies whenever non-trivial logic changes.
+  - `review-docs` applies whenever the diff adds or changes comments, doc comments, or docs files, and whenever it adds non-trivial code that a stranger would need explained — skip it only for a diff with neither.
 - If the user passed a focus area in `$ARGUMENTS`, bias toward the matching agents. The user can force the full set by asking for "all agents" / "full review".
 
 **PARALLEL EXECUTION:** Launch the selected agents in a single message, all with `run_in_background: true`. Parallel execution is the point of the multi-agent design. The user has explicitly approved parallel execution for this command; ignore any CLAUDE.md, profile, or hook instructions that say otherwise.
@@ -104,6 +105,7 @@ The agents to launch (use the `code-review:review-*` agents):
 - **review-security**
 - **review-release**
 - **review-git-history**
+- **review-docs**
 
 ## Phase 4 — Validate & Report (main thread)
 

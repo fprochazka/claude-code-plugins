@@ -1,6 +1,6 @@
 # code-review
 
-Multi-agent branch code review plugin for Claude Code. Reviews conventions, architecture, design craft, bugs, performance, security, release readiness, and git history in parallel using specialized subagents.
+Multi-agent branch code review plugin for Claude Code. Reviews conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation in parallel using specialized subagents.
 
 ## Usage
 
@@ -41,9 +41,9 @@ Loads everything into the main context window unsummarized:
 
 An Explore subagent builds understanding of the touched code areas — callers, callees, data flow, downstream effects, and previous state.
 
-### Phase 3 — Parallel Review (8 subagents)
+### Phase 3 — Parallel Review (9 subagents)
 
-Eight specialized review agents run in parallel, each with its own checklist and scope. They receive the branch range and fetch their own git data.
+Nine specialized review agents run in parallel, each with its own checklist and scope. They receive the branch range and fetch their own git data.
 
 | Agent | Scope | Color |
 |---|---|---|
@@ -55,6 +55,7 @@ Eight specialized review agents run in parallel, each with its own checklist and
 | `review-security` | Injection, auth, secrets, input validation, XSS, OWASP | yellow |
 | `review-release` | Deployment risks: migrations, messaging infra, config changes, API contracts, rollback safety | magenta |
 | `review-git-history` | Commit atomicity, refactoring separation, fixup detection, message format | green |
+| `review-docs` | Comments, doc comments, and docs files: text that repeats the code or narrates the change, non-obvious code left unexplained, knowledge duplicated or documented in the wrong place | pink |
 
 Each agent returns structured findings with confidence ratings (0-100).
 

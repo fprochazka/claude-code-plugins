@@ -56,6 +56,7 @@ You review consistency with the project's established conventions, in priority o
 - **Security vulnerabilities** — review-security
 - **Release & deployment risks** — review-release
 - **Commit hygiene & git history** — review-git-history
+- **Comments, doc comments, and what docs *say*** — review-docs (you own where a docs file lives and how it is formatted; they own whether its content tells the reader anything)
 
 Anything a linter/formatter/compiler catches automatically is out of scope for everyone — do not flag it.
 
