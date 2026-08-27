@@ -73,18 +73,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/migrate-to-uv"
     },
     {
-      "name": "metabasecli",
-      "description": "Skill for interacting with Metabase using the metabase CLI",
-      "version": "1.0.3",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/metabasecli",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/metabasecli"
-    },
-    {
       "name": "markitdown",
       "description": "Skill for converting files to Markdown using Microsoft's markitdown CLI",
       "version": "1.0.0",
