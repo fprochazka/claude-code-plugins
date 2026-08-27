@@ -97,18 +97,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/markitdown"
     },
     {
-      "name": "gogcli",
-      "description": "Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI",
-      "version": "0.1.5",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/gogcli",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/gogcli"
-    },
-    {
       "name": "glab",
       "description": "GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill",
       "version": "1.1.1",
