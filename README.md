@@ -46,15 +46,14 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 
 ## Available Plugins
 
+### Maintained here
+
 | Plugin | Description |
 |--------|-------------|
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [gemini-cli](plugins/gemini-cli/) | Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
 | [gemini-deep-research](plugins/gemini-deep-research/) | Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent |
 | [glab](plugins/glab/) | GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill |
-| [glab-discussion](https://github.com/fprochazka/glab-discussion) | Standalone CC plugin + CLI for reading and managing GitLab MR discussion threads |
-| [ai-tool-use-validator](plugins/ai-tool-use-validator/) | AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness |
-| [slackcli](https://github.com/fprochazka/slackcli) | Standalone CC plugin + CLI for interacting with Slack workspaces |
 | [migrate-to-uv](plugins/migrate-to-uv/) | Skill for migrating Python projects from Poetry, pipx, or pip to uv |
 | [metabasecli](plugins/metabasecli/) | Skill for interacting with Metabase using the metabase CLI |
 | [gogcli](plugins/gogcli/) | Skill for interacting with Google services (Gmail, Calendar, Drive, Docs, Sheets, Slides, Contacts, Tasks, Forms, Chat, People) using the gog CLI |
@@ -65,6 +64,26 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel |
 | [sdlc](plugins/sdlc/) | Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
+
+### Hosted externally
+
+Each of these is a CLI with its own Claude Code plugin in the same repository. The repository is its own marketplace, so add it with `claude plugin marketplace add fprochazka/<name> --scope user` before you install the plugin.
+
+| Plugin | Description |
+|--------|-------------|
+| [glab-discussion](https://github.com/fprochazka/glab-discussion) | Skill for working with GitLab MR discussions via the glab-discussion CLI |
+| [glab-pipeline](https://github.com/fprochazka/glab-pipeline) | Agent-friendly GitLab CI pipeline inspector — dumps full pipeline state and prints a problem-driven summary |
+| [bash-classify](https://github.com/fprochazka/bash-classify) | Auto-allows low-risk bash commands in Claude Code using bash-classify |
+| [slackcli](https://github.com/fprochazka/slackcli) | Skill for interacting with Slack workspaces using the slackcli CLI |
+| [devin-mcp-cli](https://github.com/fprochazka/devin-mcp-cli) | Skill for interacting with the Devin MCP server using the devin-mcp CLI |
+
+### Experiments
+
+Plugins that explore an idea. They work, but the shape can change without notice and they get less care than the ones above.
+
+| Plugin | Description |
+|--------|-------------|
+| [ai-tool-use-validator](plugins/ai-tool-use-validator/) | AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness |
 
 ## Developing
 
