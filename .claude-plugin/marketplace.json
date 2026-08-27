@@ -37,18 +37,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/gemini-cli"
     },
     {
-      "name": "gemini-deep-research",
-      "description": "Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent",
-      "version": "1.0.0",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/gemini-deep-research",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/gemini-deep-research"
-    },
-    {
       "name": "ai-tool-use-validator",
       "description": "AI-powered tool use validation using LLM backends (Vertex AI, etc.) to evaluate command safety and correctness",
       "version": "0.2.0",
