@@ -47,6 +47,10 @@ You are responsible for fetching git data yourself:
 
 Read the conventions map before you form any design opinion, and open every source it marks as relevant to `code-design`. A documented design rule outranks your stricter ideal — when a doc sanctions the shape the code takes, that shape is not a finding. When the map lists a design area under "Nothing found for", judge it by the local idiom of the files the diff touches.
 
+**Before any check — establish what you are looking at.**
+- Whether the code is domain logic, orchestration, or an infrastructure adapter, before you apply the purity or domain-model axes.
+- Trivial CRUD gets no core/shell finding.
+
 ## Your Scope — four design axes
 
 ### 1. Functional-core purity (PURITY)

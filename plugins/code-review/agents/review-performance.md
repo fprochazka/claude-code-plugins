@@ -68,12 +68,16 @@ You review ONLY:
 
 ## Process
 
-1. Read the conventions map and open every source it marks as relevant to `performance` — the project may document its fetch strategy, its pagination rule, its transaction boundary, or an accepted cost. A documented decision that sanctions the pattern makes it a non-finding. When the map lists a data-access area under "Nothing found for", judge it by the local idiom of the files the diff touches.
-2. Get the changed files: `git diff --name-only <base>...HEAD`, then read the full diff for files with runtime logic (skip pure config/docs/test-data).
-3. For each change touching data access, trace: where does the data come from, how many times is it fetched, and does the count scale with input size?
-4. Look specifically for loops (and stream/map pipelines) whose body touches the database, a remote service, or a lazy ORM association.
-5. Check the previous version (`git show <base>:<file>`) to see whether the change *introduced* the cost or merely moved existing code.
-6. Where you can, confirm the suspicion by reading the entity mapping / fetch strategy or the repository method, rather than guessing.
+1. **Before any check — establish what you are looking at.**
+   - Which data-access idiom the file uses, read from its imports and fields, before you flag an N+1 or an over-fetch.
+   - Whether a mapping's fetch strategy is lazy or eager, read from the mapping itself and not from the call site.
+   - Whether a loop runs per request or once at startup.
+2. Read the conventions map and open every source it marks as relevant to `performance` — the project may document its fetch strategy, its pagination rule, its transaction boundary, or an accepted cost. A documented decision that sanctions the pattern makes it a non-finding. When the map lists a data-access area under "Nothing found for", judge it by the local idiom of the files the diff touches.
+3. Get the changed files: `git diff --name-only <base>...HEAD`, then read the full diff for files with runtime logic (skip pure config/docs/test-data).
+4. For each change touching data access, trace: where does the data come from, how many times is it fetched, and does the count scale with input size?
+5. Look specifically for loops (and stream/map pipelines) whose body touches the database, a remote service, or a lazy ORM association.
+6. Check the previous version (`git show <base>:<file>`) to see whether the change *introduced* the cost or merely moved existing code.
+7. Where you can, confirm the suspicion by reading the entity mapping / fetch strategy or the repository method, rather than guessing.
 
 ## Do NOT Flag
 

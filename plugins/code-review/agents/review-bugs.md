@@ -72,14 +72,17 @@ You review ONLY:
 
 ## Process
 
-1. Read the conventions map and open every source it marks as relevant to `bugs` — the project's rules on error contracts, null handling, transaction boundaries, and test structure decide whether a pattern is a defect or the sanctioned way. When the map lists an area under "Nothing found for", judge it by the local idiom of the files the diff touches.
-2. Read the full diff (`git diff <base>...HEAD`) for each changed file
-3. For each non-trivial change, read the surrounding code to understand:
+1. **Before any check — establish what you are looking at.**
+   - Which persistence or I/O idiom the file uses — ORM entity, query builder, raw SQL, HTTP client, message consumer — read from its imports and fields. Judge a query, a transaction, or a retry against that idiom's rules, not another idiom's.
+   - Whether a test file is a unit test, an integration test, or a fixture, before you apply DEAD-TEST or WEAK-FIXTURE.
+2. Read the conventions map and open every source it marks as relevant to `bugs` — the project's rules on error contracts, null handling, transaction boundaries, and test structure decide whether a pattern is a defect or the sanctioned way. When the map lists an area under "Nothing found for", judge it by the local idiom of the files the diff touches.
+3. Read the full diff (`git diff <base>...HEAD`) for each changed file
+4. For each non-trivial change, read the surrounding code to understand:
    - What callers pass to modified functions — will they be affected?
    - What the modified code calls — are contracts respected?
    - Where does the data come from and go? (DB, API, message queue, cache)
-4. Check the previous version of key files (`git show <base>:<file>`) to understand if behavior changes are intentional
-5. For each potential bug, trace the execution path to confirm it's actually reachable
+5. Check the previous version of key files (`git show <base>:<file>`) to understand if behavior changes are intentional
+6. For each potential bug, trace the execution path to confirm it's actually reachable
 
 ## Do NOT Flag
 

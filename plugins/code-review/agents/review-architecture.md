@@ -61,18 +61,21 @@ You review structural fit against the project's actual architecture:
 
 ## Process
 
-1. Read the conventions map first, and open every source it marks as relevant to `architecture` — that is where the project states its layering, its module boundaries, and its dependency rules. A documented rule that sanctions a placement makes it a non-finding. When the map lists an architectural area under "Nothing found for", judge it by the layout of the modules the diff touches, not by a textbook ideal.
-2. Understand the project's module/package structure:
+1. **Before any check — establish what you are looking at.**
+   - Which module boundary a file belongs to — a published contract, an internal implementation, a test helper — from the build file and the module layout, not from the folder name.
+   - Judge placement and surface expansion against that boundary, not against the directory the file sits in.
+2. Read the conventions map first, and open every source it marks as relevant to `architecture` — that is where the project states its layering, its module boundaries, and its dependency rules. A documented rule that sanctions a placement makes it a non-finding. When the map lists an architectural area under "Nothing found for", judge it by the layout of the modules the diff touches, not by a textbook ideal.
+3. Understand the project's module/package structure:
    - Read top-level directory layout and any architecture docs the map did not list
    - Identify the patterns used (domain-sliced, layer-sliced, hexagonal, etc.)
-3. For each changed file, understand where it sits in the architecture:
+4. For each changed file, understand where it sits in the architecture:
    - Which module/package does it belong to?
    - What layer is it in? (domain, application, infrastructure, API)
    - What are its dependencies? (`grep` for imports)
-4. Read the full diff (`git diff <base>...HEAD`) for each changed file
-5. For new files: verify placement matches the existing structure
-6. For modified files: check if changes respect existing boundaries
-7. Trace dependency direction — imports should flow inward (infra/api → application → domain), never outward
+5. Read the full diff (`git diff <base>...HEAD`) for each changed file
+6. For new files: verify placement matches the existing structure
+7. For modified files: check if changes respect existing boundaries
+8. Trace dependency direction — imports should flow inward (infra/api → application → domain), never outward
 
 ## Do NOT Flag
 

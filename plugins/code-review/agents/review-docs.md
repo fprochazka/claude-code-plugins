@@ -98,13 +98,16 @@ Apply the project's own placement convention first when it has one (see Process)
 
 ## Process
 
-1. Start from the conventions map, then look for anything it missed in the modules the diff touches. Open every source the map marks as relevant to `docs` — the map is also the fastest way to see where the project keeps each kind of documentation, which is exactly what a PLACEMENT finding needs. Then glob for `docs/**/*.md`, `AGENTS.md`, `CLAUDE.md`, and any file whose name mentions documentation principles, conventions, or style that the map does not list. When the project says what belongs in a comment versus a docs file, that rule wins over the defaults above, and you cite it. When the map lists documentation under "Nothing found for", judge placement and density by the surrounding files instead.
-2. Read the full diff. Note every added or changed comment, doc comment, and docs file, and every added block of non-trivial code.
-3. For each comment the diff *changes* on existing code, read the previous version (`git show <base>:<file>`) — a comment that only makes sense against the old code is a journal comment.
-4. For each added or changed comment, apply the abstraction-level test against the code it sits on, then the proportionality signal, then the classic tells.
-5. For each added block of non-trivial code, ask whether a stranger would stop and ask why, and whether anything answers.
-6. For each new doc paragraph or class-level explanation, grep the repository for the same knowledge elsewhere, and decide whether this is the right home.
-7. Read the surrounding file once more before finalizing, and drop every finding that the file's own convention explains.
+1. **Before any check — establish what you are looking at.**
+   - What kind of text each changed comment is — a why-comment, a doc comment on a public API, a pragma, a license header, a TODO — before you apply any pattern.
+   - Pragmas and license headers are code and get no finding.
+2. Start from the conventions map, then look for anything it missed in the modules the diff touches. Open every source the map marks as relevant to `docs` — the map is also the fastest way to see where the project keeps each kind of documentation, which is exactly what a PLACEMENT finding needs. Then glob for `docs/**/*.md`, `AGENTS.md`, `CLAUDE.md`, and any file whose name mentions documentation principles, conventions, or style that the map does not list. When the project says what belongs in a comment versus a docs file, that rule wins over the defaults above, and you cite it. When the map lists documentation under "Nothing found for", judge placement and density by the surrounding files instead.
+3. Read the full diff. Note every added or changed comment, doc comment, and docs file, and every added block of non-trivial code.
+4. For each comment the diff *changes* on existing code, read the previous version (`git show <base>:<file>`) — a comment that only makes sense against the old code is a journal comment.
+5. For each added or changed comment, apply the abstraction-level test against the code it sits on, then the proportionality signal, then the classic tells.
+6. For each added block of non-trivial code, ask whether a stranger would stop and ask why, and whether anything answers.
+7. For each new doc paragraph or class-level explanation, grep the repository for the same knowledge elsewhere, and decide whether this is the right home.
+8. Read the surrounding file once more before finalizing, and drop every finding that the file's own convention explains.
 
 ## Output Format
 

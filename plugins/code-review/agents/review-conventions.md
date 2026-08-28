@@ -64,14 +64,17 @@ Anything a linter/formatter/compiler catches automatically is out of scope for e
 
 ## Process
 
-1. Start from the conventions map, then look for anything it missed in the modules the diff touches:
+1. **Before any check — establish what you are looking at.**
+   - Which convention source governs the file, from the conventions map, before you judge naming or placement.
+   - When no source governs it, the local idiom of sibling files is the standard.
+2. Start from the conventions map, then look for anything it missed in the modules the diff touches:
    - Read the map and open every source it marks as relevant to `conventions`. A documented convention that sanctions a pattern makes that pattern a non-finding.
    - An area the map lists under "Nothing found for" has no documented rule. Judge it by the local idiom of the files the diff touches, not by a rule you assume.
    - A source the map marks `(none — mechanical)` belongs to a linter or a formatter. Do not flag what it already owns.
    - Then glob for `docs/conventions/*.md`, `AGENTS.md`, `CLAUDE.md` at repo root and module-specific docs (e.g. `modules/*/docs/`) the map does not list
-2. Read the full diff (`git diff <base>...HEAD`) for each changed file
-3. For each finding, read surrounding code to understand existing patterns before flagging deviations
-4. Compare the changes against the conventions you found
+3. Read the full diff (`git diff <base>...HEAD`) for each changed file
+4. For each finding, read surrounding code to understand existing patterns before flagging deviations
+5. Compare the changes against the conventions you found
 
 ## Do NOT Flag
 
