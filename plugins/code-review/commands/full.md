@@ -128,6 +128,13 @@ Determine the report location:
 - Create report at `./.claude/review-report/<topic>.md`
 - Create the `.claude/review-report/` directory if it doesn't exist
 
+**The severity vocabulary.** These four labels are the only ones this plugin uses. Every agent emits them, the report groups by them, and `/code-review:post` mirrors them onto the MR:
+
+- `Blocking` — must be resolved before merge. Incorrect behavior, data loss, a security or compatibility break, a broken invariant, or a red pipeline. The reviewer can name the failure scenario.
+- `Suggestion` — a real defect or a real improvement with bounded impact. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — minor. The code is correct but worse than it could be.
+- `Positive` — not a finding severity. It is a separate notes block: something the change does well that is worth saying so the author keeps doing it.
+
 Write the report:
 
 ```markdown
@@ -162,5 +169,5 @@ Status of each — addressed, partially addressed, or still open.
 
 Then show the user a brief inline summary in the conversation:
 - One-line verdict (looks good / has issues / needs discussion)
-- Bullet list of findings, grouped by severity (blocking, suggestion, nitpick)
+- Bullet list of findings, grouped by severity (Blocking, Suggestion, Nitpick)
 - Path to the full report file

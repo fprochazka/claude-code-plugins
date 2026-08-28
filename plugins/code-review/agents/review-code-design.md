@@ -95,10 +95,24 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
-**Severity:** suggestion|nitpick   (use blocking only for a genuinely harmful design choice)
+**Severity:** Suggestion|Nitpick   (use Blocking only for a genuinely harmful design choice)
 **Existing pattern:** Does the codebase already do this a certain way? (yes — describe it / no / n-a)
 **Description:** What the stricter ideal is and why it's better here.
 **Suggestion:** The concrete improvement — and when to skip it in favor of local consistency.
 ```
+
+**Severity means:**
+- `Blocking` — rare here. The design choice will actively cause harm, such as an invariant no type can hold or a shared abstraction already breaking its callers. A definite defect belongs to review-bugs instead.
+- `Suggestion` — a real improvement with bounded impact. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the code is correct and readable. It could be shaped a little better.
+
+End with an optional positive-notes block. Use it for the design the change gets right — a value object that removes a whole class of invalid state, a pure core, an abstraction the codebase already had and the change reused:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
 
 If you find nothing worth improving, say so explicitly: "No design improvements worth suggesting." Group by category, order by confidence (highest first).

@@ -75,7 +75,7 @@ You review ONLY:
 ## Do NOT Flag
 
 - Micro-optimizations with no measurable impact at realistic scale.
-- Costs on rare/cold paths (one-off migrations, admin tools) when the simplicity is worth it — note it as low severity at most.
+- Costs on rare/cold paths (one-off migrations, admin tools) when the simplicity is worth it — note it as a `Nitpick` at most.
 - Pre-existing performance issues in untouched code.
 - Speculative scaling concerns for data volumes the system will realistically never see.
 - Eager pre-loading that loads large data most branches never use — that over-application is itself a cost; prefer it only when most paths need the data.
@@ -89,12 +89,26 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
-**Severity:** critical|high|medium|low
+**Severity:** Blocking|Suggestion|Nitpick
 **Description:** What the inefficiency is.
 **Scaling:** How the cost grows (per row, per request, with collection size) and when it starts to hurt.
 **Suggestion:** The concrete fix, and its trade-off if it adds complexity.
 ```
 
+**Severity means:**
+- `Blocking` — the cost becomes an incident at the data volume or traffic the system already sees: an N+1 on a hot path, an unbounded fetch into memory, a remote call inside a transaction.
+- `Suggestion` — a real cost with bounded impact, or one that bites only at a volume the system will plausibly reach. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the cost is real but small, or it sits on a cold path where the simplicity is worth it.
+
+End with an optional positive-notes block, for efficiency the change gets right — a batched fetch, a projection instead of a whole entity, a transaction kept tight around the write:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
+
 If you find no performance concerns, say so explicitly: "No performance concerns found."
 
-Order by severity first, then confidence. Only report issues you are reasonably confident about (aim for >60 confidence).
+Order by severity first (Blocking, Suggestion, Nitpick), then confidence. Only report issues you are reasonably confident about (aim for >60 confidence).

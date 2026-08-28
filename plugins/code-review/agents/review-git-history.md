@@ -83,9 +83,24 @@ Return your findings as a structured list. For each finding:
 
 **Commit:** `<short-sha>` — `<commit message>`
 **Confidence:** N/100
+**Severity:** Blocking|Suggestion|Nitpick
 **Description:** What the issue is and why it matters for review quality.
 **Suggestion:** How to restructure (e.g., "split into two commits", "reorder before X", "squash into <sha> with fixup!").
 ```
+
+**Severity means:**
+- `Blocking` — a commit breaks bisectability, or it mixes unrelated concerns so badly that the branch cannot be read commit-by-commit and cannot be reverted in one piece.
+- `Suggestion` — a real structure or message problem the author should fix before merge: a fixup left standalone, a behavior change hidden inside a rename, a subject that restates the diff. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the history reads fine. The ordering or the wording could be a little clearer.
+
+End with an optional positive-notes block, for what the branch gets right — a test committed before the fix it captures, prerequisite refactors kept separate, a message that names the behavior instead of the diff:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
 
 If the history is clean, say so explicitly: "Commit history is clean and well-structured."
 

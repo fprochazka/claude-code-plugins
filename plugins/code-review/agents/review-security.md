@@ -88,12 +88,26 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
-**Severity:** critical|high|medium|low
+**Severity:** Blocking|Suggestion|Nitpick
 **Description:** What the vulnerability is and how it could be exploited.
 **Attack Vector:** How an attacker would reach and exploit this.
 **Suggestion:** How to fix it.
 ```
 
+**Severity means:**
+- `Blocking` — an attacker reachable from outside the trust boundary can exploit it, and you can name the request that does it. Also a committed secret, and a known-CVE dependency the diff pulls in.
+- `Suggestion` — a real weakness with a bounded or indirect path: defense in depth that is missing, an exception whose exploitation needs access the attacker does not have yet. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the code is safe. The hardening could be tighter or more consistent with the rest of the project.
+
+End with an optional positive-notes block, for the security the change gets right — a parameterized query where the old code concatenated, an authorization check at the action point, a secret read from the environment:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
+
 If you find no issues, say so explicitly: "No security issues found."
 
-Order by severity first, then confidence.
+Order by severity first (Blocking, Suggestion, Nitpick), then confidence.

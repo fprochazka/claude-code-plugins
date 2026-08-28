@@ -95,12 +95,26 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
-**Severity:** critical|high|medium|low
+**Severity:** Blocking|Suggestion|Nitpick
 **Description:** What the bug is, how it manifests, and under what conditions.
 **Trace:** Brief execution path showing how the bug is reached.
 **Suggestion:** How to fix it.
 ```
 
+**Severity means:**
+- `Blocking` — the code produces a wrong result, loses or corrupts data, leaks a resource, or leaves an invariant broken, and you can name the input or the interleaving that reaches it.
+- `Suggestion` — a real defect with bounded impact: a rare edge case, a swallowed error on a cold path, a test that verifies nothing. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the code is correct. The error contract or the edge-case handling could be tighter.
+
+End with an optional positive-notes block, for correctness the change gets right — an edge case handled that most people miss, a test that would actually catch the regression, a guard placed where it belongs:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
+
 If you find no issues, say so explicitly: "No bugs or logic errors found."
 
-Order by severity first, then confidence. Only report issues you are reasonably confident about (aim for >60 confidence).
+Order by severity first (Blocking, Suggestion, Nitpick), then confidence. Only report issues you are reasonably confident about (aim for >60 confidence).

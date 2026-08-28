@@ -131,7 +131,7 @@ Do **not** pass `--skip-ci`. The review reads the pipeline status, so the rebase
   ```
 
   - `rebase_in_progress: false` and `merge_error: null` → the rebase landed. **Do not trust the `sha` from this response** — GitLab returns a stale `sha` for a moment after the flag flips. Derive the head from git instead: re-run `git fetch origin "$SOURCE_BRANCH"`, take `git rev-parse "$REVIEW_HEAD"`, and record that as the reviewed SHA. Then sync the local branch — see below.
-  - `merge_error` is set → the rebase failed. Record the exact message verbatim as a blocking finding titled "MR is behind `<target>` and the server-side rebase failed", quoting the error and stating that the author needs to rebase it. Review the un-rebased head.
+  - `merge_error` is set → the rebase failed. Record the exact message verbatim as a `Blocking` finding titled "MR is behind `<target>` and the server-side rebase failed", quoting the error and stating that the author needs to rebase it. Review the un-rebased head.
   - `rebase_in_progress: true` → check once more after the ticket lookup. If it is still in progress then, review the current head and note in the report that the review ran against the pre-rebase state.
 
 ### 1.1 Sync the local branch after a successful rebase

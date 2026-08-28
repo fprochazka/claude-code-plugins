@@ -57,7 +57,7 @@ Nine specialized review agents run in parallel, each with its own checklist and 
 | `review-git-history` | Commit atomicity, refactoring separation, fixup detection, message format | green |
 | `review-docs` | Comments, doc comments, and docs files: text that repeats the code or narrates the change, non-obvious code left unexplained, knowledge duplicated or documented in the wrong place | pink |
 
-Each agent returns structured findings with confidence ratings (0-100).
+Each agent returns structured findings, each one carrying a severity — `Blocking`, `Suggestion`, or `Nitpick` — and a confidence rating (0-100). An agent may also return a block of positive notes, which is not a severity.
 
 ### Phase 4 — Validate & Report (main thread)
 

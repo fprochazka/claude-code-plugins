@@ -87,10 +87,25 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
+**Severity:** Blocking|Suggestion|Nitpick
 **Description:** What the issue is and which convention it violates (cite the source doc if possible).
 **Suggestion:** How to fix it.
 ```
 
+**Severity means:**
+- `Blocking` — the break has a consequence past style: wrong placement, a contract inconsistent with its siblings, or an entity/schema rule other code depends on.
+- `Suggestion` — a real deviation from a documented rule or from the clear local idiom. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the code is correct and consistent enough. It could match the surrounding idiom more closely.
+
+End with an optional positive-notes block, for conventions the change follows well — a doc cited correctly, a new file placed where the layout says, tests that match the suite:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
+
 If you find no issues, say so explicitly: "No convention issues found."
 
-Group findings by category. Order by confidence (highest first).
+Group findings by category. Order by severity (Blocking, Suggestion, Nitpick), then by confidence (highest first).

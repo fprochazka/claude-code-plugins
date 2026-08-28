@@ -113,10 +113,24 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
-**Severity:** suggestion|nitpick   (use blocking only for a comment that contradicts the code it sits on)
+**Severity:** Suggestion|Nitpick   (use Blocking only for a comment that contradicts the code it sits on)
 **Description:** What the text does or fails to do for the reader, and which test it fails.
 **Suggestion:** The distilled replacement text, the name to use instead, the place it should live, or the why that should be stated — always concrete. When the honest verdict is "distill", show the distilled version.
 ```
+
+**Severity means:**
+- `Blocking` — rare here. The text will send the reader the wrong way: a comment that contradicts the code it sits on, or a doc that states a contract the code does not honor.
+- `Suggestion` — a real documentation defect: text that repeats the code, a journal comment, a why nobody stated, knowledge filed in the wrong place. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the text works. The wording or the placement could be tighter.
+
+End with an optional positive-notes block, for documentation the change gets right — a why that saves the next reader an hour, a legacy explanation kept where it belongs, a doc file that holds decisions instead of a class list:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
 
 Every finding carries its replacement. A finding that says only "too wordy" or "remove" is incomplete.
 

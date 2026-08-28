@@ -107,12 +107,26 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
-**Severity:** critical|high|medium|low
+**Severity:** Blocking|Suggestion|Nitpick
 **Description:** What the concern is, what could go wrong.
 **Rollout consideration:** What happens during the transition window (old and new versions coexisting). What happens on rollback.
 **Suggestion:** What the author should consider, decide, or document.
 ```
 
+**Severity means:**
+- `Blocking` — the deploy breaks something and you can name how: the old version fails against the new schema, a rollback loses data, a consumer starts before its queue exists, a config the code reads does not exist yet.
+- `Suggestion` — a real rollout risk with a bounded blast radius, or a decision the author should state explicitly. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the rollout is safe. The sequencing or the documentation of it could be clearer.
+
+End with an optional positive-notes block, for the rollout the change gets right — an expand-contract migration split correctly, a flag that turns the behavior off without a redeploy, a documented rollback path:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
+
 If you find no release concerns, say so explicitly: "No release readiness concerns found."
 
-Order by severity first, then confidence. Only report issues you are reasonably confident about (aim for >60 confidence).
+Order by severity first (Blocking, Suggestion, Nitpick), then confidence. Only report issues you are reasonably confident about (aim for >60 confidence).

@@ -90,10 +90,25 @@ Return your findings as a structured list. For each finding:
 
 **File:** `path/to/file.ext:LINE`
 **Confidence:** N/100
+**Severity:** Blocking|Suggestion|Nitpick
 **Description:** What the architectural issue is and why it matters (reference the project's actual structure).
 **Suggestion:** Where the code should go or how the design should change.
 ```
 
+**Severity means:**
+- `Blocking` — the structure breaks in a way that costs more to undo later: a dependency cycle, a layer inversion, one context writing another's data directly, or a surface made public by accident.
+- `Suggestion` — a real placement or coupling problem with bounded impact. The author decides, and a reasoned "no" is a valid answer.
+- `Nitpick` — the placement works. It sits slightly off the project's own vocabulary.
+
+End with an optional positive-notes block, for structural choices the change gets right — a boundary respected, a dependency pointed the correct way, a DTO scoped where it belongs:
+
+```
+### Positive notes
+- <one line each>
+```
+
+Leave the block out when there is nothing real to say. Do not pad it.
+
 If you find no issues, say so explicitly: "No architecture issues found."
 
-Group findings by category. Order by confidence (highest first).
+Group findings by category. Order by severity (Blocking, Suggestion, Nitpick), then by confidence (highest first).
