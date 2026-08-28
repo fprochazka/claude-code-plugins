@@ -43,7 +43,7 @@ You review structural fit against the project's actual architecture:
 - **Dependency direction** — do dependencies flow toward stability (volatile shouldn't be depended on by stable)? Any dependency **cycle**?
 - **Data ownership / boundaries** — does the change read or write another context's data/schema directly instead of through its public interface?
 - **Abstraction consistency (consistency angle only)** — is a new abstraction consistent with the project's existing abstraction vocabulary? (Whether it *could be better-crafted* is review-code-design's call.)
-- **API surface design** — endpoint structure, DTO scoping (shared only when truly reusable), request/response shapes, error design, HTTP method/status choices — consistent with existing API conventions.
+- **API surface design** — endpoint structure, DTO scoping (shared only when truly reusable), request/response shapes, error design, HTTP method/status choices — consistent with existing API conventions. Before you call a change to an endpoint, DTO, message schema, published client, or exported function "breaking", grep the repository for its consumers — callers of the method, clients of the path, readers of the field, consumers of the message type — and name them in the finding. When the consumers live outside this repository (another service, a mobile client, a published artifact), say so explicitly in the finding, state that you could not check them, and lower the confidence. Do not claim a consumer breaks when you have not seen one, and treat a change with zero in-repo consumers and no external consumer you can name as a candidate for Suggestion, not Blocking.
 - **Unintentional surface expansion** — does the diff make something public (export/endpoint/topic) that was private, with no sign it's intended?
 - **Cross-cutting concerns** — are auth/validation/logging/observability applied at the project's established layer, not ad-hoc per feature (which bypasses shared infra)?
 - **Data-flow structure** — sync-call vs async/event matches the established integration pattern for that boundary (a *structural* choice; the runtime *cost* is review-performance's).
@@ -55,7 +55,7 @@ You review structural fit against the project's actual architecture:
 - **Bugs & logic errors** — review-bugs
 - **Performance / query cost / N+1** — review-performance (you may note a *structural* data-flow choice, never its runtime cost)
 - **Security vulnerabilities** — review-security
-- **Release & deployment risks** — review-release
+- **Release & deployment risks** — review-release (on a contract change you own the surface-design consequence, never the rolling-deploy or rollback consequence)
 - **Commit hygiene & git history** — review-git-history
 
 ## Process
