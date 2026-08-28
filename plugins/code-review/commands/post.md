@@ -97,13 +97,18 @@ Post exactly **one** standalone (non-diff) comment on the MR via `glab-discussio
 ### Unresolved MR discussions
 - <thread> — addressed / partially addressed / still open
 
+### Coverage
+- Agents run: <list>
+- Agents skipped: <agent — one-line reason>, or "none"
+- Findings dropped in validation: <n>, or "none"
+
 ### Verdict
 <final call: approve, request changes, or needs discussion — and why>
 
 _Generated from a `/code-review:full` report and posted via `/code-review:post`._
 ```
 
-Only include sections that have content. Skip empty sections rather than printing "none".
+Only include sections that have content. Skip empty sections rather than printing "none". **Coverage is never empty** — at minimum it lists the agents that ran. Carry its lines straight from the report's Coverage section.
 
 Inline-anchored findings live in the diff threads, not here — do not duplicate them in the summary.
 

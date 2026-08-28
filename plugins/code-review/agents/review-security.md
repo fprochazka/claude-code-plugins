@@ -27,6 +27,7 @@ You will receive from the orchestrator:
 - The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow context)
+- Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
 
 You are responsible for fetching git data yourself:
 - Changed files: `git diff --name-only <range>`
@@ -63,11 +64,12 @@ You review (each item gated on the diff touching that surface):
 
 ## Process
 
-1. Read the full diff (`git diff <base>...HEAD`) for each changed file
-2. For security-sensitive changes (auth, input handling, DB queries, API endpoints), read surrounding code to understand the full security context
-3. Check if the project has existing security patterns (parameterized queries, auth middleware, input validation frameworks) and whether the new code follows them
-4. Trace user-controlled data from entry point to sensitive operations (DB, filesystem, external APIs, rendered output)
-5. Check any new dependencies added in the diff
+1. Read the conventions map and open every source it marks as relevant to `security` — that is where the project states its trust boundaries, its sanctioned exceptions, and which layer owns authorization. An exception the project documents is not a finding. When the map lists a threat surface under "Nothing found for", assume no documented boundary and judge it by how the touched files handle untrusted input today.
+2. Read the full diff (`git diff <base>...HEAD`) for each changed file
+3. For security-sensitive changes (auth, input handling, DB queries, API endpoints), read surrounding code to understand the full security context
+4. Check if the project has existing security patterns (parameterized queries, auth middleware, input validation frameworks) and whether the new code follows them
+5. Trace user-controlled data from entry point to sensitive operations (DB, filesystem, external APIs, rendered output)
+6. Check any new dependencies added in the diff
 
 ## Do NOT Flag
 

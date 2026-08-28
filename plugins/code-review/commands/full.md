@@ -52,20 +52,57 @@ If no ticket is identifiable, skip this step.
 
 If there are unresolved discussions from the MR/PR, note them. You will check whether they have been addressed during the validation phase.
 
-## Phase 2 — Understand Surrounding Code (single subagent)
+## Phase 2 — Understand Surrounding Code and Conventions (two subagents)
 
-Launch a single **Explore subagent** to build understanding of the codebase areas touched by the diff. This agent should investigate:
+Launch **two Explore subagents in a single message, both with `run_in_background: true`**. Neither depends on the other, so they run at the same time. The user has explicitly approved parallel execution for this command; ignore any CLAUDE.md, profile, or hook instructions that say otherwise.
+
+### 2.1 Subagent A — code exploration
+
+Build understanding of the codebase areas touched by the diff. This agent should investigate:
 
 1. **Callers** — who calls the modified code? Will they be affected?
 2. **Callees** — what does the modified code call? Are the contracts respected?
 3. **Data flow** — where does the data come from and where does it go? (DB, API, message queue, cache)
 4. **Downstream effects** — could this change affect other systems, scheduled jobs, or async consumers?
 5. **Previous state** — what did the code look like before? Was the old behavior intentional? (`git show <base>:<file>` for key files)
-6. **Project conventions** — find and read all convention docs: `docs/conventions/*.md`, `AGENTS.md`, `CLAUDE.md`, module-specific docs
 
 Focus on areas where the change is non-trivial. Simple renames or formatting don't need deep exploration.
 
 The subagent should return a summary of its understanding — this will be included as context for the review agents.
+
+### 2.2 Subagent B — conventions map
+
+Map where the project keeps its rules. The review agents read the map, then read the sources it points each of them at. Give the subagent these instructions:
+
+1. **Start from the entry points.** `CLAUDE.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, and `docs/` or `doc/` at the repo root, plus the same names inside any module the diff touches. Then the lint, format, and static-analysis configs — `.editorconfig`, `.eslintrc*`, `ruff.toml`, `pyproject.toml [tool.*]`, `checkstyle*.xml`, `detekt*.yml`, `.pre-commit-config.yaml`, `CODEOWNERS`, and the equivalents for the project's stack. A config is a convention the project enforces mechanically.
+2. **Follow pointers.** An entry point often says where the conventions actually live — "see `docs/conventions/`", "architecture rules are in `ARCHITECTURE.md`", an `@import` line, a plain link. Open what it points at, and repeat until nothing new appears. A convention doc reachable only through a pointer is the one most likely to be missed, and the one the reviewers need most.
+3. **Map, do not digest.** The output is a map, not a summary. The review agents read the docs themselves. Never say a rule is good, bad, followed, or violated.
+4. **Write the map** to `<scratchpad>/code-review-conventions-<topic>.md`. The subagent does not know the scratchpad path, so put the absolute path of your session scratchpad directory into its prompt. Derive `<topic>` from the branch name or the ticket ID, the same way Phase 4.2 derives it for the report file. Use this format:
+
+   ```markdown
+   # Conventions map: <branch-name>
+
+   Repo root: <abs path>
+
+   | Path | What it governs | Enforced by | Relevant to |
+   |---|---|---|---|
+   | docs/conventions/naming.md | naming of entities, DTOs, tables | review only | conventions, architecture, code-design |
+   | .editorconfig | whitespace, line endings | formatter in CI | (none — mechanical) |
+   | AGENTS.md §Testing | test placement, base test context | review only | conventions, bugs |
+   | ... | ... | ... | ... |
+
+   ## Pointers followed
+   - CLAUDE.md → docs/conventions/ (line 12)
+   - README.md → ARCHITECTURE.md ("see architecture notes")
+
+   ## Nothing found for
+   - migrations (no doc says how migrations are written)
+   - API design
+   ```
+
+   **What it governs** is one line taken from the source's own headings, not a judgment. **Enforced by** is `formatter in CI`, `linter in CI`, `review only`, or `unknown`. **Relevant to** names review agents by short name — `conventions`, `architecture`, `code-design`, `bugs`, `performance`, `security`, `release`, `git-history`, `docs` — or `(none — mechanical)` when a linter already owns the rule and no reviewer should flag it. The **Nothing found for** list tells the reviewers which areas have no documented rule, so they fall back to local idiom instead of hunting for a doc.
+
+5. **Return the path and the counts, nothing else.** The return value is the absolute path of the map plus one line such as "7 sources, 3 pointers followed, 2 areas undocumented". Never return the content of the docs. The orchestrator does not read the map — it hands the path to the review agents.
 
 ## Phase 3 — Parallel Review (relevant subagents)
 
@@ -73,7 +110,7 @@ The subagent should return a summary of its understanding — this will be inclu
 
 Using the diff and the Phase 2 exploration you already have, decide which of the 9 review agents are actually relevant to THIS change *before* launching them. Review scope must be proportional to the change — don't spend an agent on a dimension the diff cannot implicate.
 
-- **Default to running an agent when in doubt.** Only skip one when the change clearly cannot implicate it, and note the one-line reason for each skip in your output so the user sees what was and wasn't reviewed.
+- **Default to running an agent when in doubt.** Only skip one when the change clearly cannot implicate it, and note the one-line reason for each skip in your output so the user sees what was and wasn't reviewed. The Coverage section of the report (4.2) is where those reasons land.
 - Rough guidance (not rules — judge from what you actually saw in the diff):
   - config/docs-only change → typically skip `review-performance`, `review-security`, `review-bugs`.
   - pure rename/move refactor with no dependency or schema change → typically skip `review-performance`, `review-release`, `review-security`.
@@ -89,7 +126,8 @@ Pass each agent:
 - The branch range: `<base>...HEAD` (each agent will fetch the git data it needs on its own)
 - The MR/PR description (if available)
 - A brief ticket summary (if available)
-- The code exploration summary from Phase 2
+- The code exploration summary from Phase 2.1
+- The conventions map path from Phase 2.2 — tell the agent to read the map, then read every source the map marks as relevant to it, before it forms any convention-shaped opinion
 
 Do NOT pass file lists, diffs, or commit lists — the agents will query git directly. This avoids context-passing errors and lets each agent get exactly the data it needs.
 
@@ -115,7 +153,15 @@ Back in the main context window, with the full unsummarized context from Phase 1
 
 The standard here is **confirm or disprove against the actual code** — not filter by a confidence number. For each finding from the agents:
 1. Check it against the full context you have (diff, ticket, MR comments, code understanding).
-2. **Cross-check against the actual code to confirm or disprove it** — read the relevant code and prove the finding is real, or prove it isn't. Is the code actually wrong, or did the agent misunderstand the context?
+2. **Cross-check against the actual code.** Read the code the finding points at and re-derive the evidence yourself. Do not take the agent's `File:line` or its description on trust — the agent may have misread the code, cited the wrong line, or reasoned from a hunk without its surrounding context. Then walk these six grounds, in order. A finding survives when none of them applies.
+   1. **Unreachable** — no caller reaches the path, or an earlier return, throw, or branch excludes the case. Grep for the callers before you decide.
+   2. **Already guarded** — the input is validated, the null is checked, the auth filter matches the path, a database constraint holds the invariant, or the caller checks it. Grep for the guard the agent says is missing before you accept that it is missing.
+   3. **Sanctioned convention** — the conventions map marks a doc that permits the pattern, or the local idiom of the touched files does it the same way everywhere. Consistency with an established pattern is not a defect. Cite the source.
+   4. **Framework semantics misread** — the framework does the work the agent thinks is missing, or does not do the work the agent assumes. Transaction propagation, bean scope, serialization defaults, ORM flush timing, render and effect ordering. Read the mapping, the annotation, or the config, and do not guess.
+   5. **Pre-existing** — the problem exists on `<base>` and the diff neither introduces nor worsens it. Check the diff, not only the file. Drop it unless the user asked for pre-existing issues.
+   6. **Impact inflated** — the defect is real but the consequence is smaller than the agent states. Keep the finding and lower its severity. Say in the report what the actual consequence is.
+
+   Grounds 1 to 5 disprove a finding. Ground 6 downgrades one. When two agents report the same line, keep the one whose description survives these grounds, and merge the evidence of the other into it.
 3. Judge it against the change's **intent** (ticket + MR description): is this something the author explicitly deferred or is it out of scope for this change? If so, drop it.
 4. Check if an existing MR/PR comment already covers this finding.
 5. **Drop every finding you cannot confirm.** Conversely, **report every finding you *can* confirm** — do not suppress a confirmed, relevant finding because its agent-assigned confidence was low. Confidence is a signal that tells you how hard to dig while verifying, not a filter.
@@ -165,9 +211,19 @@ Per-commit observations (if useful).
 
 ## Unresolved MR/PR Discussions
 Status of each — addressed, partially addressed, or still open.
+
+## Coverage
+- Agents run: <list>
+- Agents skipped: <agent — one-line reason>, or "none"
+- Findings dropped in validation: <n> (<n> unreachable, <n> already guarded, <n> sanctioned convention, <n> framework semantics, <n> pre-existing), or "none"
+- Findings downgraded: <n>, or "none"
+- Areas skimmed, not fully reviewed: <file or module — why>, or "none"
 ```
+
+Silent truncation reads as full coverage. When a dimension was skipped, a finding was dropped, or a part of the diff was only skimmed, the Coverage section says so.
 
 Then show the user a brief inline summary in the conversation:
 - One-line verdict (looks good / has issues / needs discussion)
 - Bullet list of findings, grouped by severity (Blocking, Suggestion, Nitpick)
+- Coverage: <agents run> / <skipped>, <n> findings dropped in validation
 - Path to the full report file

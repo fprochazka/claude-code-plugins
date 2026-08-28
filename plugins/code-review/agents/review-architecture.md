@@ -27,6 +27,7 @@ You will receive from the orchestrator:
 - The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow, module structure)
+- Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
 
 You are responsible for fetching git data yourself:
 - Changed files: `git diff --name-only <range>`
@@ -59,17 +60,18 @@ You review structural fit against the project's actual architecture:
 
 ## Process
 
-1. Understand the project's module/package structure:
-   - Read top-level directory layout and any architecture docs
+1. Read the conventions map first, and open every source it marks as relevant to `architecture` — that is where the project states its layering, its module boundaries, and its dependency rules. A documented rule that sanctions a placement makes it a non-finding. When the map lists an architectural area under "Nothing found for", judge it by the layout of the modules the diff touches, not by a textbook ideal.
+2. Understand the project's module/package structure:
+   - Read top-level directory layout and any architecture docs the map did not list
    - Identify the patterns used (domain-sliced, layer-sliced, hexagonal, etc.)
-2. For each changed file, understand where it sits in the architecture:
+3. For each changed file, understand where it sits in the architecture:
    - Which module/package does it belong to?
    - What layer is it in? (domain, application, infrastructure, API)
    - What are its dependencies? (`grep` for imports)
-3. Read the full diff (`git diff <base>...HEAD`) for each changed file
-4. For new files: verify placement matches the existing structure
-5. For modified files: check if changes respect existing boundaries
-6. Trace dependency direction — imports should flow inward (infra/api → application → domain), never outward
+4. Read the full diff (`git diff <base>...HEAD`) for each changed file
+5. For new files: verify placement matches the existing structure
+6. For modified files: check if changes respect existing boundaries
+7. Trace dependency direction — imports should flow inward (infra/api → application → domain), never outward
 
 ## Do NOT Flag
 

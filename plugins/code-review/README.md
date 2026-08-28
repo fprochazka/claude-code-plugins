@@ -37,9 +37,9 @@ Loads everything into the main context window unsummarized:
 - MR/PR description, comments, and pipeline status
 - Ticket description and acceptance criteria
 
-### Phase 2 — Explore Surrounding Code (single subagent)
+### Phase 2 — Explore Surrounding Code and Conventions (two subagents)
 
-An Explore subagent builds understanding of the touched code areas — callers, callees, data flow, downstream effects, and previous state.
+Two Explore subagents run in parallel. One builds understanding of the touched code areas — callers, callees, data flow, downstream effects, and previous state. The other maps where the project keeps its rules: convention docs, module docs, and the lint, format, and static-analysis configs, including the ones reachable only by following a pointer out of `CLAUDE.md` or a README. It writes a table of source, what it governs, what enforces it, and which review agents it is relevant to, and it returns only the path. Every review agent reads that map before it forms a convention-shaped opinion.
 
 ### Phase 3 — Parallel Review (9 subagents)
 
@@ -61,7 +61,7 @@ Each agent returns structured findings, each one carrying a severity — `Blocki
 
 ### Phase 4 — Validate & Report (main thread)
 
-The main agent validates every finding against its full unsummarized context. Findings that can't be verified are dropped. The final report is written to `.claude/review-report/<topic>.md` in the project directory.
+The main agent validates every finding against its full unsummarized context, walking six named refutation grounds — unreachable, already guarded, sanctioned convention, framework semantics misread, pre-existing, impact inflated. Findings that can't be verified are dropped. The final report is written to `.claude/review-report/<topic>.md` in the project directory, and its Coverage section names which agents ran, which were skipped, and what validation dropped.
 
 ## Design decisions
 

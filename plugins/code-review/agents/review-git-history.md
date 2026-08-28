@@ -21,6 +21,7 @@ Match scrutiny to the change — a one-commit or tiny branch is trivially fine; 
 You will receive from the orchestrator:
 - The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
+- Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
 
 You are responsible for fetching git data yourself:
 - Commit list: `git log --oneline <base>..HEAD`
@@ -53,17 +54,18 @@ Your standard is the project's **git-workflow** discipline (this repo's `git-wor
 
 ## Process
 
-1. List all commits: `git log --oneline <base>..HEAD`
-2. Check the project's commit message conventions by reading recent history: `git log --oneline -20 <base>`
-3. For each commit, examine its contents:
+1. Read the conventions map and open every source it marks as relevant to `git-history` — that is where a project states its commit-message format, its branch naming, and its merge or rebase policy. A documented rule that permits what you were about to flag makes it a non-finding. When the map lists commit or branch conventions under "Nothing found for", judge them by the recent history of the base branch instead.
+2. List all commits: `git log --oneline <base>..HEAD`
+3. Check the project's commit message conventions by reading recent history: `git log --oneline -20 <base>`
+4. For each commit, examine its contents:
    - `git show --stat <sha>` to see which files were touched
    - `git show <sha>` to read the actual diff
-4. Check for atomicity violations:
+5. Check for atomicity violations:
    - Does any commit mix refactoring with behavior changes?
    - Does any commit touch unrelated files/modules?
    - Are there later commits that fix issues from earlier commits? (These indicate the earlier commit was wrong and needs `fixup!`)
-5. Check commit message format against the project's conventions
-6. Verify the ordering makes sense (refactorings first, then features/fixes)
+6. Check commit message format against the project's conventions
+7. Verify the ordering makes sense (refactorings first, then features/fixes)
 
 ## Do NOT Flag
 

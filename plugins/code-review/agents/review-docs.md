@@ -35,6 +35,7 @@ You will receive from the orchestrator:
 - The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow context)
+- Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
 
 You are responsible for fetching git data yourself:
 - Changed files: `git diff --name-only <range>`
@@ -96,7 +97,7 @@ Apply the project's own placement convention first when it has one (see Process)
 
 ## Process
 
-1. Find the project's own rules for comments and docs first. Glob for `docs/**/*.md`, `AGENTS.md`, `CLAUDE.md`, and any file whose name mentions documentation principles, conventions, or style. When the project says what belongs in a comment versus a docs file, that rule wins over the defaults above, and you cite it.
+1. Start from the conventions map, then look for anything it missed in the modules the diff touches. Open every source the map marks as relevant to `docs` — the map is also the fastest way to see where the project keeps each kind of documentation, which is exactly what a PLACEMENT finding needs. Then glob for `docs/**/*.md`, `AGENTS.md`, `CLAUDE.md`, and any file whose name mentions documentation principles, conventions, or style that the map does not list. When the project says what belongs in a comment versus a docs file, that rule wins over the defaults above, and you cite it. When the map lists documentation under "Nothing found for", judge placement and density by the surrounding files instead.
 2. Read the full diff. Note every added or changed comment, doc comment, and docs file, and every added block of non-trivial code.
 3. For each comment the diff *changes* on existing code, read the previous version (`git show <base>:<file>`) — a comment that only makes sense against the old code is a journal comment.
 4. For each added or changed comment, apply the abstraction-level test against the code it sits on, then the proportionality signal, then the classic tells.

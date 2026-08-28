@@ -27,6 +27,7 @@ You will receive from the orchestrator:
 - The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow context)
+- Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
 
 You are responsible for fetching git data yourself:
 - Changed files: `git diff --name-only <range>`
@@ -69,13 +70,14 @@ You review ONLY:
 
 ## Process
 
-1. Read the full diff (`git diff <base>...HEAD`) for each changed file
-2. For each non-trivial change, read the surrounding code to understand:
+1. Read the conventions map and open every source it marks as relevant to `bugs` — the project's rules on error contracts, null handling, transaction boundaries, and test structure decide whether a pattern is a defect or the sanctioned way. When the map lists an area under "Nothing found for", judge it by the local idiom of the files the diff touches.
+2. Read the full diff (`git diff <base>...HEAD`) for each changed file
+3. For each non-trivial change, read the surrounding code to understand:
    - What callers pass to modified functions — will they be affected?
    - What the modified code calls — are contracts respected?
    - Where does the data come from and go? (DB, API, message queue, cache)
-3. Check the previous version of key files (`git show <base>:<file>`) to understand if behavior changes are intentional
-4. For each potential bug, trace the execution path to confirm it's actually reachable
+4. Check the previous version of key files (`git show <base>:<file>`) to understand if behavior changes are intentional
+5. For each potential bug, trace the execution path to confirm it's actually reachable
 
 ## Do NOT Flag
 
