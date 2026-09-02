@@ -22,20 +22,22 @@ Inspect the **Scope** above:
 
 ## Phase 2 — Read the ticket (only if a ticket ref was given)
 
-Delegate to ONE subagent. Goal: load the full ticket and everything it transitively references.
+Delegate to ONE subagent. Goal: load the full ticket and everything it transitively references — the ticket's own content and the external systems it links to. **This subagent never opens the codebase.** Reading code is Phase 3 and Phase 4 work. A ticket subagent that greps a repository or reads source files has left its scope, and what it brings back from there is noise the later phases redo properly.
 
 The subagent must:
 
 - Read title, description, and **all comments**.
 - Inspect references, attachments, labels, project, status, links — anything rich.
-- Follow links to related tickets, MRs/PRs, design docs, dashboards.
+- Follow links to related tickets, MRs/PRs, design docs, dashboards. Read an MR/PR through the forge CLI (`glab`, `gh`) — description, discussions, and the diff stat (which files changed, how much) — never the diff itself, and never a local checkout of the repository. Whether a diff is relevant is decided later, once the Phase 3 code map exists.
 - If the ticket links to chat threads (Slack or similar) and they aren't already mirrored into ticket comments, read those threads too.
-- **Dump all findings into `./.claude/plans/pre-plan-<ticket-slug>-ticket.md`** (create the directory if missing) as a single markdown file. Include: full ticket content (title, description, all comments verbatim or near-verbatim where they carry real information), summarized linked context per link, a list of every concrete code/file/system reference found, and a list of any unresolved questions or ambiguities spotted in the ticket.
+- **Dump all findings into `./.claude/plans/pre-plan-<ticket-slug>-ticket.md`** (create the directory if missing) as a single markdown file. Include: full ticket content (title, description, all comments verbatim or near-verbatim where they carry real information), summarized linked context per link, a list of every concrete code/file/table/system reference **that the ticket or its linked items mention — transcribed as written, not searched for, not verified against code** — and a list of any unresolved questions or ambiguities spotted in the ticket.
 - **Return ONLY the path to that file** (plus a 2-3 sentence high-level gist). Do NOT inline the full dump into the subagent's reply — the orchestrator will read the file as needed.
 
 The subagent prompt must open with a skill-load instruction so it doesn't waste turns guessing CLI syntax. Resolve the tracker with the `sdlc:team-workflow-identify` skill first, then name the installed skill that covers that tracker: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
 
 Do the same for every other system the subagent has to read. If the ticket links to chat threads, add the instruction for the chat tool's skill as well.
+
+The prompt must also state the boundary in the subagent's own terms: `Do not open, grep, or read any repository checkout or source file. Collect only what the ticket and its links say.` Do NOT add domain hints to the prompt ("especially look for table X, class Y, DAG Z") — a hint list reads as a search brief and sends the subagent into the repositories to find the items. If the user restricted the scope (in **Scope** above or in the conversation), pass that restriction into the prompt verbatim.
 
 ## Phase 3 — Surface-level codebase exploration
 
@@ -73,4 +75,5 @@ Omit sections that have nothing to say. No filler.
 - Do NOT write a plan. Do NOT enter plan mode. Do NOT start implementing.
 - Phases run strictly in order — never overlap them. Parallelism is allowed only inside Phase 4, and only for deep dives that barely overlap. No background subagents.
 - Do NOT skip Phase 3 to jump straight into deep dives — the surface map is what makes the deep dives focused.
+- A constraint the user stated — in **Scope** or in the conversation ("only the Airflow side", "do not touch repo X") — goes into every subagent prompt verbatim. Intersect each phase's template with what the user said. Never expand a template with detail the user did not ask for.
 - Present the briefing and stop. Wait for the user to discuss before doing anything else.
