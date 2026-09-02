@@ -18,6 +18,10 @@ If empty, brief the whole session. If the session covered several unrelated thre
 
 **You (the orchestrator) write the file yourself — never a subagent**, because the primary source is the conversation you are holding. Priority order: (1) the session itself — this is often the *only* source, and that is the normal case; (2) `./.claude/plans/*.md` if any exist — newest proposal primary, older files for specific facts only; (3) docs/tickets already read this session — anchor, do not re-read. **Never go exploring for new material** — a missing fact goes in the "not yet verified" section, not into a research round.
 
+## Style
+
+Invoke the `prose:technical-writing` skill before you write. The file follows its form rules (short active sentences, plain verbs, no LLM vocabulary, no narration of change). The rules below are the briefing-specific ones on top of it.
+
 ## Output path
 
 Worktree-local `./.claude/plans/<slug>-briefing.md` (`mkdir -p`; never `/tmp`, scratchpad, or `docs/`). Slug: `$ARGUMENTS`, else ticket ID (lowercase), else kebab-case topic. **If the file exists, overwrite it wholesale** — a briefing is a snapshot of current state; do not patch, do not suffix `-2`.

@@ -13,7 +13,7 @@ claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 
 ## Commands
 
-- `/sdlc:pre-plan [ticket ref or problem description]` — gathers the context needed to **discuss** a solution. Reads the ticket and everything it links to, maps the affected subdomains, then runs one focused deep dive per subdomain. Writes a briefing to `./.claude/plans/` and stops. It does not plan and does not implement.
+- `/sdlc:pre-plan [ticket ref or problem description]` — gathers the context needed to **discuss** a solution. Reads the ticket and everything it links to, maps the affected subdomains, then runs one focused deep dive per subdomain. Writes the full context file to `./.claude/plans/`, then runs `/sdlc:brief-next-steps` on it so the chat reply is the short conclusion and the long file stays the argument. It does not plan and does not implement.
 - `/sdlc:write-plan [topic, ticket ref, or briefing path]` — enters plan mode and writes an implementation plan whose steps map onto the intended atomic commits. Appends an implementation protocol so the execution rules travel with the plan file. Normally run after `/sdlc:pre-plan` and a design discussion.
 - `/sdlc:ticket-new [extra context]` — drafts a ticket from the conversation and files it in the issue tracker. Written from the product-engineer angle: business context and acceptance criteria, no solution dictated to the implementor.
 - `/sdlc:mr-open [ticket-id]` — opens a draft MR/PR for the current branch, then rewrites the title and description against the actual diff. The description targets the reviewer: why, gotchas, and where to focus.
