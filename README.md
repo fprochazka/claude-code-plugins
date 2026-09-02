@@ -31,7 +31,7 @@ A dependency installed this way is a Claude Code plugin (skill, hook, agent). It
 | Plugin | Depends on |
 |--------|-----------|
 | `sdlc` | `prose`, `git`, `code-review`, `glab`, `glab-discussion`, `glab-pipeline` |
-| `code-review` | `prose`, `glab`, `glab-discussion` |
+| `code-review` | `glab`, `glab-discussion` |
 | `glab` | `glab-discussion`, `glab-pipeline` |
 | `noisy-tools-in-subagent` | `bash-classify-hook` |
 | `prose` | `skill-keyword-reminder` |
