@@ -34,6 +34,7 @@ A dependency installed this way is a Claude Code plugin (skill, hook, agent). It
 | `code-review` | `glab`, `glab-discussion` |
 | `glab` | `glab-discussion`, `glab-pipeline` |
 | `noisy-tools-in-subagent` | `bash-classify-hook` |
+| `prose` | `skill-keyword-reminder` |
 
 ## Upgrading
 
@@ -54,6 +55,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel |
 | [git](plugins/git/) | Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history |
 | [glab](plugins/glab/) | GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill |
+| [prose](plugins/prose/) | How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [searxngcli](plugins/searxngcli/) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |

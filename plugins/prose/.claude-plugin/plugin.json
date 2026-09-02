@@ -1,0 +1,8 @@
+{
+  "name": "prose",
+  "version": "0.1.0",
+  "description": "How Claude talks and writes — a reply style for chat (short progress notes, one clear final reply), a rule set for text people read (docs, doc comments, commits, MR text, error messages), a plain-language restate command, and a per-prompt reminder hook",
+  "dependencies": [
+    "skill-keyword-reminder"
+  ]
+}

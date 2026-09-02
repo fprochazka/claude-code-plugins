@@ -1,0 +1,16 @@
+{
+  "description": "Reminds Claude on every user prompt that replies follow the prose:reply-style skill",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/reply-style-reminder.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

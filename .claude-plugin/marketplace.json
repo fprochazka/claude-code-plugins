@@ -179,6 +179,18 @@
       "source": "./plugins/noisy-tools-in-subagent",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/noisy-tools-in-subagent"
+    },
+    {
+      "name": "prose",
+      "description": "How Claude talks and writes — a reply style for chat, a rule set for text people read (docs, doc comments, commits, MR text, error messages), a plain-language restate command, and a per-prompt reminder hook",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/prose",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/prose"
     }
   ]
 }
