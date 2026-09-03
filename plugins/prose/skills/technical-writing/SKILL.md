@@ -35,6 +35,8 @@ The reader can read the code. Text earns its place by saying what the code canno
 - One topic per paragraph, at most six sentences. Steps as a numbered list, one action per item.
 - Lists instead of two-column tables; a table only at three or more columns.
 - No marketing adjectives (robust, seamless, comprehensive, powerful, cutting-edge). No LLM vocabulary (leverage, delve, holistic, pivotal, streamline, empower, "it is important to note"). No rule-of-three padding, no em-dash pile-ups, no "this file contains". American spelling.
+- No mannered prose. Mannered prose substitutes metaphor and flourish for direct statement: "the service hums along", "the schema is the beating heart", "circle back", "get the ball rolling". When a literal phrase is available, use it. Say what you mean.
+- Length follows the substance. Cover what the reader needs and stop: no filler sections, no summary that repeats the body, no boilerplate section that exists because a template had it.
 - Write only the requested text. No preamble, no summary of what you wrote, no closing remarks.
 
 The form rules derive from ASD-STE100 Simplified Technical English (https://asd-ste100.org). For procedures, runbooks, and error messages apply them strictly: one instruction per sentence, at most 20 words, no contractions.

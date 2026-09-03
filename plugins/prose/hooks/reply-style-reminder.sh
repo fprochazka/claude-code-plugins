@@ -6,7 +6,7 @@ set -euo pipefail
 
 cat >/dev/null  # the prompt payload on stdin is not needed
 
-MESSAGE='IMPORTANT: the user expects replies structured per the prose:reply-style skill — load it if it is not loaded yet, then follow it.'
+MESSAGE='Reply style: outcome first, then only what the user must act on. Full rules in the prose:reply-style skill — load it once if it is not in context.'
 
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg msg "$MESSAGE" '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $msg}}'
