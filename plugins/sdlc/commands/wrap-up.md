@@ -1,12 +1,12 @@
 ---
-description: Post a condensed wrap-up comment to the ticket — outcome, verification numbers, findings, follow-ups — and mark it completed
+description: Attach the session's documents to the ticket, post a condensed wrap-up comment — outcome, verification numbers, findings, follow-ups — and mark it completed
 argument-hint: [ticket ref or extra context]
 allowed-tools: AskUserQuestion, Read, Glob, Bash, Write, Edit, Skill
 ---
 
 # Wrap Up
 
-Close out finished work: post one dense comment to the ticket with everything this session learned that is worth keeping, then mark the ticket completed in the issue tracker.
+Close out finished work: attach the documents the work produced, post one dense comment to the ticket with everything this session learned that is worth keeping, then mark the ticket completed in the issue tracker.
 
 ## Scope
 
@@ -21,12 +21,13 @@ Numbers must be the real ones you saw. Never reconstruct a figure from memory of
 ## Process
 
 1. **Take the scope from the session.** This command normally runs at the end of the work it wraps up, so the ticket, the MR, and the checks are already in the conversation. Use them. The scope above only narrows or overrides that, and is empty most of the time. Fall back to the branch name or the MR title when the session is genuinely fresh, and ask the user only when the session covered several tickets and you cannot tell which one is finished. Load the skill for the issue tracker in play — you need it to post and to close.
-2. **Judge from the session whether the work is finished** — MR merged, CI green on the target branch, every step of the plan done. **Do not go and look any of it up.** You either watched it happen or you did not. If the session left something open, say so in your reply to the user and ask before you mark the ticket completed. If the session never established a state at all, treat it as unknown, keep it out of the comment, and mention it to the user. Post the comment either way.
-3. **Draft the comment to `<scratchpad>/<ticket-id>-wrap-up.md`.** Follow the structure and the density rules below. When the material calls for more than one comment, draft each into its own numbered file — `<ticket-id>-wrap-up-1-outcome.md`, `-2-verification.md`, and so on.
-4. **Show the user a high-level summary and the file paths.** They can read the drafts from the files. Iterate if they want changes.
-5. **Post the comments** by reading each file into the argument (`"$(cat <path>)"`), not by inlining the text. Post them in file order, so the ticket reads top to bottom.
-6. **Mark the ticket completed** — read the tracker's real workflow states and pick its terminal one instead of guessing a name. Do not change assignee, labels, project, or priority.
-7. **Report** — ticket URL, the state you set, and the follow-ups worth filing. Point at `/sdlc:ticket-new` for those. Do not file them yourself.
+2. **Attach the documents first.** Invoke `/sdlc:ticket-attach-docs`. It runs before everything else because the steps below can stall. Whether a ticket with unmet acceptance criteria should really be closed is a question for the user, and the documents belong on the ticket whatever the answer is. That command does its own tracker reads and its own confirmation round.
+3. **Judge from the session whether the work is finished** — MR merged, CI green on the target branch, every step of the plan done. **Do not go and look any of it up.** You either watched it happen or you did not. If the session left something open, say so in your reply to the user and ask before you mark the ticket completed. If the session never established a state at all, treat it as unknown, keep it out of the comment, and mention it to the user. Post the comment either way.
+4. **Draft the comment to `<scratchpad>/<ticket-id>-wrap-up.md`.** Follow the structure and the density rules below. When the material calls for more than one comment, draft each into its own numbered file — `<ticket-id>-wrap-up-1-outcome.md`, `-2-verification.md`, and so on.
+5. **Show the user a high-level summary and the file paths.** They can read the drafts from the files. Iterate if they want changes.
+6. **Post the comments** by reading each file into the argument (`"$(cat <path>)"`), not by inlining the text. Post them in file order, so the ticket reads top to bottom.
+7. **Mark the ticket completed** — read the tracker's real workflow states and pick its terminal one instead of guessing a name. Do not change assignee, labels, project, or priority.
+8. **Report** — ticket URL, the state you set, and the follow-ups worth filing. Point at `/sdlc:ticket-new` for those. Do not file them yourself.
 
 ## The comment
 
