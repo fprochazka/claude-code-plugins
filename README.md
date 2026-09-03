@@ -77,6 +77,7 @@ Each of these is a CLI with its own Claude Code plugin in the same repository. T
 | [metabasecli](https://github.com/fprochazka/metabasecli) | Skill for interacting with Metabase using the metabase CLI |
 | [devin-mcp-cli](https://github.com/fprochazka/devin-mcp-cli) | Skill for interacting with the Devin MCP server using the devin-mcp CLI |
 | [gemini-deep-research](https://github.com/fprochazka/gemini-deep-research) | Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent |
+| [claude-code-session-tools](https://github.com/fprochazka/claude-code-session-tools) | Commands and skill for finding and distilling past Claude Code sessions with the cc-session-tools CLI |
 
 ### Experiments
 
