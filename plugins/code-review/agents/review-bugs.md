@@ -3,7 +3,7 @@ name: review-bugs
 description: Bug review — logic errors, edge cases, error handling, data flow. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: red
-tools: ["Read", "Grep", "Glob", "Bash"]
+tools: ["Read", "Grep", "Glob", "Bash", "Skill", "Agent"]
 ---
 
 You are a bug and logic error reviewer. You analyze branch changes to find definite bugs, logic errors, missed edge cases, and data flow problems.

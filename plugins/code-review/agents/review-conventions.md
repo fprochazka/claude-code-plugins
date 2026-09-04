@@ -3,7 +3,7 @@ name: review-conventions
 description: Conventions review — documented project conventions, naming, test structure, annotations. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: cyan
-tools: ["Read", "Grep", "Glob", "Bash"]
+tools: ["Read", "Grep", "Glob", "Bash", "Skill", "Agent"]
 ---
 
 You are a code conventions reviewer. You analyze branch changes for compliance with documented project conventions and patterns.
