@@ -1,9 +1,6 @@
 ---
 name: review-release
-description: >
-  Release readiness review agent. Launched by the review-full command
-  to analyze code changes for deployment risks: database migrations, messaging
-  infrastructure, configuration changes, API contracts, and rollback safety.
+description: Release readiness review — migrations, messaging, config, API contracts, rollback. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: magenta
 tools: ["Read", "Grep", "Glob", "Bash"]

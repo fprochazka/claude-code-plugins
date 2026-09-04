@@ -1,9 +1,6 @@
 ---
 name: review-security
-description: >
-  Security review agent. Launched by the review-full command
-  to analyze code changes for security vulnerabilities, injection risks,
-  authentication/authorization issues, and secret exposure.
+description: Security review — injection, auth, secrets, input validation. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]

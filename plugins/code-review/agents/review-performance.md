@@ -1,10 +1,6 @@
 ---
 name: review-performance
-description: >
-  Performance and efficiency review agent. Launched by the review-full command
-  to analyze code changes for data-access efficiency (N+1, eager/lazy loading,
-  preload-before-logic), query cost, transaction scope, caching, repeated work,
-  and memory/allocation concerns. Demands awareness, not premature optimization.
+description: Performance review — data-access efficiency, query cost, transaction scope, caching, memory. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: purple
 tools: ["Read", "Grep", "Glob", "Bash"]

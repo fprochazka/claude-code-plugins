@@ -1,9 +1,6 @@
 ---
 name: review-bugs
-description: >
-  Bug and logic error review agent. Launched by the review-full command
-  to analyze code changes for bugs, logic errors, edge cases, error handling issues,
-  and data flow problems.
+description: Bug review — logic errors, edge cases, error handling, data flow. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: red
 tools: ["Read", "Grep", "Glob", "Bash"]

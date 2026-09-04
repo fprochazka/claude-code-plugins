@@ -1,9 +1,6 @@
 ---
 name: review-conventions
-description: >
-  Code conventions review agent. Launched by the review-full command
-  to analyze code changes for compliance with documented project conventions,
-  naming patterns, test structure, and annotation usage.
+description: Conventions review — documented project conventions, naming, test structure, annotations. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: cyan
 tools: ["Read", "Grep", "Glob", "Bash"]

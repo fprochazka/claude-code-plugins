@@ -1,10 +1,6 @@
 ---
 name: review-code-design
-description: >
-  Opinionated design-craft review agent. Launched by the review-full command
-  to suggest how changed code could be improved against a stricter design ideal:
-  functional-core purity, rich domain models, value objects, right-sized
-  abstractions, and intent-revealing clarity. Improvement hints, not gatekeeping.
+description: Design-craft review — improvement hints against a stricter design ideal, not gatekeeping. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: orange
 tools: ["Read", "Grep", "Glob", "Bash"]

@@ -1,9 +1,6 @@
 ---
 name: review-architecture
-description: >
-  Architecture and design review agent. Launched by the review-full command
-  to analyze code changes for correct module placement, layer separation,
-  coupling, abstraction levels, API surface design, and dependency direction.
+description: Architecture review — module placement, layers, coupling, API surface, dependency direction. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: blue
 tools: ["Read", "Grep", "Glob", "Bash"]

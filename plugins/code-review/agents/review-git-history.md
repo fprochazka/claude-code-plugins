@@ -1,8 +1,6 @@
 ---
 name: review-git-history
-description: >
-  Git history and commit hygiene review agent. Launched by the review-full command
-  to analyze commit structure, atomicity, message format, and history quality.
+description: Git history review — commit atomicity, structure, message format. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: green
 tools: ["Read", "Grep", "Glob", "Bash"]

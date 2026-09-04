@@ -1,10 +1,6 @@
 ---
 name: review-docs
-description: >
-  Documentation review agent. Launched by the review-full command to judge the comments,
-  doc comments, and doc files a change adds or touches: whether each one tells the reader
-  something the code cannot, whether non-obvious code went undocumented, and whether the
-  documentation lives where the project keeps that kind of knowledge.
+description: Documentation review — comments, doc comments, and doc files the change adds or touches. Launched by /code-review:full; do not touch it outside of the code review workflow.
 model: inherit
 color: pink
 tools: ["Read", "Grep", "Glob", "Bash", "Skill"]
