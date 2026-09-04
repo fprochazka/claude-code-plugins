@@ -38,6 +38,8 @@ Group every finding from the report into exactly one of two buckets:
 
 Every finding ends up exactly once — never both.
 
+The report's **Migration Safety** entries are a third bucket of their own. Every entry is an inline diff comment anchored on the assessed statement in the migration file, and it is posted whatever its verdict — a `Run anytime` verdict is what the author and the approver need to see before they deploy. Never fold an assessment into a finding thread, and never move it to the summary. A `Do not run as written` verdict also has a Blocking finding in the report; that finding is a normal inline comment on the same file, and it points at the assessment thread rather than repeating it.
+
 ## Phase 5 — Fetch diff info per file (iteratively)
 
 For each file that has at least one inline-bucket finding, run:
@@ -51,6 +53,8 @@ Do **not** dump the whole MR diff in one call — iterate per file. This keeps o
 From that output, extract the SHAs and line refs you need to anchor a diff note (base/head/start SHAs, old/new line numbers, position type). The `glab-discussion` skill documents the exact fields required by `glab-discussion write` for a diff note.
 
 If a finding's intended line is not actually present in the diff (e.g. the agent flagged surrounding code that wasn't changed), move that finding to the **summary** bucket — do not post a diff comment on an unchanged line.
+
+A migration safety entry anchors on the first line of the statement it assesses (the report carries it as `path:LINE`). When that line is not in the diff — the migration was reworked and the line moved — anchor on the statement's new first line, and when the file is no longer in the diff at all, drop the entry and tell the user.
 
 ## Phase 6 — Post inline diff comments
 
@@ -70,6 +74,32 @@ _confidence: <n>/100 · from `/code-review:full` (<agent-name>)_
 - One finding per thread. Do **not** batch multiple findings into one comment.
 - Keep the body tight; the reviewer can expand if needed.
 - Post threads sequentially (not in parallel) so failures are easy to diagnose and the MR doesn't get spammed if something goes wrong mid-run.
+
+Post each migration safety entry as its own thread, in file order, with this body:
+
+```
+**[Migration safety]** <verdict> — `<statement, shortened to one line>`
+
+**Verdict: <Run anytime | Run in low-traffic hours | Do not run as written>.** <one sentence: why, and the one thing that can go wrong>
+
+**What happens** (<engine> <version>, <from `SELECT version()` on `<connection>` | inferred from `<file>`>)
+<lock phases, rewrite or scan, what concurrent reads and writes see>
+
+**Size and duration**
+<rows and bytes per database, expected wall time as a range>
+
+**Replication**
+<what the replicas and any CDC consumer do, expected lag>
+
+**What could go wrong**
+1. <failure mode — its bound — the state it leaves for the retry>
+
+**Sources:** <documentation URLs>; <live values from `<connections>` (read-only) | project files: `<paths>`>
+
+_from `/code-review:full` (review-release)_
+```
+
+Keep the numbers and the URLs from the report. The reader of this thread decides when to deploy; a verdict without its reasons is not enough for that.
 
 If a `glab-discussion write` call fails, stop, show the error, and ask the user how to proceed — do **not** silently skip and continue.
 
@@ -94,6 +124,9 @@ Post exactly **one** standalone (non-diff) comment on the MR via `glab-discussio
 ### Positive notes
 - ...
 
+### Migration safety
+- `<migration file>` — <verdict>
+
 ### Unresolved MR discussions
 - <thread> — addressed / partially addressed / still open
 
@@ -110,13 +143,14 @@ _Generated from a `/code-review:full` report and posted via `/code-review:post`.
 
 Only include sections that have content. Skip empty sections rather than printing "none". **Coverage is never empty** — at minimum it lists the agents that ran. Carry its lines straight from the report's Coverage section.
 
-Inline-anchored findings live in the diff threads, not here — do not duplicate them in the summary.
+Inline-anchored findings live in the diff threads, not here — do not duplicate them in the summary. The one exception is the migration safety list: one line per migration with its verdict, so the approver sees every verdict in one place. The reasons stay in the diff thread.
 
 ## Phase 8 — Report back to the user
 
 After posting, reply in the conversation with:
 
 - Number of inline diff comments posted, grouped by severity
+- Number of migration safety comments posted, each with its verdict
 - A link / reference to the summary comment
 - Any findings you intentionally moved from inline → summary because their line wasn't in the diff
 - Any failures, if you stopped early

@@ -245,6 +245,8 @@ Write a ledger next to the review report, at `./.claude/review-report/<topic>.wa
 
 `Status` is one of `open`, `addressed`, `refuted`, `superseded`. Only `Blocking` and `Suggestion` rows gate termination. Record `Nitpick` and `Positive` rows for completeness, but they never keep the watch alive.
 
+Record each migration safety thread as a row with `Migration safety` in the Severity column and the verdict in the Title. These rows never gate on their own — a `Do not run as written` verdict gates through its matching Blocking row.
+
 ## Phase 6 — Arm the cron
 
 Create a recurring job with `CronCreate`, every 30 minutes, on an off-minute so the fleet does not synchronize:
@@ -379,6 +381,7 @@ Watch for **fixes that introduce new problems** — a hurried fix for a blocking
 Then post the update, following `post.md`:
 
 - Post inline threads for **new** findings only. Never re-post a finding already in the ledger — repeat comments on an unchanged point are noise. A finding still `open` is carried by its existing thread (7.4), not by a new one.
+- A migration file the round reworked (a `!` interdiff or a `>` commit touching it) gets a fresh assessment from `review-release`, because the old one describes a statement that no longer exists. Post it as a new thread, reply in the old thread with a pointer to the new one, resolve the old thread, and mark its ledger row `superseded`. A migration the round did not touch keeps its thread untouched.
 - Post **one** summary comment for this round, with: the round number, the SHA range reviewed, whether the branch was rebased and onto what, the round's new findings not anchored to the diff, and a status table of every gating finding (`addressed` / `refuted` / `open`).
 - Give that comment a `### Coverage` section for this round, in the shape `post.md` Phase 7 uses: the agents run, the agents skipped with a one-line reason, and the count of findings dropped in validation. A round that re-reviewed only part of the delta says which part.
 - Add the new findings to the ledger as `open` rows.

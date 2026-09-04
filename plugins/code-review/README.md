@@ -53,11 +53,13 @@ Nine specialized review agents run in parallel, each with its own checklist and 
 | `review-bugs` | Logic errors, edge cases, error handling, race conditions, lost updates, resource leaks | red |
 | `review-performance` | Data-access efficiency (N+1, eager/lazy loading, preload-before-logic), query cost, transaction scope, caching, memory | purple |
 | `review-security` | Injection, auth, secrets, input validation, XSS, OWASP | yellow |
-| `review-release` | Deployment risks: migrations, messaging infra, config changes, API contracts, rollback safety | magenta |
+| `review-release` | Deployment risks: migrations, messaging infra, config changes, API contracts, rollback safety; a migration safety assessment per migration | magenta |
 | `review-git-history` | Commit atomicity, refactoring separation, fixup detection, message format | green |
 | `review-docs` | Comments, doc comments, and docs files: text that repeats the code or narrates the change, non-obvious code left unexplained, knowledge duplicated or documented in the wrong place | pink |
 
 Each agent returns structured findings, each one carrying a severity — `Blocking`, `Suggestion`, or `Nitpick` — and a confidence rating (0-100). An agent may also return a block of positive notes, which is not a severity.
+
+`review-release` also writes a migration safety assessment for every migration in the diff, safe or not — locks, duration, replication effects, and a verdict on when to run it — from the production database's version, schema, and sizes when the session has a read-only database skill, and from the project files otherwise. `/code-review:post` puts each one on the migration file as a diff comment.
 
 ### Phase 4 — Validate & Report (main thread)
 

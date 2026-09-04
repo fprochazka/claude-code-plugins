@@ -117,6 +117,7 @@ Using the diff and the Phase 2 exploration you already have, decide which of the
   - config/docs-only change → typically skip `review-performance`, `review-security`, `review-bugs`.
   - pure rename/move refactor with no dependency or schema change → typically skip `review-performance`, `review-release`, `review-security`.
   - dependency/lockfile bump → keep `review-security` (supply chain) and `review-release`.
+  - a migration file added or changed → always keep `review-release`; it writes the migration safety assessment the report and the MR comments carry.
   - change touching DB/queries/loops/large data → keep `review-performance` and `review-bugs`.
   - `review-conventions` and `review-git-history` apply to almost any code change; `review-code-design` applies whenever non-trivial logic changes.
   - `review-docs` applies whenever the diff adds or changes comments, doc comments, or docs files, and whenever it adds non-trivial code that a stranger would need explained — skip it only for a diff with neither.
@@ -130,6 +131,8 @@ Pass each agent:
 - A brief ticket summary (if available)
 - The code exploration summary from Phase 2.1
 - The conventions map path from Phase 2.2 — tell the agent to read the map, then read every source the map marks as relevant to it, before it forms any convention-shaped opinion
+- For `review-release` only, when the diff has a migration: the read-only database access this session has. Name the skill that provides it and what you know about which connections are this service's production databases (tenants, shards, regions), or state that there is none. Name only access you have confirmed exists in this session's skill list, and never a write-capable connection. The plugin names no database CLI of its own; whatever read-only skill the session has is what the agent's database subagent loads
+- For `review-release` only, when the diff has a migration: the research subagent it should use for the vendor documentation. Name a web research agent from this session's agent list when there is one, else the `general-purpose` agent, which has the web tools. The agent has no web tools of its own
 
 Do NOT pass file lists, diffs, or commit lists — the agents will query git directly. This avoids context-passing errors and lets each agent get exactly the data it needs.
 
@@ -164,6 +167,8 @@ The standard here is **confirm or disprove against the actual code** — not fil
    6. **Impact inflated** — the defect is real but the consequence is smaller than the agent states. Keep the finding and lower its severity. Say in the report what the actual consequence is.
 
    Grounds 1 to 5 disprove a finding. Ground 6 downgrades one. When two agents report the same line, keep the one whose description survives these grounds, and merge the evidence of the other into it.
+
+   **Migration safety assessments are not findings, and the six grounds do not apply to them.** Verify them on their facts instead: the engine and version name their source (a query on a named connection, or a named project file); every claim about a lock cites a documentation URL or a live setting; the sizes name the database they came from; and the verdict follows from the facts (`Run anytime` on a rewrite of a large table does not). Correct what is wrong, mark what you cannot check as unconfirmed, and keep the assessment. **Never drop one.** A `Do not run as written` verdict has a matching Blocking finding; add it when the agent left it out.
 3. Judge it against the change's **intent** (ticket + MR description): is this something the author explicitly deferred or is it out of scope for this change? If so, drop it.
 4. Check if an existing MR/PR comment already covers this finding.
 5. **Drop every finding you cannot confirm.** Conversely, **report every finding you *can* confirm** — do not suppress a confirmed, relevant finding because its agent-assigned confidence was low. Confidence is a signal that tells you how hard to dig while verifying, not a filter.
@@ -182,6 +187,8 @@ Determine the report location:
 - `Suggestion` — a real defect or a real improvement with bounded impact. The author decides, and a reasoned "no" is a valid answer.
 - `Nitpick` — minor. The code is correct but worse than it could be.
 - `Positive` — not a finding severity. It is a separate notes block: something the change does well that is worth saying so the author keeps doing it.
+
+A migration safety assessment carries a verdict, not a severity — `Run anytime`, `Run in low-traffic hours`, or `Do not run as written` — and lives in its own section below, one entry per migration, written even when every verdict is `Run anytime`.
 
 Write the report:
 
@@ -208,6 +215,9 @@ Style, naming, minor things.
 ### Positive Notes
 Things done well — good patterns, thorough tests, clean commits.
 
+## Migration Safety
+One entry per migration file (per statement when the verdicts differ), carried from review-release with your corrections: verdict, engine and where its version came from, what happens, size and duration, replication, what could go wrong, sources. Present whenever the diff has a migration. Omit the section only when it has none.
+
 ## Commit-by-Commit Notes
 Per-commit observations (if useful).
 
@@ -220,6 +230,7 @@ Status of each — addressed, partially addressed, or still open.
 - Findings dropped in validation: <n> (<n> unreachable, <n> already guarded, <n> sanctioned convention, <n> framework semantics, <n> pre-existing), or "none"
 - Findings downgraded: <n>, or "none"
 - Areas skimmed, not fully reviewed: <file or module — why>, or "none"
+- Migration safety: <n> migrations assessed, facts from <live read-only access to `<connections>` | project files only>, or "no migrations in the diff"
 ```
 
 Silent truncation reads as full coverage. When a dimension was skipped, a finding was dropped, or a part of the diff was only skimmed, the Coverage section says so.
@@ -227,5 +238,6 @@ Silent truncation reads as full coverage. When a dimension was skipped, a findin
 Then show the user a brief inline summary in the conversation:
 - One-line verdict (looks good / has issues / needs discussion)
 - Bullet list of findings, grouped by severity (Blocking, Suggestion, Nitpick)
+- One line per migration with its verdict, when the diff has any
 - Coverage: <agents run> / <skipped>, <n> findings dropped in validation
 - Path to the full report file
