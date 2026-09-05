@@ -40,11 +40,14 @@ Subagent doesn't have your full context, and it would be wasteful to try to pass
 
 We want to avoid having the subagent having to figure out everything from scratch every time, so subagents should be explicitly instructed to load a relevant skill before starting the real work.
 
-Also, even with skill, the subagent sometimes tries to do too much too quickly but fails hard because it doesn't really know how to use the tools right, this can be avoided by first verifying how the tools should be actually used - e.g. instead of running huge analytical queries on many databases, make sure to first explore schema and run a focused smaller-scope exploration to validate the approach for the batch analysis task will be viable.
+Before delegating, decide which of two cases the subtask is:
 
-Instead of starting a single "solve it all" subagent, prefer
-- focused exploration subagent that will validate the approach (on a part of the problem), gather info and only then run a subagent instructed to solve the full scope of the task
-- multiple focused subagents, each tasked with a specific scope - if you e.g. run a database analysis in smaller iterations, you'll get control back from the subagent and you can instruct the followup more precisely
+- **The problem is small or known and the plan is clear.** Delegate the whole thing in one go.
+- **How to solve it is not yet known** — the data lives somewhere that has to be queried right (an observability stack, a production database, a foreign codebase), or the approach has to be found rather than followed. Do not send one subagent to solve it all. A subagent handed the full problem picks the first approach that comes to mind and runs it against the full scope; when that approach is wrong, or when it gets stuck on something it would have solved in minutes on a small sample, it fights the problem for an hour and comes back with nothing usable. Split the work into two turns of the **same** subagent instead:
+  1. **Probe.** Task the subagent with the methodology only: learn how the tools have to be used, try approaches on a small slice of the problem (one tenant, one day, one table, `LIMIT`), and report back the method that worked, the evidence that it worked, and what it ruled out. It ends its turn there — it does not run the full scope.
+  2. **Judge, then resume.** Decide whether the method holds. If it does, **message the same subagent** to run the full scope with it: it already has the schema, the working queries, and the dead ends in context, so it executes faster and rediscovers nothing. A fresh subagent given only the method starts the discovery over. If the method does not hold, message it back with what is wrong and let it probe again.
+
+**Prefer resuming a subagent over spawning a new one.** Probe-then-resume is one case of a general rule: when the next task touches the same tool, system, or codebase as a subagent that already finished, message that subagent instead of starting fresh. One that has already worked out how to read the mailbox, query the tracker, or find its way around a codebase carries that in context; a clean one pays for the discovery again. The same goes for a long analysis run as iterations — one subagent, control handed back after each pass, every followup instructed more precisely than a single "solve it all" prompt could be. Start fresh only when the task is unrelated, when the old context would bias the work (a validator has to start cold), or when the subagent is near its context limit.
 
 ### Picking the model for a subagent
 Pick the model by **subtask complexity**, never by habit of spawning your own model — e.g. a fable orchestrator must not spawn fable workers for work that opus or sonnet handles fine.
