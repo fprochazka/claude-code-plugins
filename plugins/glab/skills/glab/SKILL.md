@@ -120,6 +120,16 @@ Assignee/reviewer prefix modifiers: `+` to add, `!` or `-` to remove. No prefix 
 
 `glab mr note` can add comments, but listing discussions and replying to threads requires the API.
 
+### Signing a posted comment
+
+Every comment a Claude Code command posts on an MR — a new thread, a reply, a summary, an inline diff comment — ends with a blank line and an HTML comment naming the command that caused it:
+
+```
+<!-- <plugin>:<command> -->
+```
+
+The line is invisible in rendered Markdown and stays in the API body. It tells a reader which automation wrote the comment, and it lets a later pass of the same command recognize its own threads. Recognition is a **last-line equality** check, never a substring match — review prose often quotes a marker in backticks. A command that runs another command's posting steps signs with its own name, since it is the cause.
+
 ### Add a Comment
 
 ```bash

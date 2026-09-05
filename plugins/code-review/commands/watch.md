@@ -194,7 +194,7 @@ Add any Phase 1 rebase failure to the report's **Blocking** section.
 Read `${CLAUDE_PLUGIN_ROOT}/commands/post.md` and execute it against the report you just produced. Two additions:
 
 - Anchor inline comments against the SHAs of `REVIEW_HEAD`, not the local branch.
-- Append this line to every comment body you post, inline and summary alike, so later passes can recognize your own threads by an exact last-line match:
+- Every body `post.md` writes ends with `<!-- code-review:post -->`. Replace that line, inline and summary alike, with your own signature, so later passes can recognize your own threads by an exact last-line match:
 
   ```
   <!-- code-review:watch -->

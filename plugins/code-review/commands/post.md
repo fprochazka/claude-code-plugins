@@ -68,6 +68,8 @@ For each inline finding, post one diff comment with `glab-discussion write`. Use
 <suggested fix, if the report has one>
 
 _confidence: <n>/100 · from `/code-review:full` (<agent-name>)_
+
+<!-- code-review:post -->
 ```
 
 - `<severity>` is one of `Blocking`, `Suggestion`, `Nitpick`, or `Positive` — mirror the section the finding came from in the report.
@@ -97,6 +99,8 @@ Post each migration safety entry as its own thread, in file order, with this bod
 **Sources:** <documentation URLs>; <live values from `<connections>` (read-only) | project files: `<paths>`>
 
 _from `/code-review:full` (review-release)_
+
+<!-- code-review:post -->
 ```
 
 Keep the numbers and the URLs from the report. The reader of this thread decides when to deploy; a verdict without its reasons is not enough for that.
@@ -139,7 +143,11 @@ Post exactly **one** standalone (non-diff) comment on the MR via `glab-discussio
 <final call: approve, request changes, or needs discussion — and why>
 
 _Generated from a `/code-review:full` report and posted via `/code-review:post`._
+
+<!-- code-review:post -->
 ```
+
+Every body ends with the signature line, following the `glab` skill's comment-signing convention. A command that runs these steps on its own behalf replaces it with its own signature.
 
 Only include sections that have content. Skip empty sections rather than printing "none". **Coverage is never empty** — at minimum it lists the agents that ran. Carry its lines straight from the report's Coverage section.
 
