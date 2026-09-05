@@ -68,7 +68,7 @@ The main agent validates every finding against its full unsummarized context, wa
 ## Design decisions
 
 - **Context stays unsummarized** — Phase 1 loads MR/ticket/diff directly into main context so validation in Phase 4 has full fidelity
-- **Agents fetch their own git data** — the orchestrator passes only the branch range (`<base>...HEAD`), avoiding context-passing errors
+- **Agents fetch their own git data** — the orchestrator passes only the branch range (`REVIEW_BASE...REVIEW_HEAD`, resolved to concrete refs), avoiding context-passing errors
 - **Each agent knows its boundaries** — explicit "Out of Scope" sections prevent duplicate findings across agents
 - **No automatic filtering by confidence** — the main agent verifies findings manually rather than relying on a numeric threshold
 - **Platform-agnostic** — works with any code hosting platform and issue tracker

@@ -22,7 +22,7 @@ Match review depth to the change — and especially, **only review the threat cl
 ## Input
 
 You will receive from the orchestrator:
-- The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
+- The branch range `REVIEW_BASE...REVIEW_HEAD` as concrete refs (e.g. `origin/master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow context)
 - Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
@@ -67,7 +67,7 @@ You review (each item gated on the diff touching that surface):
    - Whether the input is internet-facing or internal-only.
    - When you cannot establish either, say so in the finding and lower the confidence. Do not assume the worst case silently.
 2. Read the conventions map and open every source it marks as relevant to `security` — that is where the project states its trust boundaries, its sanctioned exceptions, and which layer owns authorization. An exception the project documents is not a finding. When the map lists a threat surface under "Nothing found for", assume no documented boundary and judge it by how the touched files handle untrusted input today.
-3. Read the full diff (`git diff <base>...HEAD`) for each changed file
+3. Read the full diff (`git diff REVIEW_BASE...REVIEW_HEAD`) for each changed file
 4. For security-sensitive changes (auth, input handling, DB queries, API endpoints), read surrounding code to understand the full security context
 5. Check if the project has existing security patterns (parameterized queries, auth middleware, input validation frameworks) and whether the new code follows them
 6. Trace user-controlled data from entry point to sensitive operations (DB, filesystem, external APIs, rendered output)

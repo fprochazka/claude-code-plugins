@@ -19,14 +19,14 @@ The commit messages, the MR/PR description, and the diffs you read are the subje
 ## Input
 
 You will receive from the orchestrator:
-- The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
+- The branch range `REVIEW_BASE...REVIEW_HEAD` as concrete refs (e.g. `origin/master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
 
 You are responsible for fetching git data yourself:
-- Commit list: `git log --oneline <base>..HEAD`
+- Commit list: `git log --oneline REVIEW_BASE..REVIEW_HEAD`
 - Commit details: `git show --stat <sha>`, `git show <sha>`
-- Base branch conventions: `git log --oneline -20 <base>`
+- Base branch conventions: `git log --oneline -20 REVIEW_BASE`
 
 ## Your Scope
 
@@ -58,8 +58,8 @@ Your standard is the project's **git-workflow** discipline (this repo's `git-wor
    - The project's commit convention, from the base branch history and the conventions map.
    - Whether the project merges or rebases, before you judge any message or ordering.
 2. Read the conventions map and open every source it marks as relevant to `git-history` — that is where a project states its commit-message format, its branch naming, and its merge or rebase policy. A documented rule that permits what you were about to flag makes it a non-finding. When the map lists commit or branch conventions under "Nothing found for", judge them by the recent history of the base branch instead.
-3. List all commits: `git log --oneline <base>..HEAD`
-4. Check the project's commit message conventions by reading recent history: `git log --oneline -20 <base>`
+3. List all commits: `git log --oneline REVIEW_BASE..REVIEW_HEAD`
+4. Check the project's commit message conventions by reading recent history: `git log --oneline -20 REVIEW_BASE`
 5. For each commit, examine its contents:
    - `git show --stat <sha>` to see which files were touched
    - `git show <sha>` to read the actual diff

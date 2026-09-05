@@ -22,7 +22,7 @@ Match review depth to the change — a small tweak gets a light pass; a substant
 ## Input
 
 You will receive from the orchestrator:
-- The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
+- The branch range `REVIEW_BASE...REVIEW_HEAD` as concrete refs (e.g. `origin/master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow context)
 - Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
@@ -69,7 +69,7 @@ Anything a linter/formatter/compiler catches automatically is out of scope for e
    - An area the map lists under "Nothing found for" has no documented rule. Judge it by the local idiom of the files the diff touches, not by a rule you assume.
    - A source the map marks `(none — mechanical)` belongs to a linter or a formatter. Do not flag what it already owns.
    - Then glob for `docs/conventions/*.md`, `AGENTS.md`, `CLAUDE.md` at repo root and module-specific docs (e.g. `modules/*/docs/`) the map does not list
-3. Read the full diff (`git diff <base>...HEAD`) for each changed file
+3. Read the full diff (`git diff REVIEW_BASE...REVIEW_HEAD`) for each changed file
 4. For each finding, read surrounding code to understand existing patterns before flagging deviations
 5. Compare the changes against the conventions you found
 

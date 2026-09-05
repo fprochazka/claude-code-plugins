@@ -181,7 +181,7 @@ Recovery is always available after a successful reset: `git reflog` holds the pr
 
 Read `${CLAUDE_PLUGIN_ROOT}/commands/full.md` and execute it, with these substitutions:
 
-- Wherever it says `<base>`, use `REVIEW_BASE`. Wherever it says `HEAD`, use `REVIEW_HEAD`. Pass the range `REVIEW_BASE...REVIEW_HEAD` to the review agents instead of `<base>...HEAD`.
+- `REVIEW_BASE` and `REVIEW_HEAD` are already defined by Phase 0.3 above; `full.md` reads the same two names, so its 1.2 definition is skipped.
 - Its Phase 1.1 (MR context) is partly done — reuse what Phase 0.2 already fetched instead of re-fetching, but do still load the description, labels, and **all** comment threads.
 - Pass `$ARGUMENTS` through as its focus-area argument.
 

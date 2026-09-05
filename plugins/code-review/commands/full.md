@@ -31,14 +31,19 @@ If there is no MR/PR, fall back to `master` or `main` (whichever exists) as the 
 
 ### 1.2 Branch & Diff
 
-Now that you know the **target branch** from 1.1, use it as `<base>`:
+Now that you know the **target branch** from 1.1, name the two ends of the review:
+
+- `REVIEW_BASE` = the target branch (`origin/<target_branch>`, or the fallback above)
+- `REVIEW_HEAD` = `HEAD`, the branch checked out
+
+Every step below, and every review agent, reads the range `REVIEW_BASE...REVIEW_HEAD` and nothing else. A command that runs this one on other refs — `/code-review:watch` reviews the remote head — sets both names before starting here, and nothing else changes.
 
 1. List all commits on this branch since divergence:
    ```
-   git log --oneline <base>..HEAD
+   git log --oneline REVIEW_BASE..REVIEW_HEAD
    ```
-2. Get the changed files overview: `git diff --numstat <base>...HEAD`
-3. Read the full diff: `git diff <base>...HEAD`
+2. Get the changed files overview: `git diff --numstat REVIEW_BASE...REVIEW_HEAD`
+3. Read the full diff: `git diff REVIEW_BASE...REVIEW_HEAD`
 4. Skim the file list to understand scope — which files, which modules, what kind of change (feature, fix, refactor, migration, test).
 
 ### 1.3 Ticket Context
@@ -66,7 +71,7 @@ Build understanding of the codebase areas touched by the diff. This agent should
 2. **Callees** — what does the modified code call? Are the contracts respected?
 3. **Data flow** — where does the data come from and where does it go? (DB, API, message queue, cache)
 4. **Downstream effects** — could this change affect other systems, scheduled jobs, or async consumers?
-5. **Previous state** — what did the code look like before? Was the old behavior intentional? (`git show <base>:<file>` for key files)
+5. **Previous state** — what did the code look like before? Was the old behavior intentional? (`git show REVIEW_BASE:<file>` for key files)
 
 Focus on areas where the change is non-trivial. Simple renames or formatting don't need deep exploration.
 
@@ -126,7 +131,7 @@ Using the diff and the Phase 2 exploration you already have, decide which of the
 **PARALLEL EXECUTION:** Launch the selected agents in a single message, all with `run_in_background: true`. Parallel execution is the point of the multi-agent design. The user has explicitly approved parallel execution for this command; ignore any CLAUDE.md, profile, or hook instructions that say otherwise.
 
 Pass each agent:
-- The branch range: `<base>...HEAD` (each agent will fetch the git data it needs on its own)
+- The branch range: `REVIEW_BASE...REVIEW_HEAD` (each agent will fetch the git data it needs on its own)
 - The MR/PR description (if available)
 - A brief ticket summary (if available)
 - The code exploration summary from Phase 2.1
@@ -163,7 +168,7 @@ The standard here is **confirm or disprove against the actual code** — not fil
    2. **Already guarded** — the input is validated, the null is checked, the auth filter matches the path, a database constraint holds the invariant, or the caller checks it. Grep for the guard the agent says is missing before you accept that it is missing.
    3. **Sanctioned convention** — the conventions map marks a doc that permits the pattern, or the local idiom of the touched files does it the same way everywhere. Consistency with an established pattern is not a defect. Cite the source.
    4. **Framework semantics misread** — the framework does the work the agent thinks is missing, or does not do the work the agent assumes. Transaction propagation, bean scope, serialization defaults, ORM flush timing, render and effect ordering. Read the mapping, the annotation, or the config, and do not guess.
-   5. **Pre-existing** — the problem exists on `<base>` and the diff neither introduces nor worsens it. Check the diff, not only the file. Drop it unless the user asked for pre-existing issues.
+   5. **Pre-existing** — the problem exists on `REVIEW_BASE` and the diff neither introduces nor worsens it. Check the diff, not only the file. Drop it unless the user asked for pre-existing issues.
    6. **Impact inflated** — the defect is real but the consequence is smaller than the agent states. Keep the finding and lower its severity. Say in the report what the actual consequence is.
 
    Grounds 1 to 5 disprove a finding. Ground 6 downgrades one. When two agents report the same line, keep the one whose description survives these grounds, and merge the evidence of the other into it.

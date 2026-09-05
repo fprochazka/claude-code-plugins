@@ -29,7 +29,7 @@ Match review depth to the change — a diff that adds two comments gets a two-mi
 ## Input
 
 You will receive from the orchestrator:
-- The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
+- The branch range `REVIEW_BASE...REVIEW_HEAD` as concrete refs (e.g. `origin/master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow context)
 - Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
@@ -37,7 +37,7 @@ You will receive from the orchestrator:
 You are responsible for fetching git data yourself:
 - Changed files: `git diff --name-only <range>`
 - Full diff: `git diff <range>`
-- Previous file versions: `git show <base>:<file>` — you need the old text to recognize a comment that narrates the change
+- Previous file versions: `git show REVIEW_BASE:<file>` — you need the old text to recognize a comment that narrates the change
 
 ## Your Scope
 
@@ -100,7 +100,7 @@ Apply the project's own placement convention first when it has one (see Process)
    - Pragmas and license headers are code and get no finding.
 3. Start from the conventions map, then look for anything it missed in the modules the diff touches. Open every source the map marks as relevant to `docs` — the map is also the fastest way to see where the project keeps each kind of documentation, which is exactly what a PLACEMENT finding needs. Then glob for `docs/**/*.md`, `AGENTS.md`, `CLAUDE.md`, and any file whose name mentions documentation principles, conventions, or style that the map does not list. When the project says what belongs in a comment versus a docs file, that rule wins over the defaults above, and you cite it. When the map lists documentation under "Nothing found for", judge placement and density by the surrounding files instead.
 4. Read the full diff. Note every added or changed comment, doc comment, and docs file, and every added block of non-trivial code.
-5. For each comment the diff *changes* on existing code, read the previous version (`git show <base>:<file>`) — a comment that only makes sense against the old code is a journal comment.
+5. For each comment the diff *changes* on existing code, read the previous version (`git show REVIEW_BASE:<file>`) — a comment that only makes sense against the old code is a journal comment.
 6. For each added or changed comment, apply the abstraction-level test against the code it sits on, then the proportionality signal, then the classic tells.
 7. For each added block of non-trivial code, ask whether a stranger would stop and ask why, and whether anything answers.
 8. For each new doc paragraph or class-level explanation, grep the repository for the same knowledge elsewhere, and decide whether this is the right home.

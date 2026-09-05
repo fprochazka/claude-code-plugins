@@ -22,7 +22,7 @@ Match review depth to the change — a small tweak gets a light pass; a structur
 ## Input
 
 You will receive from the orchestrator:
-- The branch range (e.g. `master...HEAD`) — use this to query git for everything you need
+- The branch range `REVIEW_BASE...REVIEW_HEAD` as concrete refs (e.g. `origin/master...HEAD`) — use this to query git for everything you need
 - MR/PR description and ticket summary (if available)
 - Code exploration summary (callers, callees, data flow, module structure)
 - Path to the conventions map — a table of the project's convention docs and configs, with which agents each one is relevant to
@@ -69,7 +69,7 @@ You review structural fit against the project's actual architecture:
    - Which module/package does it belong to?
    - What layer is it in? (domain, application, infrastructure, API)
    - What are its dependencies? (`grep` for imports)
-5. Read the full diff (`git diff <base>...HEAD`) for each changed file
+5. Read the full diff (`git diff REVIEW_BASE...REVIEW_HEAD`) for each changed file
 6. For new files: verify placement matches the existing structure
 7. For modified files: check if changes respect existing boundaries
 8. Trace dependency direction — imports should flow inward (infra/api → application → domain), never outward
