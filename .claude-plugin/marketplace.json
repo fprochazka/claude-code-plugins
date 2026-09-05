@@ -195,7 +195,7 @@
     {
       "name": "agent-roles",
       "description": "Two roles injected at the start of every agent: the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
