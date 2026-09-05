@@ -191,6 +191,18 @@
       "source": "./plugins/prose",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/prose"
+    },
+    {
+      "name": "agent-roles",
+      "description": "Two roles injected at the start of every agent: the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/agent-roles",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/agent-roles"
     }
   ]
 }

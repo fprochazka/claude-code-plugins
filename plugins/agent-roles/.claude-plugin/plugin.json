@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "agent-roles",
+  "version": "0.1.0",
+  "description": "Two roles injected at the start of every agent: the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings.",
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/agent-roles",
+  "license": "MIT",
+  "dependencies": [
+    "noisy-tools-in-subagent"
+  ]
+}

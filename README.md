@@ -34,6 +34,7 @@ A dependency installed this way is a Claude Code plugin (skill, hook, agent). It
 | `code-review` | `prose`, `glab`, `glab-discussion` |
 | `glab` | `glab-discussion`, `glab-pipeline` |
 | `noisy-tools-in-subagent` | `bash-classify-hook` |
+| `agent-roles` | `noisy-tools-in-subagent` |
 | `prose` | `skill-keyword-reminder` |
 
 ## Upgrading
@@ -57,6 +58,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [glab](plugins/glab/) | GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill |
 | [prose](plugins/prose/) | How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
+| [agent-roles](plugins/agent-roles/) | Two roles injected at the start of every agent — the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings |
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [searxngcli](plugins/searxngcli/) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
