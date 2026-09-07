@@ -33,7 +33,7 @@ Full rules in [`skills/reply-style/SKILL.md`](skills/reply-style/) and [`skills/
 
 ## How the reminder works
 
-Claude Code's built-in output styles re-inject a one-line reminder on every prompt because a style stated once in the system prompt stops being followed after a few turns. This plugin does the same with a hook instead of an output style: `hooks/reply-style-reminder.sh` prints one static line that states the behavior and names the skill. On the first prompt that makes Claude load the skill; on every later prompt it keeps the loaded rules in force, and after context compaction it makes Claude load them again. The line is static on purpose — hook output is replayed when a session is resumed.
+Claude Code's built-in output styles re-inject a one-line reminder on every prompt because a style stated once in the system prompt stops being followed after a few turns. This plugin does the same with a hook instead of an output style: `hooks/reply-style-reminder.sh` prints one static line that names the skill and tells Claude to load it. The line carries no summary of the rules on purpose — a paraphrase in the reminder reads as sufficient guidance on its own and Claude stops fetching the skill. On the first prompt that makes Claude load the skill; on every later prompt it keeps the loaded rules in force, and after context compaction it makes Claude load them again. The line is static on purpose — hook output is replayed when a session is resumed.
 
 The plugin assumes the output-style feature is unused (`outputStyle` left at `default`). Running the built-in `Concise` style alongside adds a second reminder whose body claims precedence over other instructions.
 
