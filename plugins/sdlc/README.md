@@ -25,20 +25,17 @@ claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 ## Skills
 
 - `sdlc:team-workflow-identify` — resolves the issue tracker, the team, the ticket ID pattern, the branch convention and the workflow state names, then prints them as one block the calling command carries. Reads `CLAUDE.md` / `AGENTS.md` first, the repo `README.md` second, and asks before it falls back to the tracker API — so the answer gets written down instead of rediscovered every run. It hardcodes no team or status name. See [`skills/team-workflow-identify/SKILL.md`](skills/team-workflow-identify/).
+- `sdlc:mr-babysit-worker` — the watching half of `/sdlc:mr-babysit`, loaded by the subagent that command spawns, not by you. See [`skills/mr-babysit-worker/SKILL.md`](skills/mr-babysit-worker/).
 
 ## Babysitting an MR to green
 
 `/sdlc:mr-babysit` is the **author** side of an MR — the mirror image of `/code-review:watch`, which is the reviewer side. It changes code; the reviewer command never does.
 
-Run it once to load the procedure, then drive the cadence with a lightweight native-loop prompt naming the MRs. Re-invoking the whole command each cycle would needlessly re-inject the entire spec:
+The command runs in your session and decides; it does not watch and it does not write code. One subagent watches the MRs, waits out pipelines, and turns every failed job and open thread into a proposal — fix it, dismiss it, or ask you. The command approves or overturns each proposal and hands the approved fixes to a second subagent, which implements and pushes them. You get a progress line at least every 30 minutes, whether or not anything moved.
 
-```
-/loop 2m re-check MR !123 and !456 and run the next babysit pass
-```
+Each pass covers **every** MR in the set — a change spanning a service repo and a pipelines repo is two MRs, and babysitting only the one in the current directory is the failure this guards against.
 
-Each pass covers **every** MR in the set — a change spanning a service repo and a pipelines repo is two MRs, and babysitting only the one in the current directory is the failure this guards against. Per MR, a pass rebases onto the target branch, triages failed CI, works through unresolved comment threads, and pushes everything as one batch.
-
-It runs unattended by design. Rebasing, force-pushing with lease, retrying jobs, and replying to or resolving threads are all pre-authorized, and pausing to ask for them defeats the command. It stops for a rebase conflict that encodes a real product decision, a CI failure it cannot confidently fix, an attempt cap, or oscillation.
+It runs unattended by design. Rebasing, force-pushing with lease, retrying jobs, and replying to or resolving threads are all pre-authorized for both subagents, and pausing to ask for them defeats the command. It stops for a rebase conflict that encodes a real product decision, a CI failure it cannot confidently fix, an attempt cap, oscillation, or three hours with nothing moving.
 
 If your permission setup makes Claude Code prompt for those git operations, allowlist them once so the loop runs uninterrupted:
 
@@ -47,15 +44,15 @@ If your permission setup makes Claude Code prompt for those git operations, allo
 "Bash(git push:*)", "Bash(git rebase:*)", "Bash(git fetch:*)", "Bash(glab ci retry:*)", "Bash(glab mr update:*)"
 ```
 
-Review feedback is evaluated, never rubber-stamped. Every thread reaches one of four outcomes — apply, dismiss with a reasoned reply, defer as a judgment call, or skip this pass. A bot's `critical` tag does not exempt a finding from that judgment. One thread type is the exception to the resolve rules: a thread whose last reviewer note is marked `<!-- code-review:watch -->` gets the fix and a reply, and stays unresolved. The reviewer verifies it against the code and resolves it.
+Review feedback is evaluated, never rubber-stamped. Every thread ends as a fix, a dismissal with a reasoned reply, or a question for you. A bot's `critical` tag does not exempt a finding from that judgment. One thread type is the exception to the resolve rules: a thread whose last reviewer note is marked `<!-- code-review:watch -->` gets the fix and a reply, and stays unresolved. The reviewer verifies it against the code and resolves it.
 
 ### The handshake with the reviewer
 
 Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together, and whoever hands the ball over sets both. `/code-review:watch` reads the same two flags and sets them the same way, so a half-set handshake either starts a review of work in progress or leaves a finished MR unreviewed.
 
-`/sdlc:mr-babysit` claims an MR back to draft whenever a pass finds work to do on it — behind its target branch, red pipeline, or open threads. When everything is green, quiet and settled with no judgment call outstanding, it marks the MRs ready and moves the ticket to `REVIEW_STATE`.
+`/sdlc:mr-babysit` claims an MR back to draft whenever it finds work to do on it — behind its target branch, red pipeline, open threads, or a fix about to land. When everything is green, quiet and settled, it marks the MRs ready and moves the ticket to `REVIEW_STATE`.
 
-Then it does not stop. It swaps the 2-minute `/loop` for a recurring cron every 30 minutes and waits. If the reviewer hands the work back — ticket in `WORK_STATE` or the MR in draft again — it deletes the cron, re-arms the fast loop, and runs a normal pass. It stops for good when the MRs merge or the ticket reaches a terminal state. Say "stop after handoff" to opt out of the wait.
+Then it does not stop. It keeps checking every 30 minutes, and if the reviewer hands the work back — ticket in `WORK_STATE` or the MR in draft again — it picks the work up. It stops for good when the MRs merge, when the ticket reaches a terminal state, or after three hours with nothing moving, and the final report says which of those ended it. Say "stop after handoff" to opt out of the wait.
 
 The workflow state names are never hardcoded. Both commands resolve them at run time through the `sdlc:team-workflow-identify` skill, and both read MR state through the `glab:mr-status` skill from the **glab** plugin. With no tracker, the handshake degrades to the draft flag alone.
 
