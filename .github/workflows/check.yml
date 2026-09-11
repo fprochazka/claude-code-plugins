@@ -2,13 +2,13 @@ name: check
 
 on: [push, pull_request]
 
-env:
-  # A throwaway config dir, so `claude plugin validate` never looks for a login.
-  CLAUDE_CONFIG_DIR: ${{ runner.temp }}/claude-config
-
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      # A throwaway config dir, so `claude plugin validate` never looks for a login.
+      # The runner context only exists at job level, not in a workflow-level env block.
+      CLAUDE_CONFIG_DIR: ${{ runner.temp }}/claude-config
     steps:
       - uses: actions/checkout@v4
 
