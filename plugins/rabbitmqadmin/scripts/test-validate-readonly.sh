@@ -4,6 +4,15 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT="$SCRIPT_DIR/validate-readonly.sh"
 
+# The validator reads configured nodes from ~/.rabbitmqadmin.conf, so the test runs against a throwaway
+# HOME holding exactly the nodes the cases below name. It must never depend on the developer's own config.
+TEST_HOME=$(mktemp -d)
+trap 'rm -rf "$TEST_HOME"' EXIT
+export HOME="$TEST_HOME"
+for node in staging-at staging-cz staging-hu staging-de staging-ro staging-group; do
+  printf '[%s]\nhost = "rabbit.example.com"\n\n' "$node"
+done > "$HOME/.rabbitmqadmin.conf"
+
 PASSED=0
 FAILED=0
 
