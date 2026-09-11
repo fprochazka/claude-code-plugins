@@ -57,6 +57,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [git](plugins/git/) | Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history |
 | [glab](plugins/glab/) | GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill |
 | [prose](plugins/prose/) | How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command |
+| [diagrams](plugins/diagrams/) | Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
 | [agent-roles](plugins/agent-roles/) | Two roles injected at the start of every agent — the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings |
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |

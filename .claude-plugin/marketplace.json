@@ -203,6 +203,18 @@
       "source": "./plugins/agent-roles",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/agent-roles"
+    },
+    {
+      "name": "diagrams",
+      "description": "Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/diagrams",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/diagrams"
     }
   ]
 }
