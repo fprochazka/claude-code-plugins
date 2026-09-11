@@ -38,6 +38,16 @@ Don't move on to Step 3 while something material is unresolved.
 
 Write the plan to the **plan file specified in the plan-mode system message** — a fresh file; don't append to or carry over a previous plan. The body is the ordered sequence of atomic-commit-sized steps from Step 1, each with: what changes, which files, why, how to verify, the intended commit message, and the step's **check tier** (below).
 
+### Point at the pre-plan files instead of repeating them
+
+The plan opens with a `Sources` line naming, by worktree path, the pre-plan files this session produced: the context file (`./.claude/plans/pre-plan-<slug>.md`), its briefing (`./.claude/plans/<slug>-briefing.md`), and the ticket dump when there is one. The implementation subagent receives this plan file and follows those pointers, so they must be paths it can open, not descriptions.
+
+**Do not restate what those files already say and still hold.** The current state of the code, the subdomain map, the areas of pressure, the trade-offs — a step that needs them cites the file and the section ("the writer/reader split in `pre-plan-<slug>.md` § Current state") and moves on. A plan that copies its own sources is twice as long, and the copy goes stale the moment the source is corrected.
+
+What the plan does carry is the **delta since the pre-plan**: every decision the discussion took, every fact the discussion overturned, every open question the briefing listed that is now closed. State each as what is now true and mark what it supersedes, so a reader of both files knows which one wins. A decision recorded only in the chat is a decision the executing agent never sees.
+
+When there was no pre-plan — the plan comes from the conversation alone — the plan carries the context itself, and the `Sources` line says so.
+
 ### Name the implementation model
 
 The plan names the model for the implementation subagent — one line near the top. Use `opus` by default. Use `fable` only when the implementation itself carries hard reasoning: concurrency, transaction and isolation behavior, subtle correctness, cross-system effects. If the difficulty is concentrated in one phase, the plan may schedule a subagent swap at that phase boundary (see the protocol) so the expensive model is spent only on the steps that need it.
