@@ -73,18 +73,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/migrate-to-uv"
     },
     {
-      "name": "markitdown",
-      "description": "Skill for converting files to Markdown using Microsoft's markitdown CLI",
-      "version": "1.0.0",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/markitdown",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/markitdown"
-    },
-    {
       "name": "glab",
       "description": "GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill",
       "version": "1.2.0",
@@ -119,18 +107,6 @@
       "source": "./plugins/searxngcli",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/searxngcli"
-    },
-    {
-      "name": "use-libsrc-mcp",
-      "description": "Blocks direct access to dependency caches (~/.m2/repository, etc.) and redirects to the libsrc MCP tool for source inspection",
-      "version": "0.1.1",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/use-libsrc-mcp",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/use-libsrc-mcp"
     },
     {
       "name": "git",

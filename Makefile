@@ -21,7 +21,6 @@ validate:
 test:
 	python3 -m unittest discover -s plugins/noisy-tools-in-subagent/hooks -p 'test_*.py'
 	bash plugins/rabbitmqadmin/scripts/test-validate-readonly.sh
-	bash plugins/use-libsrc-mcp/scripts/test-check-blocked-paths.sh
 
 # One-off per clone. The patterns file the hooks read is deliberately not in the repo, so its path
 # has to be set by hand.

@@ -14,7 +14,7 @@ set -euo pipefail
 
 # Plugins queued for deletion. They are exempt from the marketplace and README checks until they are removed.
 # When you delete the directory, delete its line here in the same commit.
-PENDING_REMOVAL=(markitdown use-libsrc-mcp llm-toto)
+PENDING_REMOVAL=()
 
 # Marketplaces other than this one that a cross-marketplace dependency may point at. Kept as a constant
 # rather than parsed out of the README, so a typo in the README cannot make a broken dependency pass.
