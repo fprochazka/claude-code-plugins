@@ -6,7 +6,7 @@ trigger-keywords: docs, documentation, README, javadoc, docstring, doc comment, 
 
 # technical-writing
 
-The reader can read the code. Text earns its place by saying what the code cannot: why it is this way, what will surprise the reader, what it connects to. Everything else is a restatement that goes stale the day the code changes.
+The reader can read the code. Text is worth writing only when it says what the code cannot: why it is this way, what will surprise the reader, what it connects to. Everything else is a restatement that goes stale the day the code changes.
 
 ## What to write down
 
@@ -35,7 +35,7 @@ The reader can read the code. Text earns its place by saying what the code canno
 - One topic per paragraph, at most six sentences. Steps as a numbered list, one action per item.
 - Lists instead of two-column tables; a table only at three or more columns.
 - No marketing adjectives (robust, seamless, comprehensive, powerful, cutting-edge). No LLM vocabulary (leverage, delve, holistic, pivotal, streamline, empower, "it is important to note"). No rule-of-three padding, no em-dash pile-ups, no "this file contains". American spelling.
-- No mannered prose. Mannered prose substitutes metaphor and flourish for direct statement: "the service hums along", "the schema is the beating heart", "circle back", "get the ball rolling". When a literal phrase is available, use it. Say what you mean.
+- No mannered prose. Mannered prose substitutes metaphor and flourish for direct statement. Instead of "a parameter worth varying," the mannered writer produces "a dial worth turning." Instead of "this point still matters," they write "this point earns its keep." The phrases exist to display the writer, not to convey the idea, and readers can tell. That is why mannered prose irritates: it makes the reader work harder so the writer can perform. It is also imprecise. Metaphors drag in connotations the writer did not choose and cannot control. The fix is to say what you mean. When a literal phrase is available, use it. More of the same: "the service hums along", "the schema is the beating heart", "circle back", "get the ball rolling".
 - Length follows the substance. Cover what the reader needs and stop: no filler sections, no summary that repeats the body, no boilerplate section that exists because a template had it.
 - Write only the requested text. No preamble, no summary of what you wrote, no closing remarks.
 
@@ -68,6 +68,6 @@ The form rules derive from ASD-STE100 Simplified Technical English (https://asd-
 3. A nominalization, an "-ing" main verb, a phrasal verb? Replace with a plain verb.
 4. The same thing named two ways? Pick one.
 5. A sentence that restates the code, narrates the change, or lists what a file contains? Delete it.
-6. A marketing adjective or an LLM word? Delete it.
+6. A marketing adjective or an LLM word? Delete it. A metaphor where a literal phrase exists? Replace it.
 
 These rules fix the form of the text. They cannot make a hollow paragraph true — if a section has nothing to say that the code does not, delete the section.
