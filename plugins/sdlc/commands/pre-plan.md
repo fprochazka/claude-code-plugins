@@ -70,6 +70,8 @@ Write the briefing to `./.claude/plans/pre-plan-<short-slug>.md` (slug from tick
 
 Omit sections that have nothing to say. No filler.
 
+**Current state** and **What would have to change** are where a picture sometimes beats a paragraph. When the flow you are describing crosses three or more components, the behavior is a state machine, the interaction is ordering-sensitive (a race, a retry, a handshake), or the change is a before/after of the same structure — draw it as a diagram, and invoke the `diagrams:mermaid` skill first so the diagram is written and validated the right way. It is your call. A diagram carries one idea, so two ideas mean two diagrams — and a context file with none is a fine context file.
+
 ## Phase 6 — Brief the conclusion
 
 The Phase 5 file is the argument. The user reads the conclusion first: invoke the `sdlc:brief-next-steps` skill with the same slug. It writes `./.claude/plans/<slug>-briefing.md` — the directions in implementation order, the decisions the user still owes, what is not yet verified — and it defines the chat reply.

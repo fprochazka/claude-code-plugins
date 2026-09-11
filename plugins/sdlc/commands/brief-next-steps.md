@@ -47,6 +47,7 @@ Only: file path, line count, and the step headings as a bare list. Nothing else.
 - **Only the final proposal.** No alternatives, comparisons, `Decided`/`Open` taxonomies, rule numbers, or revision history.
 - **No narration.** Only the current state — never what changed or what an earlier version said.
 - **Layman's terms.** Define internal vocabulary on first use, one clause, inline — no glossary section.
+- **A `mermaid` fence in a source document is copied over verbatim, or left out entirely** — never turned into prose. A diagram that earned its place in the long document earns it in the briefing too, and a paragraph describing a picture is worse than either.
 - Numbers only where they justify the work; `file:line` refs sparse and inline.
 - Hedging lives in the closing sections only.
 - Do not delete or rewrite the long source docs — the briefing points at them.
