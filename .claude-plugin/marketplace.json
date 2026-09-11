@@ -183,7 +183,7 @@
     {
       "name": "diagrams",
       "description": "Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

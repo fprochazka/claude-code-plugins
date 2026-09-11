@@ -27,7 +27,8 @@ Secondary, when they clearly fit: `classDiagram`, `gitGraph`, `timeline`. Every 
 
 ## 3. Authoring rules
 
-- **Give it a title** in frontmatter, and set config there too. `%%{init: ...}%%` directives are deprecated; frontmatter is the current form and both hosts are far past the version that needs it.
+- **Never pin a theme.** Every host themes the diagram for the reader — GitLab initialises mermaid with `neutral`, or `dark` when the reader is in dark mode, and GitHub follows the reader's light/dark setting. A `config: theme:` line in the diagram overrides that choice, because `theme` is not one of mermaid's secure options, and the result is a light diagram on a dark page: the title and the sequence-diagram message labels are painted straight onto the transparent background and drop to about 1.3:1 contrast. Text inside a filled shape — node labels, notes, edge-label boxes, subgraph titles — carries its own background and survives either way. Write no `config:` block at all unless something genuinely needs one, and never `theme`.
+- **Put the title in the document, not the frontmatter.** A markdown heading above the fence costs nothing against the size budget, is selectable and searchable, joins the document outline, and keeps the one element with no background of its own out of the picture. Frontmatter `title:` renders correctly as long as no theme is pinned, so it is a fallback, not the default.
 - **Show the mechanism, not boxes with nouns.** Draw the path a request takes, not a box labeled "system".
 - **Label every arrow with a verb**: `writes`, `invalidates`, `polls every 30s`. An unlabeled arrow means "related somehow", which is worth nothing.
 - **12 to 15 nodes is the ceiling.** Past that, auto-layout stops producing something readable and the answer is two diagrams, not a bigger one.
@@ -37,12 +38,12 @@ Secondary, when they clearly fit: `classDiagram`, `gitGraph`, `timeline`. Every 
 - **No `classDef` or styling on the first pass.** GitHub applies its own theme to match the reader's light or dark setting, so colors are not yours to control there.
 - **In a sequence diagram use `->>+` and `-->>-`** rather than bare `activate` / `deactivate`, so activation is balanced by construction — unbalanced activation is the most-failed dimension in the one published benchmark of LLM-generated sequence diagrams ([MermaidSeqBench](https://arxiv.org/html/2511.14967v3)). **Draw the error path, not only the happy path**; missing failure branches is the second-most-failed dimension there.
 
-```
----
-title: Cart checkout
-config:
-  theme: neutral
----
+How it lands in the document — a heading, then the fence, and no frontmatter:
+
+````
+### Cart checkout
+
+```mermaid
 flowchart LR
   %% one idea: where the reservation is written before payment
   Client -->|POST /orders| API["Order API"]
@@ -50,6 +51,7 @@ flowchart LR
   API -->|publishes OrderPlaced| Bus{{Event bus}}
   Bus -->|charges| Billing["Billing worker"]
 ```
+````
 
 [`references/pitfalls.md`](references/pitfalls.md) is the broken/fixed table. Read it when a render fails, not before.
 

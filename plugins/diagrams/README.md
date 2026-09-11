@@ -28,7 +28,7 @@ One command does both jobs: `mmdc -i x.mmd -o x.png -s 2` fails on a syntax erro
 - **Every arrow carries a verb** — `writes`, `invalidates`, `polls every 30s`. An unlabeled arrow means "related somehow"
 - **12 to 15 nodes, then split** — past that, auto-layout stops producing something a reader can follow
 - **The GitLab budget is real** — 2000 characters of mermaid per page, shared across every fence on it, and merge-request descriptions and comments are not exempt. Over budget the diagram does not fail: it becomes a yellow performance warning with a button the reader has to click. Keep a diagram under about 700 characters and a page under three of them
-- **GitHub styles the diagram, not you** — it applies its own theme to match the reader's light or dark setting, so `classDef` colors are wasted there
+- **The host styles the diagram, not you** — GitLab and GitHub both theme it from the reader's light or dark setting, so `classDef` colors are wasted and a pinned `theme:` is worse than wasted: it forces a light diagram onto a dark page, where the title and the sequence-diagram message labels have no background of their own and disappear. The validator renders against a white page and a dark one and reads both
 - **Stable types only** — `flowchart`, `sequenceDiagram`, `stateDiagram-v2`, `erDiagram` first, then `classDiagram`, `gitGraph`, `timeline`. Every `-beta` type, every `C4*` type and `mindmap` are opt-in: they parse on both hosts and still render badly
 
 ## Not used here

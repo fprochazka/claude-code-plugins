@@ -38,6 +38,12 @@ These produce a valid diagram that says something you did not mean. Only looking
 - **A participant name cannot contain a line break.** Alias it: `participant S as Session store`. Where both an inline alias and an `as` alias exist, the `as` alias wins.
 - **`box` takes no hex color** — `rgb()`, `rgba()`, `hsl()` or `transparent`.
 
+## Parses, renders, and is unreadable for half the readers
+
+- **A pinned theme is the one that bites.** `config: theme: neutral` (or `default`, `forest`) renders a light diagram for everybody, including the reader in dark mode; `theme: dark` does the mirror on a light page. Every host picks a theme from the reader's colour scheme — GitLab initialises `neutral`, or `dark` when the page carries `gl-dark` — and `theme` is not one of mermaid's secure options, so the diagram's own frontmatter wins. Write no theme.
+- **The frontmatter title takes its colour from `textColor`, not `titleColor`.** `titleColor` colours subgraph and cluster labels. Worth knowing before reaching for a variable that cannot fix the thing you are looking at — and the better answer is a markdown heading above the fence, which no theme can make invisible.
+- **Only text with no fill behind it is at risk**: the frontmatter title, sequence-diagram message labels, `loop` guards, and the edge lines themselves. Node labels, notes, edge-label boxes and subgraph titles carry their own background and read on either page.
+
 ## Escape hatches
 
 - Numeric entities work inside labels where quoting is not enough: `#35;` renders `#`, `#59;` renders `;`.
