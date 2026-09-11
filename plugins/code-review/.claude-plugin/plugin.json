@@ -1,12 +1,14 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "code-review",
   "version": "1.14.0",
   "description": "Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel",
   "author": {
-    "name": "Filip Prochazka"
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
   },
-  "repository": "https://github.com/fprochazka/claude-code-plugins",
   "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/code-review",
   "keywords": [
     "code-review",
     "multi-agent",

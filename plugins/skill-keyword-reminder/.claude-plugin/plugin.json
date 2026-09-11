@@ -1,5 +1,12 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "skill-keyword-reminder",
   "version": "1.2.0",
-  "description": "Auto-reminds Claude to load skills based on keyword triggers in prompts"
+  "description": "Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts",
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/skill-keyword-reminder"
 }

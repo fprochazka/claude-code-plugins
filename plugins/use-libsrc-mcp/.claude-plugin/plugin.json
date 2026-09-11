@@ -6,5 +6,7 @@
   "author": {
     "name": "Filip Procházka",
     "url": "https://github.com/fprochazka"
-  }
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/use-libsrc-mcp"
 }

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Blocks a commit message that contains a private identifier.
+#
+# Same patterns file as pre-commit, same reason it lives outside the repo:
+#
+#   git config hooks.forbiddenPatternsFile <path to a file outside this repo>
+#
+# One extended regex per line, blank lines and # comments ignored, matched case-insensitively.
+# The hook fails closed: no patterns file means no commit.
+
+set -uo pipefail
+
+message_file="${1:-}"
+if [ -z "$message_file" ] || [ ! -f "$message_file" ]; then
+  echo "commit-msg: no commit message file passed." >&2
+  exit 1
+fi
+
+patterns_file=$(git config --get hooks.forbiddenPatternsFile || true)
+
+if [ -z "$patterns_file" ] || [ ! -f "${patterns_file/#\~/$HOME}" ]; then
+  echo "commit-msg: no forbidden-patterns file, refusing to check the message." >&2
+  echo "commit-msg: write one extended regex per line to a file outside this repo, then run: git config hooks.forbiddenPatternsFile <path to that file>" >&2
+  exit 1
+fi
+patterns_file="${patterns_file/#\~/$HOME}"
+
+mapfile -t patterns < <(grep -vE '^[[:space:]]*(#|$)' "$patterns_file" || true)
+if [ "${#patterns[@]}" -eq 0 ]; then
+  echo "commit-msg: the forbidden-patterns file holds no patterns, refusing to check the message." >&2
+  echo "commit-msg: write one extended regex per line to $patterns_file, or unset hooks.forbiddenPatternsFile to disable the guard." >&2
+  exit 1
+fi
+
+hits=0
+lineno=0
+while IFS= read -r content; do
+  lineno=$((lineno + 1))
+  case "$content" in '#'*) continue ;; esac
+  for pattern in "${patterns[@]}"; do
+    if printf '%s\n' "$content" | grep -qiE -- "$pattern"; then
+      printf 'commit-msg: forbidden identifier on line %d: %s\n' "$lineno" "$content" >&2
+      hits=$((hits + 1))
+      break
+    fi
+  done
+done < "$message_file"
+
+if [ "$hits" -gt 0 ]; then
+  echo "commit-msg: $hits message line(s) match a forbidden pattern. Reword the message." >&2
+  exit 1
+fi
+exit 0

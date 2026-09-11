@@ -163,8 +163,6 @@ fetch_comments() {
     # Write the full output to the output dir for reference
     echo "$dump_output" > "$output_dir/comments-summary.txt"
     echo "$discussions_dir" > "$output_dir/discussions-dir.txt"
-
-    DISCUSSIONS_DIR="$discussions_dir"
 }
 
 # ==============================================================================
@@ -284,16 +282,18 @@ print_summary() {
 
         # Show failed external commit statuses
         if [[ -n "${EXTERNAL_STATUSES:-}" ]]; then
-            local failed_external=$(echo "$EXTERNAL_STATUSES" | jq -c '[.[] | select(.status == "failed")]')
-            local failed_ext_count=$(echo "$failed_external" | jq 'length')
+            local failed_external failed_ext_count
+            failed_external=$(echo "$EXTERNAL_STATUSES" | jq -c '[.[] | select(.status == "failed")]')
+            failed_ext_count=$(echo "$failed_external" | jq 'length')
 
             if (( failed_ext_count > 0 )); then
                 echo
                 echo "Failed External Statuses ($failed_ext_count):"
                 while IFS= read -r ext; do
-                    local ext_name=$(echo "$ext" | jq -r '.name')
-                    local ext_desc=$(echo "$ext" | jq -r '.description // ""')
-                    local ext_url=$(echo "$ext" | jq -r '.target_url // ""')
+                    local ext_name ext_desc ext_url
+                    ext_name=$(echo "$ext" | jq -r '.name')
+                    ext_desc=$(echo "$ext" | jq -r '.description // ""')
+                    ext_url=$(echo "$ext" | jq -r '.target_url // ""')
                     echo -n "  $ext_name"
                     [[ -n "$ext_desc" && "$ext_desc" != "null" ]] && echo -n " ($ext_desc)"
                     echo

@@ -1,0 +1,29 @@
+name: check
+
+on: [push, pull_request]
+
+env:
+  # A throwaway config dir, so `claude plugin validate` never looks for a login.
+  CLAUDE_CONFIG_DIR: ${{ runner.temp }}/claude-config
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # No package.json here, so setup-node's npm cache has nothing to key on and is left off.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq shellcheck
+          pip install pyyaml || sudo apt-get install -y python3-yaml
+          npm install -g @anthropic-ai/claude-code@2.1.266
+
+      - run: mkdir -p "$CLAUDE_CONFIG_DIR"
+
+      - run: make all

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Blocks a commit whose staged additions contain a private identifier.
+#
+# The patterns live outside the repository, because writing them down here would publish exactly the
+# strings the guard exists to keep out. The path comes from git config, so it never appears in a
+# tracked file either:
+#
+#   git config hooks.forbiddenPatternsFile <path to a file outside this repo>
+#
+# One extended regex per line, blank lines and # comments ignored, matched case-insensitively.
+# The hook fails closed: no patterns file means no commit.
+
+set -uo pipefail
+
+patterns_file=$(git config --get hooks.forbiddenPatternsFile || true)
+
+if [ -z "$patterns_file" ] || [ ! -f "${patterns_file/#\~/$HOME}" ]; then
+  echo "pre-commit: no forbidden-patterns file, refusing to check the commit." >&2
+  echo "pre-commit: write one extended regex per line to a file outside this repo, then run: git config hooks.forbiddenPatternsFile <path to that file>" >&2
+  exit 1
+fi
+patterns_file="${patterns_file/#\~/$HOME}"
+
+mapfile -t patterns < <(grep -vE '^[[:space:]]*(#|$)' "$patterns_file" || true)
+if [ "${#patterns[@]}" -eq 0 ]; then
+  echo "pre-commit: the forbidden-patterns file holds no patterns, refusing to check the commit." >&2
+  echo "pre-commit: write one extended regex per line to $patterns_file, or unset hooks.forbiddenPatternsFile to disable the guard." >&2
+  exit 1
+fi
+
+hits=0
+file=""
+lineno=0
+
+# Walk the staged diff, tracking the current file and the new-file line number, so a hit can be
+# reported at the place the author has to edit.
+while IFS= read -r line; do
+  case "$line" in
+    '+++ b/'*) file="${line#+++ b/}"; continue ;;
+    '+++ '*) file="${line#+++ }"; continue ;;
+    '--- '*) continue ;;
+    '@@'*)
+      # @@ -old,count +new,count @@
+      lineno=$(printf '%s\n' "$line" | sed -E 's/^@@ -[^ ]+ \+([0-9]+).*/\1/')
+      lineno=$((lineno - 1))
+      continue
+      ;;
+    '+'*)
+      lineno=$((lineno + 1))
+      content="${line#+}"
+      for pattern in "${patterns[@]}"; do
+        if printf '%s\n' "$content" | grep -qiE -- "$pattern"; then
+          printf 'pre-commit: forbidden identifier in %s:%d: %s\n' "$file" "$lineno" "$content" >&2
+          hits=$((hits + 1))
+          break
+        fi
+      done
+      ;;
+    ' '*) lineno=$((lineno + 1)) ;;
+  esac
+done < <(git diff --cached --unified=0 --no-color)
+
+if [ "$hits" -gt 0 ]; then
+  echo "pre-commit: $hits staged line(s) match a forbidden pattern. Remove them, or amend the pattern file if the match is wrong." >&2
+  exit 1
+fi
+exit 0

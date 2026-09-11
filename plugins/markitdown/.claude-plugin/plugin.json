@@ -1,6 +1,12 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "markitdown",
   "version": "1.0.0",
   "description": "Skill for converting files to Markdown using Microsoft's markitdown CLI",
-  "skills": "./skills/"
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/markitdown"
 }

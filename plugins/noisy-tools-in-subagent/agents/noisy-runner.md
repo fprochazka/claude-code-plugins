@@ -1,4 +1,5 @@
 ---
+name: noisy-runner
 description: Runs noisy commands (builds, tests, linters, static analysis, or anything producing large amounts of output) in an isolated subagent context so the main agent's context window is preserved. Given one or more commands, runs them, reads any files referenced in the output, interprets the results, and reports back a concise summary plus paths to full captured logs. Use whenever the main agent wants to run a command whose output would be noisy or long — not just builds and tests, but anything where you want interpretation without burning main-context tokens on raw output.
 model: sonnet
 color: yellow

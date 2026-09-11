@@ -22,7 +22,7 @@
       },
       "source": "./plugins/skill-keyword-reminder",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/skill-keyword-reminder"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/skill-keyword-reminder"
     },
     {
       "name": "gemini-cli",
@@ -34,7 +34,7 @@
       },
       "source": "./plugins/gemini-cli",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/gemini-cli"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/gemini-cli"
     },
     {
       "name": "ai-tool-use-validator",
@@ -46,7 +46,7 @@
       },
       "source": "./plugins/ai-tool-use-validator",
       "category": "security",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/ai-tool-use-validator"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/ai-tool-use-validator"
     },
     {
       "name": "web-researcher",
@@ -58,7 +58,7 @@
       },
       "source": "./plugins/web-researcher",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/web-researcher"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/web-researcher"
     },
     {
       "name": "migrate-to-uv",
@@ -70,7 +70,7 @@
       },
       "source": "./plugins/migrate-to-uv",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/migrate-to-uv"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/migrate-to-uv"
     },
     {
       "name": "markitdown",
@@ -82,7 +82,7 @@
       },
       "source": "./plugins/markitdown",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/markitdown"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/markitdown"
     },
     {
       "name": "glab",
@@ -94,7 +94,7 @@
       },
       "source": "./plugins/glab",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/glab"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/glab"
     },
     {
       "name": "rabbitmqadmin",
@@ -106,7 +106,7 @@
       },
       "source": "./plugins/rabbitmqadmin",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/rabbitmqadmin"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/rabbitmqadmin"
     },
     {
       "name": "searxngcli",
@@ -118,7 +118,7 @@
       },
       "source": "./plugins/searxngcli",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/searxngcli"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/searxngcli"
     },
     {
       "name": "use-libsrc-mcp",
@@ -130,11 +130,11 @@
       },
       "source": "./plugins/use-libsrc-mcp",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/use-libsrc-mcp"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/use-libsrc-mcp"
     },
     {
       "name": "git",
-      "description": "Git workflow skill and commit commands — vertical-slice atomic commits, fixups over correction commits, and dependency-ordered branch history",
+      "description": "Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history",
       "version": "0.3.1",
       "author": {
         "name": "Filip Procházka",
@@ -142,7 +142,7 @@
       },
       "source": "./plugins/git",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/git"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/git"
     },
     {
       "name": "code-review",
@@ -154,11 +154,11 @@
       },
       "source": "./plugins/code-review",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/code-review"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/code-review"
     },
     {
       "name": "sdlc",
-      "description": "Software delivery workflow commands - gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps",
+      "description": "Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps",
       "version": "0.17.0",
       "author": {
         "name": "Filip Procházka",
@@ -166,7 +166,7 @@
       },
       "source": "./plugins/sdlc",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/sdlc"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/sdlc"
     },
     {
       "name": "noisy-tools-in-subagent",
@@ -178,11 +178,11 @@
       },
       "source": "./plugins/noisy-tools-in-subagent",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/noisy-tools-in-subagent"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/noisy-tools-in-subagent"
     },
     {
       "name": "prose",
-      "description": "How Claude talks and writes — a reply style for chat, a rule set for text people read (docs, doc comments, commits, MR text, error messages), a plain-language restate command, and a per-prompt reminder hook",
+      "description": "How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command",
       "version": "0.3.0",
       "author": {
         "name": "Filip Procházka",
@@ -190,11 +190,11 @@
       },
       "source": "./plugins/prose",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/prose"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/prose"
     },
     {
       "name": "agent-roles",
-      "description": "Two roles injected at the start of every agent: the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings.",
+      "description": "Two roles injected at the start of every agent — the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings",
       "version": "0.2.0",
       "author": {
         "name": "Filip Procházka",
@@ -202,7 +202,7 @@
       },
       "source": "./plugins/agent-roles",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/agent-roles"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/agent-roles"
     },
     {
       "name": "diagrams",
@@ -214,7 +214,7 @@
       },
       "source": "./plugins/diagrams",
       "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/main/plugins/diagrams"
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/diagrams"
     }
   ]
 }

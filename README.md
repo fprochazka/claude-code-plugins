@@ -92,6 +92,12 @@ Plugins that explore an idea. They work, but the shape can change without notice
 
 ## Developing
 
+### Checks
+
+Run `make all` before you push. It runs three things: `make check` (the repository checks in `scripts/check.sh` — manifests, marketplace and README consistency, frontmatter, references, hooks, shellcheck), `make validate` (`claude plugin validate --strict` over the marketplace and every plugin), and `make test` (the hook test suites). The same target runs in CI on every push and pull request. To debug one check, pass its id: `scripts/check.sh references`. A plugin's `plugin.json` is the source of its description: the marketplace entry and the README row below are copies of it, and `make check` fails when they drift apart.
+
+Run `make hooks` once per clone. It points `core.hooksPath` at `scripts/hooks`, where a pre-commit and a commit-msg hook refuse anything whose staged lines or commit message contain a private identifier — a customer, host, bot or ticket prefix that has no business in a public repository. The hooks read the identifiers from a file outside the repository, named by `git config hooks.forbiddenPatternsFile`, because listing them here would publish the very strings they exist to keep out. Until that config key points at a real file, both hooks refuse the commit and print how to create it.
+
 ### Creating a New Plugin
 
 - [ ] Create `plugins/<name>/` directory

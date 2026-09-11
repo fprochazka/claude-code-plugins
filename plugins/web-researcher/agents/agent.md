@@ -1,4 +1,5 @@
 ---
+name: agent
 description: Iterative web research agent that searches, reads, discovers new directions, and repeats until the query is comprehensively answered
 tools: WebSearch, WebFetch
 model: sonnet

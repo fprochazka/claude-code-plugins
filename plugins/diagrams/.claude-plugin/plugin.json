@@ -1,5 +1,12 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "diagrams",
   "version": "0.1.0",
-  "description": "Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket"
+  "description": "Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket",
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/diagrams"
 }

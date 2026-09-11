@@ -1,4 +1,5 @@
 ---
+name: agent
 description: Iterative web research agent that uses SearXNG to search, read pages, discover new directions, and repeat until the query is comprehensively answered
 tools: Bash, WebFetch
 skills:

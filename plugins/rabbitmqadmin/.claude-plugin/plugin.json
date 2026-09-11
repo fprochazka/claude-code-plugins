@@ -1,6 +1,12 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "rabbitmqadmin",
   "version": "0.2.0",
   "description": "Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng)",
-  "skills": "./skills/"
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/rabbitmqadmin"
 }

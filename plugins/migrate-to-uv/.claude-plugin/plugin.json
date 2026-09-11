@@ -1,6 +1,12 @@
 {
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "migrate-to-uv",
   "version": "1.2.0",
   "description": "Skill for migrating Python projects from Poetry, pipx, or pip to uv",
-  "skills": "./skills/"
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/migrate-to-uv"
 }
