@@ -84,7 +84,7 @@ Map where the project keeps its rules. The review agents read the map, then read
 1. **Start from the entry points.** `CLAUDE.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md`, and `docs/` or `doc/` at the repo root, plus the same names inside any module the diff touches. Then the lint, format, and static-analysis configs — `.editorconfig`, `.eslintrc*`, `ruff.toml`, `pyproject.toml [tool.*]`, `checkstyle*.xml`, `detekt*.yml`, `.pre-commit-config.yaml`, `CODEOWNERS`, and the equivalents for the project's stack. A config is a convention the project enforces mechanically.
 2. **Follow pointers.** An entry point often says where the conventions actually live — "see `docs/conventions/`", "architecture rules are in `ARCHITECTURE.md`", an `@import` line, a plain link. Open what it points at, and repeat until nothing new appears. A convention doc reachable only through a pointer is the one most likely to be missed, and the one the reviewers need most.
 3. **Map, do not digest.** The output is a map, not a summary. The review agents read the docs themselves. Never say a rule is good, bad, followed, or violated.
-4. **Write the map** to `<scratchpad>/code-review-conventions-<topic>.md`. The subagent does not know the scratchpad path, so put the absolute path of your session scratchpad directory into its prompt. Derive `<topic>` from the branch name or the ticket ID, the same way Phase 4.2 derives it for the report file. Use this format:
+4. **Write the map** to `<scratchpad>/code-review-conventions-<topic>.md`. The subagent does not know the scratchpad path, so put the absolute path of your session scratchpad directory into its prompt. Derive `<topic>` from the branch name or the ticket ID, the same way Phase 4.3 derives it for the report file. Use this format:
 
    ```markdown
    # Conventions map: <branch-name>
@@ -117,7 +117,7 @@ Map where the project keeps its rules. The review agents read the map, then read
 
 Using the diff and the Phase 2 exploration you already have, decide which of the 9 review agents are actually relevant to THIS change *before* launching them. Review scope must be proportional to the change — don't spend an agent on a dimension the diff cannot implicate.
 
-- **Default to running an agent when in doubt.** Only skip one when the change clearly cannot implicate it, and note the one-line reason for each skip in your output so the user sees what was and wasn't reviewed. The Coverage section of the report (4.2) is where those reasons land.
+- **Default to running an agent when in doubt.** Only skip one when the change clearly cannot implicate it, and note the one-line reason for each skip in your output so the user sees what was and wasn't reviewed. The Coverage section of the report (4.3) is where those reasons land.
 - Rough guidance (not rules — judge from what you actually saw in the diff):
   - config/docs-only change → typically skip `review-performance`, `review-security`, `review-bugs`.
   - pure rename/move refactor with no dependency or schema change → typically skip `review-performance`, `review-release`, `review-security`.
@@ -179,7 +179,17 @@ The standard here is **confirm or disprove against the actual code** — not fil
 5. **Drop every finding you cannot confirm.** Conversely, **report every finding you *can* confirm** — do not suppress a confirmed, relevant finding because its agent-assigned confidence was low. Confidence is a signal that tells you how hard to dig while verifying, not a filter.
 6. **Don't let a clean verdict hide a shallow pass.** If the diff is large and you only skimmed an area, say so rather than implying it was fully reviewed.
 
-### 4.2 Produce Report
+### 4.2 Draw the Findings That Need a Picture
+
+A few findings are hard to carry in text: the reader has to hold three components, two call orders, or a before and an after in their head at once while reading the paragraph. For each surviving `Blocking` and `Suggestion` finding, ask whether text alone gets the problem across. It does not when the finding turns on a race or a call ordering, a gap between states, data flowing across three or more components, or a structure this change reshapes.
+
+When text alone does not carry it, draw the finding as a diagram — invoke the `diagrams:mermaid` skill first, so the diagram is written and validated the right way — and put the `mermaid` fence in the report under the finding body, before the suggested fix.
+
+**At most three diagrams per review**, spent on the findings that need them most, `Blocking` before `Suggestion`. GitLab auto-renders at most 2000 characters of mermaid per page, the budget is shared across every fence on the MR overview, and a fourth diagram costs a rendered one somewhere else on that page.
+
+This is your call. The review agents stay text-only; none of them draws anything.
+
+### 4.3 Produce Report
 
 Determine the report location:
 - Extract a meaningful topic from the branch name or ticket ID (e.g., `TEAM-123-add-user-export` → `add-user-export`)

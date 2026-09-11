@@ -65,6 +65,8 @@ For each inline finding, post one diff comment with `glab-discussion write`. Use
 
 <finding body — what's wrong, why it matters>
 
+<the finding's `mermaid` fence from the report, when it has one>
+
 <suggested fix, if the report has one>
 
 _confidence: <n>/100 · from `/code-review:full` (<agent-name>)_
@@ -73,6 +75,7 @@ _confidence: <n>/100 · from `/code-review:full` (<agent-name>)_
 ```
 
 - `<severity>` is one of `Blocking`, `Suggestion`, `Nitpick`, or `Positive` — mirror the section the finding came from in the report.
+- A finding that carries a `mermaid` fence in the report keeps it in the comment, copied character for character between the body and the suggested fix. Do not redraw it, do not re-wrap it, and do not restate it in a sentence. **At most three fences reach the MR** — GitLab auto-renders 2000 characters of mermaid per page and the budget is shared. If the report somehow holds more, post the ones on `Blocking` findings first, drop the fences off the rest, and say so in Phase 8.
 - One finding per thread. Do **not** batch multiple findings into one comment.
 - Keep the body tight; the reviewer can expand if needed.
 - Post threads sequentially (not in parallel) so failures are easy to diagnose and the MR doesn't get spammed if something goes wrong mid-run.
@@ -149,6 +152,8 @@ _Generated from a `/code-review:full` report and posted via `/code-review:post`.
 
 Every body ends with the signature line, following the `glab` skill's comment-signing convention. A command that runs these steps on its own behalf replaces it with its own signature.
 
+A summary-bucket finding whose report entry carries a `mermaid` fence keeps it under its own bullet, unchanged, and it counts against the same three-fence budget as the inline ones.
+
 Only include sections that have content. Skip empty sections rather than printing "none". **Coverage is never empty** — at minimum it lists the agents that ran. Carry its lines straight from the report's Coverage section.
 
 Inline-anchored findings live in the diff threads, not here — do not duplicate them in the summary. The one exception is the migration safety list: one line per migration with its verdict, so the approver sees every verdict in one place. The reasons stay in the diff thread.
@@ -161,4 +166,5 @@ After posting, reply in the conversation with:
 - Number of migration safety comments posted, each with its verdict
 - A link / reference to the summary comment
 - Any findings you intentionally moved from inline → summary because their line wasn't in the diff
+- Any diagram fences you left off a finding to stay inside the three-fence budget
 - Any failures, if you stopped early

@@ -65,6 +65,8 @@ Each agent returns structured findings, each one carrying a severity — `Blocki
 
 The main agent validates every finding against its full unsummarized context, walking six named refutation grounds — unreachable, already guarded, sanctioned convention, framework semantics misread, pre-existing, impact inflated. Findings that can't be verified are dropped. The final report is written to `.claude/review-report/<topic>.md` in the project directory, and its Coverage section names which agents ran, which were skipped, and what validation dropped.
 
+A surviving finding that turns on a race, a call ordering, a gap between states, or data crossing three or more components gets a mermaid diagram under it, drawn through the `diagrams:mermaid` skill and rendered before it lands — at most three per review, `Blocking` findings first, because GitLab shares one 2000-character mermaid budget across a page. `/code-review:post` carries those fences onto the MR unchanged. The nine review agents stay text-only; drawing is the main agent's call.
+
 ## Design decisions
 
 - **Context stays unsummarized** — Phase 1 loads MR/ticket/diff directly into main context so validation in Phase 4 has full fidelity
