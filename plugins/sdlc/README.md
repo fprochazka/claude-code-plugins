@@ -2,7 +2,25 @@
 
 Slash commands for the stages around writing code: gather context, agree on a direction, plan, implement through subagents, file the ticket, open the MR, drive it to green.
 
+The plugin serves one product engineer on one task. The starting point is a vague problem statement; the work is to establish how the system behaves today — for the agent's benefit more than yours — then to design the change and land it reliably. It is not a tool for starting a project from nothing or for planning a body of work into many tickets: every command assumes a single ticket, a single branch, a single MR set.
+
 The commands are deliberately separate. Each one ends by handing control back to you — no command silently rolls into the next stage.
+
+## The flow
+
+```
+pre-plan → (discuss) → write-plan → (implement) → mr-open → mr-babysit → wrap-up
+                ticket-new ↗                       ticket-attach-docs ↗
+```
+
+1. `/sdlc:pre-plan` reads the ticket, or takes the problem from you, and writes the context file and its briefing. The ticket is not touched.
+2. You discuss the briefing. `/sdlc:ticket-new` files the ticket here when there was none; it creates it in progress and assigned to you when the work has already started.
+3. `/sdlc:write-plan` turns the agreed direction into a plan whose steps are the intended commits, then hands the plan to the implementation subagent it describes.
+4. `/sdlc:mr-open` opens the draft MR and writes the Why into the ticket.
+5. `/sdlc:mr-babysit` drives the MR to green, marks it ready and moves the ticket to the review state; when the reviewer hands the work back it moves the ticket to the work state again. The handshake is described below.
+6. `/sdlc:wrap-up` attaches the documents through `/sdlc:ticket-attach-docs`, posts the outcome, and marks the ticket completed. `ticket-attach-docs` also runs on its own once the plan is approved, so the plan reaches the ticket before the work starts.
+
+Keep steps 1 to 3 in one context window: the discussion and the plan build on what `pre-plan` learned, and a summary of it is not the same thing. From step 3 on, the plan file in `./.claude/plans/` and the babysit ledger in `./.claude/review-report/` hold the state, so a fresh window can pick up at any later step — `wrap-up` writes the best comment from the session that did the work, because the findings the diff does not show live only there.
 
 ## Installation
 
@@ -11,7 +29,9 @@ claude plugin marketplace add fprochazka/claude-code-plugins --scope user
 claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 ```
 
-## Commands
+## Slash commands
+
+Each is a skill with `disable-model-invocation` off, so Claude may also reach for one on its own when the situation matches its description.
 
 - `/sdlc:pre-plan [ticket ref or problem description]` — gathers the context needed to **discuss** a solution. Reads the ticket and everything it links to, maps the affected subdomains, then runs one focused deep dive per subdomain. Writes the full context file to `./.claude/plans/`, then runs `/sdlc:brief-next-steps` on it so the chat reply is the short conclusion and the long file stays the argument. Where the current flow or the change pressure reads better as a picture, the file gets a mermaid diagram, drawn and validated through `diagrams:mermaid`, and the briefing carries it over verbatim. It does not plan and does not implement.
 - `/sdlc:write-plan [topic, ticket ref, or briefing path]` — enters plan mode and writes an implementation plan whose steps map onto the intended atomic commits. Appends an implementation protocol so the execution rules travel with the plan file. Normally run after `/sdlc:pre-plan` and a design discussion.
@@ -22,7 +42,7 @@ claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 - `/sdlc:wrap-up [ticket ref]` — closes finished work out. Attaches the documents first, so they land even when the close decision needs you. Then posts a dense comment to the ticket — outcome, the production checks with their real numbers, findings the diff does not show, limits, possible follow-ups — and marks the ticket completed. It splits into several comments when one would bury its own best parts. Facts only: it never commits anyone to future work.
 - `/sdlc:brief-next-steps [scope hint or slug]` — compresses the session into one short briefing in `./.claude/plans/`: the final proposal in implementation order, plus the decisions you still owe. The conclusion, not the argument.
 
-## Skills
+## Supporting skills
 
 - `sdlc:team-workflow-identify` — resolves the issue tracker, the team, the ticket ID pattern, the branch convention and the workflow state names, then prints them as one block the calling command carries. Reads `CLAUDE.md` / `AGENTS.md` first, the repo `README.md` second, and asks before it falls back to the tracker API — so the answer gets written down instead of rediscovered every run. It hardcodes no team or status name. See [`skills/team-workflow-identify/SKILL.md`](skills/team-workflow-identify/).
 - `sdlc:mr-babysit-worker` — the watching half of `/sdlc:mr-babysit`, loaded by the subagent that command spawns, not by you. See [`skills/mr-babysit-worker/SKILL.md`](skills/mr-babysit-worker/).
