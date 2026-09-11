@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "prose",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command",
   "author": {
     "name": "Filip Procházka",

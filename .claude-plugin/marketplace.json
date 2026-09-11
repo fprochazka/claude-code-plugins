@@ -51,7 +51,7 @@
     {
       "name": "web-researcher",
       "description": "Iterative web research agent that searches, discovers new directions, and synthesizes findings",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -75,7 +75,7 @@
     {
       "name": "glab",
       "description": "GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -99,7 +99,7 @@
     {
       "name": "searxngcli",
       "description": "Skill for searching the web using a SearXNG instance via the searxngcli CLI",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -111,7 +111,7 @@
     {
       "name": "git",
       "description": "Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -123,7 +123,7 @@
     {
       "name": "code-review",
       "description": "Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel",
-      "version": "1.14.0",
+      "version": "1.14.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -135,7 +135,7 @@
     {
       "name": "sdlc",
       "description": "Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps",
-      "version": "0.17.0",
+      "version": "0.17.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -159,7 +159,7 @@
     {
       "name": "prose",
       "description": "How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

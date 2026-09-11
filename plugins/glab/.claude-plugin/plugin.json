@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "glab",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "GitLab through the glab CLI — the glab skill, MR commands for pipeline and comment state, and the mr-status review-state skill",
   "author": {
     "name": "Filip Procházka",

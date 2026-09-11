@@ -102,7 +102,7 @@ Run `make hooks` once per clone. It points `core.hooksPath` at `scripts/hooks`, 
 
 - [ ] Create `plugins/<name>/` directory
 - [ ] Create `plugins/<name>/.claude-plugin/plugin.json` with name, version, description
-- [ ] Add plugin content (skills/, commands/, agents/, hooks/, etc.)
+- [ ] Add plugin content (skills/, agents/, hooks/, etc.)
 - [ ] Create `plugins/<name>/README.md`
 - [ ] Add entry to `.claude-plugin/marketplace.json` with matching version
 - [ ] Add row to "Available Plugins" table in the root README

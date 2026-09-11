@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "searxngcli",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Skill for searching the web using a SearXNG instance via the searxngcli CLI",
   "author": {
     "name": "Filip Procházka",

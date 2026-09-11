@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "git",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history",
   "author": {
     "name": "Filip Procházka",
