@@ -572,7 +572,7 @@ class MainLoop(unittest.TestCase):
 
     def test_a_one_shot_run_that_read_something_keeps_its_normal_code(self):
         code, _, _ = self.run_main([], lambda _self: snap())
-        self.assertEqual(code, mr_state.EXIT_BASELINE)
+        self.assertEqual(code, mr_state.EXIT_OK)
 
     def test_a_wait_keeps_probing_through_read_failures_and_reports_each_mr_once(self):
         # A failed read is not a reason to stop watching: the token may come back, and the
@@ -595,7 +595,7 @@ class MainLoop(unittest.TestCase):
             monotonic=clock(0, 50, 100),
             seed=snap(),
         )
-        self.assertEqual(code, mr_state.EXIT_TIMEOUT)
+        self.assertEqual(code, mr_state.EXIT_OK)
         self.assertEqual(probe.call_count, 2)
         self.assertIn("scorecard:", out)
 
@@ -606,7 +606,7 @@ class MainLoop(unittest.TestCase):
             monotonic=clock(0, 50, 100),
             seed=snap(),
         )
-        self.assertEqual(code, mr_state.EXIT_CHANGE)
+        self.assertEqual(code, mr_state.EXIT_OK)
         self.assertIn("STATE_CHANGED", out)
 
     def test_detail_flags_are_rejected_in_wait_mode(self):

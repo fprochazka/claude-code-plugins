@@ -16,10 +16,10 @@ The probe is two calls per MR: the merge-request object and the newest note by u
 The heavy reads are gated on what moved: the pipeline dump (glab-pipeline) on a pipeline id or
 status change, the discussion dump (glab-discussion) on a note change, approvals on updated_at.
 
-Exit codes: 0 a change was detected (or a one-shot read succeeded), 3 the wait timed out with no
-change, 4 the first run established a baseline, 5 nothing could be read at all — every MR failed
-on every probe of the run, 1 a fatal error (bad arguments, no MR, no glab). A run in which some
-MRs read and others did not keeps its normal exit code and prints a READ_FAILED line per MR.
+Exit codes: 0 the run completed — a baseline, a change, or a wait that timed out with nothing to
+report; the `result:` line says which. 5 nothing could be read at all — every MR failed on every
+probe of the run. 1 a fatal error (bad arguments, no MR, no glab). A run in which some MRs read
+and others did not exits 0 and prints a READ_FAILED line per MR.
 """
 
 from __future__ import annotations
@@ -44,10 +44,8 @@ from urllib.parse import quote
 MAX_RETRIES = 5
 INITIAL_RETRY_DELAY = 1.0
 
-EXIT_CHANGE = 0
+EXIT_OK = 0
 EXIT_FATAL = 1
-EXIT_TIMEOUT = 3
-EXIT_BASELINE = 4
 EXIT_READ_FAILED = 5
 
 # The HTTP codes that mean "asking again changes nothing": a bad token, a forbidden project, a
@@ -837,15 +835,15 @@ def main(argv: list[str] | None = None) -> int:
                 print("result: nothing could be read; every MR failed (see the READ_FAILED lines above)")
                 return EXIT_READ_FAILED
             print(f"state: {watched[0].sdir.parent.parent.parent if len(watched) > 1 else watched[0].sdir}")
-            return EXIT_BASELINE if any_baseline and not any_change else EXIT_CHANGE
+            return EXIT_OK
         # A change outranks a baseline: a set can hold both on the same probe, and the caller
         # has to hear about the change rather than be told the run was only a baseline.
         if any_change:
             print(f"result: change detected after {probes} probe(s) since {started}")
-            return EXIT_CHANGE
+            return EXIT_OK
         if any_baseline and probes == 1 and read_ever_succeeded:
             print(f"result: baseline established at {started}; run again to wait for changes")
-            return EXIT_BASELINE
+            return EXIT_OK
         # Never start a probe that the window cannot hold. A probe can pull a pipeline dump,
         # and one that begins near the deadline runs past the caller's own tool timeout.
         remaining = deadline - time.monotonic()
@@ -858,7 +856,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"result: nothing could be read in {args.wait_for_state_change_timeout_minutes:g} minutes since {started}; every probe failed for every MR ({probes} probes)")
                 return EXIT_READ_FAILED
             print(f"result: no change in {args.wait_for_state_change_timeout_minutes:g} minutes since {started} ({probes} probes)")
-            return EXIT_TIMEOUT
+            return EXIT_OK
         time.sleep(args.poll_interval_seconds)
 
 
