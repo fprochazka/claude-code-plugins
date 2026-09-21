@@ -29,7 +29,7 @@ A bot's `high`/`critical` **severity tag does not elevate a finding above this g
 
 **A decision the user already stated is not a judgment call.** When the user picked a direction or accepted a tradeoff earlier in the session, carry it out. Do not re-offer it as options, and do not raise it as an `ask` — the user answered once and must not have to answer twice. Only a call the user has *not* made is a judgment call.
 
-The grant also covers the **handoff controls**. Yours are the ticket-side moves and the schedule: moving the ticket between the work and review states on every reclaim and every handoff, posting the short factual ticket comment that explains a move, spawning and stopping the watcher, and arming or deleting the watchdog cron job. The MR-side ones are the actor's, pre-authorized the same way: toggling an MR between draft and ready (`glab mr update <iid> --draft --yes` and `glab mr update <iid> --ready --yes`) and posting the one-line MR comment that says why. These carry the same rule as everything else: do them, do not ask for them.
+The grant also covers the **handoff controls**: every hand-over and take-back move `teamwork:review-handshake` defines, the ticket side yours and the MR side the actor's, plus spawning and stopping the watcher and arming or deleting the watchdog cron job. Do them, do not ask for them.
 
 (If your harness's safety classifier blocks these git or discussion operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README. If a block lands mid-run, don't stall on it: note the exact blocked command **loudly** in the progress note, carry on with everything else and the other MRs, and let the allowlist fix land out of band — never sit and wait for a go-ahead on an operation this run already authorized. A permission prompt that reaches a background subagent pauses that subagent until the user answers; the watchdog notices a silent watcher, and you name the blocked command.)
 
@@ -55,13 +55,13 @@ State the resolved set back to the user as the **very first line, before running
 
 ## Pass 0 — resolve the workflow, check the worktrees, spawn the watcher, arm the watchdog
 
-1. **Resolve the ticket and its workflow states yourself**, before anything is spawned. Invoke the `sdlc:team-workflow-identify` skill and carry its output block for the whole run: it names the tracker, the ticket ID pattern, and the state names, and it asks the user once when a role has several plausible names — which is exactly why this cannot be a subagent's job, since a background subagent cannot ask. Then load the installed skill that covers the resolved tracker; that skill holds the command syntax, and this command names no tracker CLI of its own. Take the ticket from the MR title, the branch name, or the MR description, using the ticket pattern from the block; several MRs in the set usually share one ticket. If the block says `tracker: none`, or no ticket is identifiable, the handshake degrades to the draft flag alone — every ticket move is then skipped rather than faked.
+1. **Resolve the ticket and its workflow states yourself**, before anything is spawned. Invoke the `teamwork:workflow-identify` skill and carry its output block for the whole run: it names the tracker, the ticket ID pattern, and the state names, and it asks the user once when a role has several plausible names — which is exactly why this cannot be a subagent's job, since a background subagent cannot ask. Take the ticket as that skill says, with the ticket pattern from the block; several MRs in the set usually share one ticket. Invoke `teamwork:review-handshake` too: it holds the handover, the thread rules, the comment signature and the ledger paths. Then load the installed skill that covers the resolved tracker; that skill holds the command syntax, and this command names no tracker CLI of its own. If the block says `tracker: none`, or no ticket is identifiable, the handshake degrades to the draft flag alone, which then carries the ball both ways — every ticket move is skipped rather than faked.
 2. **Safety checks, per MR, through a one-off `sonnet` subagent** that reads and changes nothing: the source branch is checked out in its worktree (`git branch --show-current` equals `source_branch`; never auto-checkout a different branch), the branch is not `master`/`main`, the worktree is clean (`git status --porcelain` empty; the run rebases and force-pushes, which is unsafe over uncommitted work), and the MR is open. Drop any MR that fails a check and say why. If the set is empty, stop.
 3. **Spawn the watcher by calling the Agent tool, not by describing it**: `subagent_type: glab:mr-watch`, `run_in_background: true`, with the prompt below. If you cannot name its agent id, nothing is watching. Its first message is a scorecard with zero events; that is your baseline.
 4. Arm the **watchdog**: a recurring `CronCreate` every 30 minutes, on an off-minute so the fleet does not synchronize — `cron`: `"13,43 * * * *"`, `recurring`: `true`, and a one-sentence plain-text prompt.
 5. **Write the ledger** (below) with the set, the ticket, the states, the ids, and an empty table. From here on, rewrite it after every decision.
 
-Spawn no actor yet — there is nothing to do until the watcher reports something. Any MR that is not draft while the ledger holds work is reclaimed on the first message that brings work.
+Spawn no actor yet — there is nothing to do until the watcher reports something. A set already handed over while the ledger holds work is taken back, per `teamwork:review-handshake`, on the first message that brings work.
 
 ### The ledger
 
@@ -69,7 +69,7 @@ Spawn no actor yet — there is nothing to do until the watcher reports somethin
 # Babysit ledger: <topic> (MR !<iid>, !<iid>)
 
 - MRs: <host/project!iid — worktree path> (one line each)
-- Ticket: <TICKET-ID> (<url>) — handshake: ticket+draft | draft-only · work state "<WORK_STATE>" · review state "<REVIEW_STATE>"
+- Ticket: <TICKET-ID> (<url>) — handshake: ticket-led | draft-only · work state "<WORK_STATE>" · review state "<REVIEW_STATE>"
 - Mode: working | handoff-wait
 - Watcher: <agent id> · ledger ./.claude/review-report/<topic>.mr-watch.md · Watchdog cron: <job id> · Actor: <agent id | none>
 
@@ -98,7 +98,7 @@ MRs: https://git.example.com/group/service/-/merge_requests/123 (worktree /home/
 Report: pipeline finished, push, behind target, handshake, notes, verdict, approvals, merged/closed, quiet 2m after green, idle 3h
 Cadence: working
 Self markers: <!-- sdlc:mr-babysit -->, <!-- sdlc:mr-open -->
-Handshake: ready-for-review = not draft and ticket in "In Review"; back-to-work = draft and ticket in "In Progress"
+Handshake: ready-for-review = not draft and ticket in "In Review"; back-to-work = ticket in "In Progress"
 Ticket: TEAM-789 — work state "In Progress", review state "In Review", terminal states "Done", "Canceled"; load the <tracker skill name> skill before reading it
 Ledger: ./.claude/review-report/<topic>.mr-watch.md
 ```
@@ -141,7 +141,7 @@ Report one line per row, `<row id> fixed <sha>` / `could-not-fix <why>` / `poste
 The message names the MR, the events, the ids involved, the dump paths, and a scorecard line per MR. Decide what it means, dispatch, rewrite the ledger, and write a progress note of at most three lines. Never read the MR yourself.
 
 - **`STATE_CHANGED` to merged or closed** → drop the MR from the set; if the set is empty, go to [Stopping](#stopping-instead-of-handing-over).
-- **`HANDSHAKE back-to-work`, or any MR draft again while in handoff-wait** → the reviewer handed it back. Set `Mode: working`, message the watcher `cadence: working`, and treat the new threads as ordinary in-scope threads.
+- **`HANDSHAKE back-to-work` while in handoff-wait** → the reviewer handed it back. Set `Mode: working`, message the watcher `cadence: working`, and treat the new threads as ordinary in-scope threads.
 - **`PIPELINE_CHANGED` to `failed`** → a triage batch: `pipeline <id> on !<iid>` with the dump path from the message. A pipeline that ran on a superseded base is judged after the rebase.
 - **`NOTES_CHANGED`** with threads the watcher classed as reviewer or human → a triage batch: `threads <ids> on !<iid>`. Threads under your own markers need nothing; a thread under another automation's marker is triaged like any reviewer's, and the actor's brief says which of those it may not resolve.
 - **`BEHIND_CHANGED` to a non-zero count** → `rebase !<iid>` in the next batch. When the watcher says the MR is stacked on another branch, rebase the base MR first.
@@ -152,7 +152,7 @@ The message names the MR, the events, the ids involved, the dump paths, and a sc
 - **`TICKET_CHANGED` to a terminal state** → the work moved past review; go to [Stopping](#stopping-instead-of-handing-over).
 - **`READ_FAILED` or `DEPENDENCY MISSING`** → say so in the note; a missing helper goes to the user with the install command and a question.
 
-**In a working cycle, an MR that is not draft while there is anything to rebase, triage or fix is reclaimed first**: the batch opens with `reclaim !<iid>`, you move the ticket to the work state yourself in the same step, and you ack the watcher for both. A batch about to be implemented is work in progress too.
+**In a working cycle, a set already handed over while there is anything to rebase, triage or fix is taken back first**, per `teamwork:review-handshake`: your ticket move, then the batch opens with `reclaim !<iid>` for the actor's one-line comment, and you ack the watcher for both. A batch about to be implemented is work in progress too.
 
 **One actor at a time.** While one is out, collect the next message's work and send it in the next batch. A rebase never runs while an implementation batch is out; it goes into the batch after it.
 
@@ -164,7 +164,7 @@ The message names the MR, the events, the ids involved, the dump paths, and a sc
    - **Approve a `fix`** when the evidence on the row supports it, the change is at the right layer (root cause, not symptom), and it does not contradict a fix already made this run. When the proposal is right about the problem but wrong about the change, approve it with your correction written into the batch.
    - **Approve a `dismiss`** when the reasoned disagreement holds — the finding misreads the code, is already covered, or would create a new problem. **Overturn it into a `fix`** when the actor was too quick and the finding is right after all. A severity tag is not a reason to approve either way.
    - **Take an `ask` to the user**, in the progress note, without blocking anything else — dispatch the rest of the batch anyway. Never present the whole triage as options and wait for a go-ahead; only an `ask` reaches the user.
-   - Whatever the disposition, **promise nothing on the MR**. The replies state facts — what changed, what SHA carries it, why a finding does not hold. No "we will fix", no timeline, no follow-up.
+   - Whatever the disposition, **promise nothing on the MR**. The replies state facts — what changed, what SHA carries it, why a finding does not hold. `teamwork:review-handshake` holds the rule.
 4. **Record the outcomes**: `fixed <sha>`, `could-not-fix`, `dismissed`, `ask`, and the attempt count on a failure signature. A `could-not-fix` row is yours to re-decide — a fresh `fix` proposal with a different approach, or an `ask` for the user.
 5. **Dispatch the next batch**: the approved `fix` rows, the approved dismissals, and any reclaim or ready, to the actor as one implementation batch. Resume the same actor while it has context — it holds the code and the reasoning behind every row — and spawn a fresh one, pointed at the ledger, only when it runs out.
 6. Post a progress note of **at most three lines** to the user.
@@ -188,16 +188,14 @@ Hand the set over when **every MR** satisfies **all** of these, read off the wat
 2. It has been **≥2 minutes quiet** — the watcher's `QUIET` event: a green pipeline on the current head with no note movement for two minutes, which gives an AI reviewer time to weigh in on the final commit.
 3. Every actionable comment has a reply, and every thread the actor handled is resolved. Watch threads carry a reply and stay unresolved, which is the settled state for them.
 4. The only remaining open threads, if any, are `ask` rows or skips, watch threads already answered, or human threads left for the human to close.
-5. **No row is unfinished** — no `ask`, no `approved`, no `fixing`, no `could-not-fix`. Every one of those means the change is not finished, so the MR stays draft and the ticket stays in the work state, and you hand back to the user instead.
+5. **No row is unfinished** — no `ask`, no `approved`, no `fixing`, no `could-not-fix`. Every one of those means the change is not finished, so the ticket stays in the work state — and an MR never handed over stays draft — and you hand back to the user instead.
 6. The branch is **not behind its target branch** — or the divergence provably does not touch this MR. Master often moves faster than a long pipeline finishes, so a rebase-then-wait cycle can never converge. The actor's rebase report gives the two file sets and whether they intersect; hand over behind **only** when they do not, and say it in the handover line: "4 commits behind master, docs-only, no overlap with this MR". Any overlap means rebase first and let the watcher report the resulting pipeline.
 
 ### Hand the ball over
 
-Ready-for-review means the MR is **not draft** AND the ticket is in the review state; back-to-work means draft AND the work state. The two flags always move together, and `/code-review:watch` reads both before it reviews — a half-set handshake either starts a review of work in progress or leaves a finished MR unreviewed. Both state names are the ones you resolved in pass 0.
+Hand over per `teamwork:review-handshake`: an implementation batch of `ready !<iid>` for every MR in the set, then your ticket move, **once**, when every MR on that ticket qualifies. One MR going green while its sibling is still red is not a handover.
 
-An implementation batch of `ready !<iid>` for every MR in the set marks each ready and posts one short comment per MR saying it is ready and what the last cycle changed. Move the ticket to the review state **once**, when every MR on that ticket qualifies. One MR going green while its sibling is still red is not a handover. Then ack the watcher for the draft flips and the ticket move, message it `cadence: waiting`, and set `Mode: handoff-wait`. Facts only, and promise nothing.
-
-Then **do not stop**. The reviewer now has the ball, and hands it back through the same two flags. With `tracker: none`, the handshake is the draft flag alone.
+Then ack the watcher for whatever moved, message it `cadence: waiting`, and set `Mode: handoff-wait`. Do **not** stop: the reviewer has the ball.
 
 ### Handoff-wait
 
@@ -205,10 +203,10 @@ Nothing polls. The watcher keeps watching in the waiting cadence and messages yo
 
 **Each message does one of four things:**
 
-- **`HANDSHAKE back-to-work`, or any MR draft again** → the reviewer handed it back. Set `Mode: working`, message the watcher `cadence: working`. New reviewer threads are ordinary in-scope threads, and their triage comes back to you like any other.
+- **`HANDSHAKE back-to-work`** → the reviewer handed it back. Set `Mode: working`, message the watcher `cadence: working`. New reviewer threads are ordinary in-scope threads, and their triage comes back to you like any other.
 - **`HEARTBEAT` with the flags unmoved** → nothing moved. Write the one line, naming how long the set has been idle.
 - **Every MR merged or closed, or the ticket reached a terminal state** → stop the watcher, confirm the actor has returned, delete the cron job, report, and stop for good.
-- **`NOTES_CHANGED` while the flags did not move** → a reviewer is mid-review, and a comment is not a hand-back. Write one line as an FYI — "!123 handed over, 3 new comments since 14:02, reviewer still active" — and keep waiting. Take the work back on one of two signals only: the handshake flips (the bullet above), or the newest comment is **at least 30 minutes old** with the flags still unmoved, which you read off the watcher's next heartbeat — the reviewer left comments and walked away without handing over. On that second signal set `Mode: working`, reclaim, move the ticket to the work state yourself, dispatch the thread triage, and message the watcher `cadence: working`.
+- **`NOTES_CHANGED` while the flags did not move** → a reviewer is mid-review, and a comment is not a hand-back. Write one line as an FYI — "!123 handed over, 3 new comments since 14:02, reviewer still active" — and keep waiting. Take the work back on one of two signals only: the handshake flips (the bullet above), or the newest comment is **at least 30 minutes old** with the flags still unmoved, which you read off the watcher's next heartbeat — the reviewer left comments and walked away without handing over. On that second signal set `Mode: working`, move the ticket to the work state yourself, dispatch the thread triage with a `reclaim !<iid>` row so the actor says why on the MR, and message the watcher `cadence: working`.
 
 **Idle cap: 3 hours.** The watcher reports `IDLE` when nothing has moved for the cap its prompt named. End the run: stop the watcher, confirm the actor has returned, delete the cron job, and report. Say plainly that it stopped on an **idle timeout, not on a merge**, name what is still outstanding, and name the way back in — running `/sdlc:mr-babysit` again picks the same set up.
 
@@ -218,7 +216,7 @@ The user can opt out of the wait with an explicit "stop after handoff". Then the
 
 **Stop and hand back to the user** on any of: all MRs merged/closed; a rebase conflict that encodes a genuine product/design decision; a CI failure triaged as `ask`, or a failure signature that hit its 2-attempt cap and is still red; a `could-not-fix` row with no way forward; a reply or resolve that kept failing after a retry; oscillation (this batch's fix contradicting the last one's); or an outstanding `ask` with nothing else left to solve. A halt on one MR doesn't have to halt the others — keep babysitting the rest and report the one that needs you.
 
-Whenever you stop this way, the MRs concerned stay **draft** and the ticket stays in the work state. The work is not ready, so the handshake must not say it is.
+Whenever you stop this way, the set stays back-to-work, per `teamwork:review-handshake`.
 
 **Leave nothing running.** A stop is complete only when the watcher has acknowledged `stop` and ended its turn, the actor has returned and its report has been read back, and the cron job is deleted. An actor still working its batch is allowed to finish and return; dispatch nothing after a halt. Never stop while a subagent is alive, and never report a halt on a subagent you did not read back.
 

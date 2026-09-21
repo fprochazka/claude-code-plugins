@@ -21,7 +21,7 @@ Numbers must be the real ones you saw. Never reconstruct a figure from memory of
 
 ## Process
 
-1. **Take the scope from the session.** This command normally runs at the end of the work it wraps up, so the ticket, the MR, and the checks are already in the conversation. Use them. The scope above only narrows or overrides that, and is empty most of the time. Fall back to the branch name or the MR title when the session is genuinely fresh, and ask the user only when the session covered several tickets and you cannot tell which one is finished. Load the skill for the issue tracker in play — you need it to post and to close.
+1. **Take the scope from the session.** This command normally runs at the end of the work it wraps up, so the ticket, the MR, and the checks are already in the conversation. Use them. The scope above only narrows or overrides that, and is empty most of the time. Fall back to the MR title, the branch name or the MR description the way `teamwork:workflow-identify` says when the session is genuinely fresh, and ask the user only when the session covered several tickets and you cannot tell which one is finished. Load the skill for the issue tracker in play — you need it to post and to close.
 2. **Attach the documents first.** Invoke `/sdlc:ticket-attach-docs`. It runs before everything else because the steps below can stall. Whether a ticket with unmet acceptance criteria should really be closed is a question for the user, and the documents belong on the ticket whatever the answer is. That command does its own tracker reads and its own confirmation round.
 3. **Judge from the session whether the work is finished** — MR merged, CI green on the target branch, every step of the plan done. **Do not go and look any of it up.** You either watched it happen or you did not. A message from the watcher agent delivered into this session counts as watching; a state file it left on disk does not. If the session left something open, say so in your reply to the user and ask before you mark the ticket completed. If the session never established a state at all, treat it as unknown, keep it out of the comment, and mention it to the user. Post the comment either way.
 4. **Draft the comment to `<scratchpad>/<ticket-id>-wrap-up.md`.** Follow the structure and the density rules below. When the material calls for more than one comment, draft each into its own numbered file — `<ticket-id>-wrap-up-1-outcome.md`, `-2-verification.md`, and so on.
@@ -59,8 +59,7 @@ One comment is the default. Split when the material is long enough that a single
 
 ## Hard rules
 
-- The comment is addressed to other people. **State findings, facts, causes, and numbers. Stop there.** No commitments, no timelines, no "we will fix", "next release", "a ticket is coming", or any softer version of the same. This holds for the follow-ups section above all — a follow-up is an observation and an option, never planned work.
-- Do not ask anyone to wait for anything, and do not say work is under way unless the user told you it is.
+- The comment is addressed to other people, so invoke `teamwork:review-handshake` for the rule: **state findings, facts, causes, and numbers, and stop there.** It binds the follow-ups section above all — a follow-up is an observation and an option, never planned work.
 - **The session is the whole world.** Report what it established and nothing else. Do not check a pipeline, re-read a ticket, re-query production, or look up a status to fill a gap. A gap stays a gap — leave it out of the comment and tell the user instead.
 - Do not invent a verification you did not run. Missing coverage goes under Limits.
 - Do not change code, do not commit, do not touch the MR.

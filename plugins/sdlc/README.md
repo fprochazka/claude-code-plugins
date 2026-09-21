@@ -42,10 +42,6 @@ Each is a skill with `disable-model-invocation` off, so Claude may also reach fo
 - `/sdlc:ticket-attach-docs [ticket ref]` — attaches the documents the work produced to the ticket: the briefing and the implementation plan always, the rest by judgment. It reads what the ticket already holds, then picks the carrier the tracker offers: a document it can update in place, an attachment, an inline comment, or a link to the file on the branch. It never attaches the pre-plan ticket dump, which is the ticket's own content read back out.
 - `/sdlc:wrap-up [ticket ref]` — closes finished work out. Attaches the documents first, so they land even when the close decision needs you. Then posts a dense comment to the ticket — outcome, the production checks with their real numbers, findings the diff does not show, limits, possible follow-ups — and marks the ticket completed. It splits into several comments when one would bury its own best parts. Facts only: it never commits anyone to future work.
 
-## Supporting skills
-
-- `sdlc:team-workflow-identify` — resolves the issue tracker, the team, the ticket ID pattern, the branch convention and the workflow state names, then prints them as one block the calling command carries. Reads `CLAUDE.md` / `AGENTS.md` first, the repo `README.md` second, and asks before it falls back to the tracker API — so the answer gets written down instead of rediscovered every run. It hardcodes no team or status name. See [`skills/team-workflow-identify/SKILL.md`](skills/team-workflow-identify/).
-
 ## Babysitting an MR to green
 
 `/sdlc:mr-babysit` is the **author** side of an MR — the mirror image of `/code-review:watch`, which is the reviewer side. It changes code; the reviewer command never does.
@@ -63,17 +59,11 @@ If your permission setup makes Claude Code prompt for those git operations, allo
 "Bash(git push:*)", "Bash(git rebase:*)", "Bash(git fetch:*)", "Bash(glab ci retry:*)", "Bash(glab mr update:*)"
 ```
 
-Review feedback is evaluated, never rubber-stamped. Every thread ends as a fix, a dismissal with a reasoned reply, or a question for you. A bot's `critical` tag does not exempt a finding from that judgment. One thread type is the exception to the resolve rules: a thread whose last reviewer note is marked `<!-- code-review:watch -->` gets the fix and a reply, and stays unresolved. The reviewer verifies it against the code and resolves it.
+Review feedback is evaluated, never rubber-stamped. Every thread ends as a fix, a dismissal with a reasoned reply, or a question for you. A bot's `critical` tag does not exempt a finding from that judgment. A thread whose last reviewer note is marked `<!-- code-review:watch -->` is the exception to the resolve rules: it gets the fix and a reply, and stays unresolved. `teamwork:review-handshake` says why.
 
 ### The handshake with the reviewer
 
-Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together, and whoever hands the ball over sets both. `/code-review:watch` reads the same two flags and sets them the same way, so a half-set handshake either starts a review of work in progress or leaves a finished MR unreviewed.
-
-`/sdlc:mr-babysit` claims an MR back to draft whenever it finds work to do on it — behind its target branch, red pipeline, open threads, or a fix about to land. When everything is green, quiet and settled, it marks the MRs ready and moves the ticket to `REVIEW_STATE`.
-
-Then it does not stop. The watcher keeps reading both flags, the MR every few minutes and the ticket after every probe window, and if the reviewer hands the work back — ticket in `WORK_STATE` or the MR in draft again — the command picks the work up within a probe window. It stops for good when the MRs merge, when the ticket reaches a terminal state, or after three hours with nothing moving, and the final report says which of those ended it. Say "stop after handoff" to opt out of the wait.
-
-The workflow state names are never hardcoded. Both commands resolve them at run time through the `sdlc:team-workflow-identify` skill, both read MR state through the `glab:mr-status` skill from the **glab** plugin, and both watch through its `glab:mr-watch` agent. With no tracker, the handshake degrades to the draft flag alone.
+The protocol lives in the [teamwork plugin](../teamwork/), shared with `/code-review:watch`: `teamwork:review-handshake` for the handover, `teamwork:workflow-identify` for the state names, both read at run time, plus `glab:mr-status` and the `glab:mr-watch` agent from the **glab** plugin for MR state. `/sdlc:mr-babysit` moves the ticket back to the work state, with a comment saying why, whenever it takes work back after a handover — behind its target branch, red pipeline, open threads, or a fix about to land. When everything is green, quiet and settled, it moves the ticket to the review state and marks every MR ready, then keeps watching in case the reviewer hands the work back. It stops for good when the MRs merge, when the ticket reaches a terminal state, or after three hours with nothing moving; say "stop after handoff" to opt out of the wait.
 
 Two CLIs are required, and the command asks you to install them when they are missing:
 

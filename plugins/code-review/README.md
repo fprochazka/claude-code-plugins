@@ -16,15 +16,7 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 
 ## The handshake with the author
 
-`/code-review:watch` is paced by two flags it shares with `/sdlc:mr-babysit`.
-
-Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together, and whoever hands the ball over sets both.
-
-After posting a round of findings, the watch sets the MR to draft and moves the ticket to `WORK_STATE`. A background watcher, the `glab:mr-watch` agent from the **glab** plugin, then reads both flags every minute and messages the watch when they say ready-for-review; nothing happens until then. A ticket in the review state while the MR is still draft is not a handover, and the watch stays silent. This is what keeps the review out of half-finished pushes. The watcher's 30-minute heartbeat becomes the progress line; a cron on the same interval only checks that the watcher is still alive and speaks only when it has to respawn it.
-
-The author side replies to a `<!-- code-review:watch -->` thread but never resolves one on its own. The watch resolves the threads it verified, so a watch thread resolved without its verdict was closed on a human's decision — by the person, or by the author agent on the person's instruction. When the code at the MR head still shows the problem, the watch un-resolves the thread and names the line that still shows it.
-
-The tracker and its state names are never hardcoded. The command resolves them at run time through the `sdlc:team-workflow-identify` skill, reads MR state through the `glab:mr-status` skill, and watches through the `glab:mr-watch` agent. Install the **sdlc** and **glab** plugins alongside this one for the full watch. With no tracker at all it falls back to a push gate on the draft flag plus a new head SHA.
+`/code-review:watch` is paced by the ticket state it shares with `/sdlc:mr-babysit`; the protocol, and what each side may do to the other's threads, is in the [teamwork plugin](../teamwork/) — `teamwork:review-handshake` for the handover and `teamwork:workflow-identify` for the state names, both read at run time. After posting a round of findings the watch moves the ticket to `WORK_STATE` and leaves the draft flag alone, then waits for the `glab:mr-watch` agent from the **glab** plugin to report ready-for-review again; its 30-minute heartbeat is the progress line, and a cron on the same interval only respawns a dead watcher. The watch resolves the threads it verified, and un-resolves one whose problem the code at the MR head still shows. The **teamwork** and **glab** plugins are declared dependencies, so installing this one installs both; with no tracker at all the watch falls back to a push gate on the draft flag plus a new head SHA.
 
 ## How it works
 

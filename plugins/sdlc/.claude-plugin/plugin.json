@@ -10,6 +10,7 @@
   "license": "MIT",
   "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/sdlc",
   "dependencies": [
+    "teamwork",
     "prose",
     "git",
     "code-review",

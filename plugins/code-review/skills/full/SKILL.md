@@ -49,12 +49,12 @@ Every step below, and every review agent, reads the range `REVIEW_BASE...REVIEW_
 
 ### 1.3 Ticket Context
 
-1. Extract the ticket ID from the MR/PR title or branch name (common patterns: `TEAM-123`, `#123`, etc.)
+1. Invoke the `teamwork:workflow-identify` skill, unless the command that called this one already carries its output block, and take the ticket the way that skill says, with the ticket pattern it resolved. Without an MR/PR, the branch name is the only source left.
 2. If found, use the project's issue tracker to fetch the ticket — read its description, acceptance criteria, status, and comments.
 3. Check for **related tickets** (parent, children, blocked-by, blocking) and skim those too — they provide motivation and constraints.
 4. If the ticket has links to external resources, see if you can read those too (documents, discussion links, etc.).
 
-If no ticket is identifiable, skip this step.
+If the skill reports `tracker: none`, or no ticket is identifiable, skip this step — a project with no tracker is a valid answer.
 
 ### 1.4 Note Unresolved Reviewer Comments
 

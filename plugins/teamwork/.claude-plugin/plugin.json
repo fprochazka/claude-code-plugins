@@ -1,0 +1,12 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "teamwork",
+  "version": "0.1.0",
+  "description": "Team-process conventions shared by the sdlc and code-review plugins — the workflow-identify skill that resolves the tracker, team and state names at run time, and the review-handshake skill that says whose court the ball is in",
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/teamwork"
+}

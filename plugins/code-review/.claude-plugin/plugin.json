@@ -19,6 +19,7 @@
     "performance"
   ],
   "dependencies": [
+    "teamwork",
     "prose",
     "diagrams",
     "glab",

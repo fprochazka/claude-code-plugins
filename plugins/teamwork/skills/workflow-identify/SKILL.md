@@ -1,10 +1,10 @@
 ---
-name: team-workflow-identify
+name: workflow-identify
 description: Identify the project's issue tracker, team, ticket conventions and workflow state names before any command touches a ticket. Use when asked "which status should this move to", "move the ticket", "mark it ready for review", "what is the team workflow", "which issue tracker states exist", or when a ticket has to change state. The sdlc and code-review commands invoke this skill by name and consume its output block.
 trigger-keywords: ticket status, workflow states, issue tracker, move the ticket, ready for review, team workflow
 ---
 
-# team-workflow-identify
+# workflow-identify
 
 Ground the agent in the project's issue tracker, team and workflow states **before** any command reads or moves a ticket. Every value is discovered at run time. This skill hardcodes no team name, no team id and no status name — a skill that carries them turns stale the day someone renames a state.
 
@@ -39,7 +39,7 @@ The user picks. Then query the tracker API, write the result into the chosen pla
 
 - **Tracker** — Linear, Jira, GitLab issues, GitHub issues, or none.
 - **Team** — display name, key, and id where the tracker has one. These are three different strings for one team. Never derive one from another.
-- **Ticket ID pattern** — `TEAM-123`, `#123`, or a tracker URL. The commands parse branch names and MR titles with it.
+- **Ticket ID pattern** — `TEAM-123`, `#123`, or a tracker URL. The commands parse branch names and MR titles with it. **A command takes the ticket of the work at hand from the MR title, the branch name, or the MR description, in that order, using this pattern**; several MRs of one change usually share one ticket, and a command that finds none reports `none` rather than guessing.
 - **Branch convention** — the documented pattern if there is one, for example `<initials>/<TICKET>-<slug>`. Report `none` when nothing documents it, and do not invent one from the branches that happen to exist.
 - **Workflow states** — see below.
 

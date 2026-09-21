@@ -17,7 +17,7 @@ $ARGUMENTS
 
 Inspect the **Scope** above:
 
-- **Looks like a ticket ref** (e.g. `ABC-1234`, a Linear/GitHub/GitLab URL, `#789`): treat as ticket → run Phase 2.
+- **Looks like a ticket ref** — an ID, a tracker URL, a `#number`; `teamwork:workflow-identify` holds the project's real pattern: treat as ticket → run Phase 2.
 - **Looks like a freeform problem description**: skip Phase 2, use the description as the brief.
 - **Empty**: use the current conversation context. If it's unclear what we're gathering context for, ask the user before proceeding.
 
@@ -34,7 +34,7 @@ The subagent must:
 - **Dump all findings into `./.claude/plans/pre-plan-<ticket-slug>-ticket.md`** (create the directory if missing) as a single markdown file. Include: full ticket content (title, description, all comments verbatim or near-verbatim where they carry real information), summarized linked context per link, a list of every concrete code/file/table/system reference **that the ticket or its linked items mention — transcribed as written, not searched for, not verified against code** — and a list of any unresolved questions or ambiguities spotted in the ticket.
 - **Return ONLY the path to that file** (plus a 2-3 sentence high-level gist). Do NOT inline the full dump into the subagent's reply — the orchestrator will read the file as needed.
 
-The subagent prompt must open with a skill-load instruction so it doesn't waste turns guessing CLI syntax. Resolve the tracker with the `sdlc:team-workflow-identify` skill first, then name the installed skill that covers that tracker: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
+The subagent prompt must open with a skill-load instruction so it doesn't waste turns guessing CLI syntax. Resolve the tracker with the `teamwork:workflow-identify` skill first, then name the installed skill that covers that tracker: `First, invoke the <skill-name> skill to load its usage guidance before running any commands.`
 
 Do the same for every other system the subagent has to read. If the ticket links to chat threads, add the instruction for the chat tool's skill as well.
 

@@ -2,7 +2,7 @@
 
 You act on a merge request on behalf of `/sdlc:mr-babysit`: you triage what a watcher reported, you implement what the orchestrator approved, you post the replies it approved, and you push. The orchestrator's prompt names the task, the worktree, the rows, and the dump paths; this file holds the rules every task shares. Read it in full before the first command.
 
-**Load these skills before your first tool call:** `git:git-workflow` for commit shaping, `glab:mr-status` for how the dumps are laid out and how to judge them, `glab-discussion` for comment threads, `glab-pipeline` for CI triage.
+**Load these skills before your first tool call:** `git:git-workflow` for commit shaping, `teamwork:review-handshake` for the thread rules, the comment signature and what you may write to other people, `glab:mr-status` for how the dumps are laid out and how to judge them, `glab-discussion` for comment threads, `glab-pipeline` for CI triage.
 
 ## Hard rules
 
@@ -12,7 +12,7 @@ You act on a merge request on behalf of `/sdlc:mr-babysit`: you triage what a wa
 - **Never background anything.** Foreground, serially. A nested `noisy-tools-in-subagent:noisy-runner` in the foreground for builds and tests.
 - **Never claim what you did not observe this turn.** `Exit code 143` or "timed out" means you learned nothing; re-run the smaller check and read the real output.
 - **Report every push, comment, resolve and draft toggle** with its SHA or timestamp, so the orchestrator can tell the watcher these were the run's own moves.
-- **Promise nothing on the MR.** Replies state facts: what changed, which SHA carries it, why a finding does not hold. No "we will fix", no timeline, no follow-up.
+- **Promise nothing on the MR.** Replies state facts: what changed, which SHA carries it, why a finding does not hold. `teamwork:review-handshake` holds the rule in full.
 
 ## Ids
 
@@ -65,11 +65,14 @@ One of four dispositions per in-scope thread, critically evaluated. Review feedb
 ## Posting
 
 - Post a dismissal reply once the orchestrator approved it, and a fix reply only with the SHA that carries the fix. A reply announcing a fix you cannot point at is a promise.
-- Every reply body ends with a blank line then `<!-- sdlc:mr-babysit -->`, the comment-signing convention from the `glab` skill, so handled threads are not re-processed. Write multi-line bodies to a file, then `glab-discussion write --reply-to <id> --body - < <file>`, then `glab-discussion resolve <id>`. Reply first, then resolve; if a reply fails after one retry, do not resolve, report it.
-- **A watch thread gets a reply and never a resolve.** A thread whose most recent reviewer note ends with `<!-- code-review:watch -->` belongs to `/code-review:watch`: it gets the fix or the reasoned disagreement and stays unresolved, because the reviewer verifies against the MR head and resolves it; resolving it yourself removes that signal. The one exception is the user telling you to resolve a specific watch thread.
+- Every reply body ends with a blank line then `<!-- sdlc:mr-babysit -->`, the signing convention in `teamwork:review-handshake`, so handled threads are not re-processed. Write multi-line bodies to a file, then `glab-discussion write --reply-to <id> --body - < <file>`, then `glab-discussion resolve <id>`. Reply first, then resolve; if a reply fails after one retry, do not resolve, report it.
+- **A watch thread gets a reply and never a resolve.** A thread whose most recent reviewer note ends with `<!-- code-review:watch -->` belongs to `/code-review:watch`; `teamwork:review-handshake` names the one exception.
 - **A general note with no `Resolved` field cannot be resolved.** GitLab answers with HTTP 403, the API refusing an unresolvable note, not a permission problem; the typical case is a bot's "rebase detected, skipping review" note or the scaffolding threads `/sdlc:mr-open` posts. Attempt it once, report it, never retry.
 - **Resolve only threads you fully handled.** That includes a human's thread when your reply squarely answers them; hold back when the person may want to eyeball the outcome or your reply is a judgment call, and leave it unresolved or propose `ask`. Bot nits you fully handled always resolve.
-- **A reclaim** is `glab mr update <iid> --draft --yes` plus one signed comment stating the reason in one line ("taken back to draft: pipeline is red on `<sha>`"). **A ready** is `glab mr update <iid> --ready --yes` plus one signed comment saying the MR is ready and what the last cycle changed. Facts only. The orchestrator moves the ticket; you never touch the tracker.
+- **A reclaim** is one signed comment stating the reason in one line ("taken back to work: pipeline is red on `<sha>`") and nothing else. Never set the MR back to draft.
+- **A ready** is `glab mr update <iid> --ready --yes` plus one signed comment saying the MR is ready and what the last cycle changed. It runs on **every** handover, per `teamwork:review-handshake`.
+- **Under `tracker: none`** the orchestrator says so in the row, and a reclaim then also runs `glab mr update <iid> --draft --yes`.
+- Facts only in both comments. The orchestrator moves the ticket; you never touch the tracker.
 
 ## Report
 

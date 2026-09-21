@@ -19,7 +19,7 @@ $ARGUMENTS
 
 ## Process
 
-1. **Load skills** — invoke the `git:git-workflow` skill for commit/MR shaping judgment, and the skill that covers the CLI for the remote host (GitHub, GitLab, …) so you don't guess at its syntax. On GitLab, also invoke the `glab-discussion` skill — step 5 posts standalone MR discussions and that is where their syntax lives. Resolve the tracker with the `sdlc:team-workflow-identify` skill and invoke the installed skill it names; this command names no tracker CLI of its own. The ticket is usually already in context from earlier in the session — read it through that skill if it is not.
+1. **Load skills** — invoke the `git:git-workflow` skill for commit/MR shaping judgment, and the skill that covers the CLI for the remote host (GitHub, GitLab, …) so you don't guess at its syntax. On GitLab, also invoke the `glab-discussion` skill — step 5 posts standalone MR discussions and that is where their syntax lives. Resolve the tracker with the `teamwork:workflow-identify` skill and invoke the installed skill it names; this command names no tracker CLI of its own. The ticket is usually already in context from earlier in the session — read it through that skill if it is not.
 2. **Open the draft MR** — push the branch, then open the merge/pull request **as a draft**, targeting the repository's base branch and assigned to the user. Prefer whatever the project or the user's setup already provides for this — a dedicated script or alias that derives the title from the ticket, otherwise the host's CLI directly. If an MR/PR for this branch already exists, take its URL and carry on with step 3.
 3. **Inspect what actually changed** — review the diff against the base branch and the commit history. Don't trust the original ticket title/description verbatim; the implementation may have diverged.
 4. **Put the Why in the ticket** — the problem, the constraints, and the decision that shaped the approach, in the ticket and never in the MR description. If the ticket body is empty or a stub, write it from the work actually done. If the body already carries content, leave it alone and add the approach as a ticket comment. Then tell the user which of the two you did and what you wrote.
@@ -39,6 +39,6 @@ $ARGUMENTS
 ## Notes
 
 - Keep the MR in **draft** state — do not mark it ready.
-- **Promise nothing** in anything you post. The ticket update, the MR comments and the description state facts: what the change does, what was measured, what the release needs. No "we will fix", no timeline, no follow-up the user has not committed to.
+- **Promise nothing** in anything you post — invoke `teamwork:review-handshake` for the rule. The ticket update, the MR comments and the description state facts: what the change does, what was measured, what the release needs.
 - Do not push `--no-verify` or skip hooks if the push fails on a hook; fix the underlying issue.
 - If the repository's title convention needs a ticket ID, the branch has none recorded, and no `<ticket-id>` arg was passed, ask the user for it before opening the MR.

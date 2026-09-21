@@ -9,21 +9,21 @@ disable-model-invocation: true
 
 Run a full code review of the current branch's merge request, post it, hand the work back to the author, and then watch it through the watcher agent until every blocking finding and every suggestion has been **addressed in code** or **refuted with a reply**.
 
-**The handshake invariant.** Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together. Whoever hands the ball over sets both.
+**The handshake invariant.** The ticket carries the ball, as `teamwork:review-handshake` defines it; Phase 0.4 loads that skill.
 
-That is what paces this command. After posting a round of findings, hand the work back — ticket to `WORK_STATE`, MR to draft. Only when both flags say ready-for-review again does the next round run. This keeps the review out of work-in-progress instead of commenting on every half-finished push.
+That is what paces this command. After posting a round of findings, hand the work back per `teamwork:review-handshake`; the next round runs only when the handshake reads ready-for-review again. This keeps the review out of work-in-progress instead of commenting on every half-finished push.
 
 ```
-review → post → ticket to WORK_STATE + MR to draft → [wait]
-   → author sets MR ready + ticket to REVIEW_STATE
+review → post → hand back (teamwork:review-handshake) → [wait]
+   → the author hands over again
    → sync the local branch onto the author's new head
    → revisit every open thread, reply, resolve what is settled
    → review the delta, post new findings
-   → anything still open? ticket to WORK_STATE + MR to draft, wait again
-   → nothing open? leave it ready in REVIEW_STATE and stop
+   → anything still open? hand back, wait again
+   → nothing open? leave it handed over and stop
 ```
 
-This command is the **reviewer** side of an MR. It is the mirror image of `/sdlc:mr-babysit`, which is the **author** side. The distinction matters and is enforced below: this command never edits, commits, pushes, or rebases locally, and never resolves the author's threads.
+This command is the **reviewer** side of an MR. It is the mirror image of `/sdlc:mr-babysit`, which is the **author** side. The distinction matters and is enforced below: this command never edits, commits, pushes, or rebases locally.
 
 $ARGUMENTS
 
@@ -32,8 +32,7 @@ $ARGUMENTS
 For the whole lifetime of this command, including every follow-up round:
 
 - **Never change the code.** No `Edit`, no `Write` into the repo, no `git commit`, no `git push`, no local `git rebase`, no `git checkout` of a different branch, no stash. If a finding has an obvious fix, describe it in the comment. Do not apply it.
-- **Never resolve a thread the author opened.** You may resolve **your own** finding threads, and only once you have verified in the diff that the finding is genuinely addressed.
-- **Never promise anything on the MR.** Comment bodies state findings, facts, verification results, and open questions. They do not say "we will fix", "a follow-up is coming", "this will be improved", or any softer paraphrase. If a fix belongs in the picture, describe it as an option in the comment and raise the commitment question with the user in the conversation instead.
+- **Never resolve a thread the author opened, and never promise anything on the MR** — `teamwork:review-handshake`.
 
 Exactly **two** kinds of write to git are authorized (the MR draft flag and the ticket status are metadata, not code — see the autonomy grant below):
 
@@ -44,7 +43,9 @@ Nothing else writes to git. Note what the sync is **not**: it moves the branch p
 
 ## Autonomy — scoped grant
 
-These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, resolving your own threads, **un-resolving your own threads**, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, **toggling the MR between draft and ready** (`glab mr update <iid> --draft --yes` and `glab mr update <iid> --ready --yes`), commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, spawning and stopping the watcher, and arming or deleting the watchdog cron job. This override is scoped to those operations and ends when the watch ends.
+These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, resolving your own threads, **un-resolving your own threads**, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, spawning and stopping the watcher, and arming or deleting the watchdog cron job. This override is scoped to those operations and ends when the watch ends.
+
+The hand-back moves are pre-authorized as `teamwork:review-handshake` defines them, its no-tracker mode included.
 
 Stop and hand back only for the halt conditions under [Termination](#termination).
 
@@ -68,7 +69,7 @@ The top-level session is the **orchestrator**. It never sleeps, never polls, and
 
 Invoke the `glab` skill and the `glab-discussion` skill before making any GitLab calls. `glab`, `glab-discussion` and `glab-pipeline` are required; when the state script reports one missing, tell the user which, give the install command `uv tool install glab-discussion glab-pipeline`, and ask before installing.
 
-This command also uses two skills from other plugins: `glab:mr-status` for MR state (0.2, and inside the watcher from Phase 6 on) and `sdlc:team-workflow-identify` for the tracker and its state names (0.4). The glab plugin is a declared dependency. If the sdlc skill is unavailable, say so in one line and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
+This command also uses skills from other plugins: `glab:mr-status` for MR state (0.2, and inside the watcher from Phase 6 on), and `teamwork:workflow-identify` and `teamwork:review-handshake` for the tracker, its state names and the handshake (0.4). The glab and teamwork plugins are declared dependencies. If the teamwork skills are unavailable, say so in one line and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
 
 ### 0.2 Identify the MR and its refs
 
@@ -76,7 +77,7 @@ The MR is the one for the branch currently checked out. Spawn the one-shot state
 
 Stop and report if there is no MR for this branch, or if `state` is `merged` or `closed`. This command has nothing to watch in those cases.
 
-**If the MR is already `draft` at invocation, warn and proceed.** A draft MR means the author has not handed the work over, so the review reads code they may still be changing. Say so in one line, then run the initial review anyway — the user asked for it explicitly. From Phase 4 onward the draft flag becomes yours to set, and the gate in 7.2 enforces the invariant for every later round.
+**If the MR is already `draft` at invocation, warn and proceed.** A draft MR means the author has not handed the work over, so the review reads code they may still be changing. Say so in one line, then run the initial review anyway — the user asked for it explicitly. The gate in 7.2 enforces the invariant for every later round; the draft flag stays the author's unless the push gate is in play.
 
 ### 0.3 Define the review refs
 
@@ -97,11 +98,13 @@ Fetching the source branch is safe here **because this command never pushes** �
 
 The watch is paced by the handshake, not by pushes, so resolve the ticket now and fail fast if you cannot.
 
-Invoke the `sdlc:team-workflow-identify` skill and carry its output block for the whole watch, every round included. The watcher gets the same block in its spawn prompt, together with the name of the tracker skill, so it can read the ticket. It names the tracker, the ticket ID pattern, and the `WORK_STATE` / `REVIEW_STATE` names this command moves the ticket between, and it asks the user once when a role has several plausible names. Then load the installed skill that covers the resolved tracker — that skill holds the command syntax, and this command names no tracker CLI of its own.
+Invoke the `teamwork:workflow-identify` skill and carry its output block for the whole watch, every round included. The watcher gets the same block in its spawn prompt, together with the name of the tracker skill, so it can read the ticket. It names the tracker, the ticket ID pattern, and the `WORK_STATE` / `REVIEW_STATE` names this command moves the ticket between, and it asks the user once when a role has several plausible names. Then load the installed skill that covers the resolved tracker — that skill holds the command syntax, and this command names no tracker CLI of its own.
 
-Take the ticket from the MR title, the branch name, or the MR description, using the ticket pattern from the block. Record the ticket ID and both state names in the ledger.
+Invoke `teamwork:review-handshake` as well: it holds the two flags this watch is paced by, the rules for whose threads each side resolves, the comment signature, and the ledger paths.
 
-If the block says `tracker: none`, or no ticket is identifiable, say so and fall back to the **push gate**: the follow-up pass then triggers on the MR being not draft with a new head SHA, instead of on a status change. Everything else in this command is unchanged.
+Take the ticket as `teamwork:workflow-identify` says, with the ticket pattern from the block. Record the ticket ID and both state names in the ledger.
+
+If the block says `tracker: none`, or no ticket is identifiable, say so: `teamwork:review-handshake` defines the no-tracker mode, which this command calls the **push gate** — a round starts on the MR not draft with a new head SHA. Everything else in this command is unchanged.
 
 ## Phase 1 — Rebase gate (server-side, exactly once)
 
@@ -219,20 +222,12 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/post/SKILL.md` and execute it against the rep
 
 ## Phase 4 — Hand the work back to the author
 
-Once the comments are posted, set **both** halves of the handshake: move the ticket from `REVIEW_STATE` to `WORK_STATE`, and mark the MR draft.
+Once the comments are posted, hand the work back per `teamwork:review-handshake`.
 
-```bash
-glab mr update "$IID" --draft --yes
-```
-
-Back-to-work means the MR is draft AND the ticket is in `WORK_STATE`. Setting one and not the other leaves the author reading two contradictory signals, and it leaves the 7.2 gate unable to tell a handover from a stale state.
-
-- Set both **only after** every comment from Phase 3 has actually posted. Work handed back before the findings are visible tells the author nothing.
-- Add a short tracker comment naming the MR and pointing at the review summary comment. State the findings count by severity. **Do not promise anything** in it — no "we will re-review", no timelines.
-- If the ticket is already in `WORK_STATE`, or the MR is already draft, leave that half alone and note it.
-- If the ticket move fails (permissions, a workflow transition the tracker forbids), do not fight it. Record the failure in the ledger, tell the user, and fall back to the **push gate** for this watch. Still set the draft flag — it carries the push gate on its own.
-
-Skip the ticket half entirely when Phase 0.4 found no ticket. The draft half always runs.
+- Hand back **only after** every comment from Phase 3 has actually posted. Work handed back before the findings are visible tells the author nothing.
+- Add a short tracker comment naming the MR and pointing at the review summary comment. State the findings count by severity, facts only.
+- If the work is already handed back, leave it alone and note it.
+- If the ticket move fails (permissions, a workflow transition the tracker forbids), do not fight it. Record the failure in the ledger, tell the user, and use the push gate for this watch.
 
 ## Phase 5 — Build the finding ledger
 
@@ -243,7 +238,7 @@ Write a ledger next to the review report, at `./.claude/review-report/<topic>.wa
 
 - MR: <web_url>
 - Target: <target_branch>
-- Ticket: <TICKET-ID> (<url>) — gate: ticket-status + draft | draft-only
+- Ticket: <TICKET-ID> (<url>) — gate: ticket-status | push-gate
 - Work state: <WORK_STATE> · Review state: <REVIEW_STATE>
 - Last reviewed SHA: <sha>
 - Last handshake reading: <ready-for-review | back-to-work | half-set> at <UTC timestamp>
@@ -276,7 +271,7 @@ MRs: <web_url> (worktree <path>)
 Report: handshake, push, notes, verdict, pipeline finished, merged/closed, idle 4h
 Cadence: waiting
 Self markers: <!-- code-review:watch -->, <!-- code-review:post -->
-Handshake: ready-for-review = not draft and ticket in "<REVIEW_STATE>"; back-to-work = draft and ticket in "<WORK_STATE>"
+Handshake: ready-for-review = not draft and ticket in "<REVIEW_STATE>"; back-to-work = ticket in "<WORK_STATE>"
 Ticket: <TICKET-ID> — work state "<WORK_STATE>", review state "<REVIEW_STATE>", terminal states <...>; load the <tracker skill name> skill before reading it
 Ledger: ./.claude/review-report/<topic>.mr-watch.md
 Reviewed at: <REVIEW_HEAD sha>
@@ -286,7 +281,7 @@ Omit the `Ticket:` line under the push gate and write the `Handshake:` line on t
 
 Then arm the **watchdog** with `CronCreate`, recurring, every 30 minutes on an off-minute (`cron`: `"7,37 * * * *"`), with a one-sentence plain-text prompt naming the MR `!iid`, the ticket, and the ledger path — never a slash command, which would re-enter this command on every firing. Record both ids in the ledger. The heartbeat proves the watcher is alive; nothing proves it is dead, since a watcher that ran out of context, was killed, or is paused on a permission prompt sends nothing, and no message ever wakes you. The cron is the one clock that fires without it. Each firing checks two things and nothing else: is the watcher alive per `ListAgents`, and is `Last message to parent` under 45 minutes old per the watcher's own ledger — a liveness read, never a substitute for a message. Both hold → say nothing and end the turn. Either fails → message the watcher (a message to an ended agent resumes it) or spawn a fresh one against the ledger, and say so in one line. The watchdog never reads the MR itself and never runs a round.
 
-The progress line comes from the watcher's `HEARTBEAT`: on every heartbeat **write one line to the user, even when nothing changed** — the gate it is waiting on, the count of findings still open, and how long the MR has been idle: "!123 still draft, 2 findings open, idle 1h40m". A watch that says nothing for an hour is a dead watch.
+The progress line comes from the watcher's `HEARTBEAT`: on every heartbeat **write one line to the user, even when nothing changed** — the gate it is waiting on, the count of findings still open, and how long the MR has been idle: "!123 still with the author, 2 findings open, idle 1h40m". A watch that says nothing for an hour is a dead watch.
 
 Do **not** warn the user that the cron job is session-only or that it expires after 7 days. They know, and it is not a problem.
 
@@ -294,7 +289,7 @@ Then report the initial pass to the user and end the turn. Do not sleep, poll, o
 
 ## Phase 7 — The follow-up round (on a watcher message)
 
-A round starts when the watcher's message says the handshake flipped to ready-for-review — or, when `Last reviewed SHA` is still empty because the initial run found the pipeline in flight, when `PIPELINE_CHANGED` reports a settled status while the last handshake reading is ready-for-review; that round is the initial review, Phases 2 to 5, not 7.3 to 7.6. Every other message is information: update the ledger's `Last movement`, write one line to the user if it changes what they would do, and end the turn. A push while the MR is still draft is not a round. A new note is not a round; you read it in the next round. `STATE_CHANGED` to merged or closed goes to [Termination](#termination).
+A round starts when the watcher's message says the handshake flipped to ready-for-review — or, when `Last reviewed SHA` is still empty because the initial run found the pipeline in flight, when `PIPELINE_CHANGED` reports a settled status while the last handshake reading is ready-for-review; that round is the initial review, Phases 2 to 5, not 7.3 to 7.6. Every other message is information: update the ledger's `Last movement`, write one line to the user if it changes what they would do, and end the turn. A push while the ticket is still in `WORK_STATE` is not a round. A new note is not a round; you read it in the next round. `STATE_CHANGED` to merged or closed goes to [Termination](#termination).
 
 ### 7.1 Re-derive state from the ledger and the message
 
@@ -308,9 +303,9 @@ git fetch origin "$TARGET_BRANCH" "$SOURCE_BRANCH"
 
 ### 7.2 The handshake gate
 
-The watcher already read both flags; its `ready-for-review` reading is the gate opening. **Half-set is not ready**, and the watcher reports it as such: a ticket in `REVIEW_STATE` while the MR is still draft is a no-op, exactly as before. Do not comment on the mismatch on the MR, and do not fix it for the author.
+The gate is the watcher's `ready-for-review` reading; a `half-set` reading is a no-op, per `teamwork:review-handshake`.
 
-**Watch for a stale review state.** If the gate opens but the head SHA still equals `Last reviewed SHA` and the watcher reported no new notes since your last round, the author changed nothing. Do not re-review the same code and do not re-post. Reply once in the summary thread naming the findings still `open`, then hand the work back as in Phase 4 — ticket to `WORK_STATE` and MR to draft — and end the turn.
+**Watch for a stale review state.** If the gate opens but the head SHA still equals `Last reviewed SHA` and the watcher reported no new notes since your last round, the author changed nothing. Do not re-review the same code and do not re-post. Reply once in the summary thread naming the findings still `open`, then hand the work back as in Phase 4 and end the turn.
 
 **Push-gate fallback.** When Phase 0.4 found no ticket, or the Phase 4 ticket move failed, the round starts on the watcher reporting the MR not draft with a head SHA that differs from `Last reviewed SHA`. Otherwise it is a no-op.
 
@@ -342,17 +337,17 @@ Read all threads with `glab-discussion read --dump`. Then, for **each** ledger r
 | `superseded` | State that the code moved and the finding no longer applies | **Yes** |
 | `still open` | State precisely what is still missing — the line, the case, the counter-argument. Never a bare "still open" | **No** |
 
-- **Resolve only your own threads**, and only on a verdict of `addressed`, `refuted`, or `superseded`. Never resolve a thread the author opened — that is theirs to close.
+- **Resolve only your own threads**, and only on a verdict of `addressed`, `refuted`, or `superseded`.
 - **Un-resolve your own thread when it was resolved over a problem that is still there.** A verdict of `still open` on a thread that shows as resolved means somebody closed it without the code satisfying it. Re-open it and reply naming the exact line at `REVIEW_HEAD` that still shows the problem:
 
   ```bash
   glab-discussion resolve <discussion_id> --unresolve
   ```
 
-  `/sdlc:mr-babysit` replies to a `<!-- code-review:watch -->` thread but never resolves one on its own. You resolve the threads you verified. A watch thread that shows as resolved without a verdict of yours behind it was therefore closed on a **human's decision** — the person resolved it, or told the author agent to. Treat it as such: the un-resolve reply addresses a person who read the finding and judged it done, so it states the evidence and nothing sharper. Un-resolve on evidence only, never to keep a thread alive out of doubt.
+  A resolved thread without your verdict behind it was closed by a person: un-resolve on evidence only, and address that person.
 - **Never resolve without a reply.** A silently resolved thread destroys the record of why the finding went away.
 - **One reply per thread per round.** Do not re-state an unchanged verdict every round — a thread that was `still open` last round and is unchanged this round gets one fresh reply only if the author changed something in it or in the code it points at. Otherwise leave it and let the round's summary comment carry the status.
-- Reply bodies state findings and verification results. **They never promise anything** — no "we will re-check", no timelines. End every body with a blank line and `<!-- code-review:watch -->`.
+- Reply bodies state findings and verification results, and **promise nothing** — see `teamwork:review-handshake`. End every body with a blank line and `<!-- code-review:watch -->`.
 
 Record the evidence for each transition in the ledger's `Evidence` column: a SHA and file:line for `addressed`, the note id for `refuted`.
 
@@ -405,11 +400,11 @@ Then post the update, following `post.md`:
 
 ### 7.6 Hand the work back, update the ledger, end the pass
 
-If any gating finding is still `open` — carried over or newly found — hand the work back as in Phase 4: ticket to `WORK_STATE` **and** `glab mr update "$IID" --draft --yes`. The ball returns to the author, and the next round waits for them to set both flags to ready-for-review again. Under the push gate, set only the draft flag.
+If any gating finding is still `open` — carried over or newly found — hand the work back as in Phase 4. The next round waits for the author to hand over again.
 
-If nothing is left open, set neither flag back: leave the MR ready and the ticket in `REVIEW_STATE`, and go to [Termination](#termination).
+If nothing is left open, leave the handshake as it is and go to [Termination](#termination).
 
-Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new handshake reading, the round count, and the new `Last movement` and `Last round` timestamps. Message the watcher `acted: hand-back on <mr url> at <UTC timestamp>` and `reviewed at <sha>`, so it does not report your own draft flip and ticket move back to you. Then end the turn. The watcher's next message resumes you.
+Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new handshake reading, the round count, and the new `Last movement` and `Last round` timestamps. Message the watcher `acted: hand-back on <mr url> at <UTC timestamp>` and `reviewed at <sha>`, so it does not report your own ticket move back to you. Then end the turn. The watcher's next message resumes you.
 
 Report what changed: what the author pushed, which findings moved status, what you posted and resolved.
 
@@ -419,7 +414,7 @@ Report what changed: what the author pushed, which findings moved status, what y
 
 Open `Nitpick` rows never keep the watch alive.
 
-On a clean termination: leave the MR **ready** and the ticket in `REVIEW_STATE`, and post one final summary comment on the MR stating that every gating finding is settled, with the outcome per finding. The handshake stays on ready-for-review because the review is what finished, not the merge — the MR is now a human's to approve and merge.
+On a clean termination: leave the handshake at ready-for-review, and post one final summary comment on the MR stating that every gating finding is settled, with the outcome per finding. The handshake stays on ready-for-review because the review is what finished, not the merge — the MR is now a human's to approve and merge.
 
 **Also stop early**, stopping the watcher, deleting the watchdog cron job and reporting, on any of:
 
