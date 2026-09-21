@@ -51,7 +51,7 @@ The `mr-status` skill and the three commands carry the state script, `glab-discu
 - `mr-state.py` reads the MR of the current branch; `--mr-url <url>`, repeated, reads a set across repos and hosts.
 - Every run remembers what it saw under `<tmp>/glab-state/<host>/<project>/mr-<iid>/` and prints what changed since the last run: state, draft, head, pipeline, rebase distance, merge status, notes, reviewers, assignees, labels, approvals. The first run establishes a baseline. It prints the diff, flushes, and only then advances the stored state, so a run killed in between reports the same change again rather than losing it.
 - `--wait-for-state-change-timeout-minutes N` probes every minute and exits on the first change (exit code 0) or on the timeout (exit code 3). A probe is two API calls per MR, the MR object and the newest note by `updated_at`, plus approvals when the MR's `updated_at` moved. A read that fails for one MR is reported and the others still read; exit code 5 means every probe in the window failed. The discussion dump runs only when a note moved, the pipeline dump only when the pipeline moved.
-- `--all`, `--comments`, `--pipeline` narrow a one-shot read. `--reset` forgets the stored state.
+- `--all`, `--comments`, `--pipeline` narrow a one-shot read; `--pipeline` also forces a fresh pipeline dump when the pipeline did not move. `--reset` forgets the stored state.
 
 Transient GitLab values (`merge_status: checking`, a rebase in progress) are held at their last settled value, not reported as changes. Its unit tests run under `make test`.
 

@@ -34,6 +34,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -574,15 +575,23 @@ class Watched:
         return f"{self.host}/{self.project_path}!{self.iid}"
 
     def probe(self) -> dict[str, Any]:
-        mr = glab_api(self.host, f"projects/{self.enc}/merge_requests/{self.iid}?include_diverged_commits_count=true&include_rebase_in_progress=true")
+        # The MR object, the newest note and the default branch do not depend on each other, so
+        # they run side by side; each is a glab process that mostly waits on the network.
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            f_mr = pool.submit(glab_api, self.host, f"projects/{self.enc}/merge_requests/{self.iid}?include_diverged_commits_count=true&include_rebase_in_progress=true")
+            f_notes = None if self.notes_refused else pool.submit(probe_notes, self.host, self.enc, self.iid)
+            f_default = None if self.default_branch is not None else pool.submit(probe_default_branch, self.host, self.enc)
+            mr = f_mr.result()
+            notes = f_notes.result() if f_notes else None
+            default_branch = f_default.result() if f_default else self.default_branch
         (self.sdir / "mr.json").write_text(json.dumps(mr, indent=2) + "\n")
         snap = snapshot_from_mr(mr, self.host, self.project_path)
-        if self.notes_refused:
+        if notes is None:
             # Asked once this run and refused. The first probe of the next run asks again, so a
             # policy that is lifted between runs is picked up without a --reset.
             snap["newest_note"], snap["notes_probe"] = None, "count-only"
         else:
-            snap["newest_note"], snap["notes_probe"] = probe_notes(self.host, self.enc, self.iid)
+            snap["newest_note"], snap["notes_probe"] = notes
             self.notes_refused = snap["notes_probe"] == "count-only"
         if self.last is None or self.last.get("updated_at") != snap.get("updated_at") or self.last.get("approvals") is None:
             # Nothing else in the MR object reflects an approval, so the only trigger is a
@@ -590,8 +599,7 @@ class Watched:
             snap["approvals"] = probe_approvals(self.host, self.enc, self.iid)
         else:
             snap["approvals"] = self.last.get("approvals")
-        if self.default_branch is None:
-            self.default_branch = probe_default_branch(self.host, self.enc)
+        self.default_branch = default_branch
         snap["default_branch"] = self.default_branch
         return snap
 
@@ -673,6 +681,14 @@ def print_details(d: Details) -> None:
         print(f"  ERROR: {e}")
 
 
+def _try_probe(w: "Watched") -> "dict[str, Any] | GlabError":
+    """Probe one MR for a thread pool: return the snapshot, or the error instead of raising."""
+    try:
+        return w.probe()
+    except GlabError as e:
+        return e
+
+
 def check_helpers() -> list[str]:
     return [missing_helper_message(t) for t in ("glab-discussion", "glab-pipeline") if not which(t)]
 
@@ -696,6 +712,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Line-buffer stdout even when it is a pipe, so a caller reading the output as it comes
+    # (the Bash tool, a tee, a log) sees each line when it is printed, not at exit.
+    if hasattr(sys.stdout, "reconfigure"):  # a test's StringIO has no buffering to change
+        sys.stdout.reconfigure(line_buffering=True)
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.wait_for_state_change_timeout_minutes is not None and (args.all or args.comments or args.pipeline):
@@ -733,25 +753,30 @@ def main(argv: list[str] | None = None) -> int:
         probes += 1
         any_change = False
         any_baseline = False
-        for w in watched:
-            try:
-                snap = w.probe()
-            except GlabError as e:
+        # Every MR is probed at the same time, a few at once; the results are then handled in
+        # the set's order, so the printing and the state advance stay sequential per MR.
+        with ThreadPoolExecutor(max_workers=min(4, len(watched))) as pool:
+            probed = list(pool.map(lambda w: _try_probe(w), watched))
+        # Decide what every MR needs before fetching anything, so the dumps of the whole set
+        # run in one pool; the blocks are then printed in the set's order as each MR's dumps land.
+        plan: list[tuple[Any, ...]] = []
+        for w, outcome in zip(watched, probed):
+            if isinstance(outcome, GlabError):
                 # A read failure does not end a wait: the token may come back, the host may
                 # recover, and the other MRs in the set are still worth watching. Report it
                 # once per MR per run so a nine-minute wait does not print it nine times.
                 if not w.read_failure_reported:
-                    ev = Event("READ_FAILED", f"probe failed: {e}")
+                    ev = Event("READ_FAILED", f"probe failed: {outcome}")
                     print(f"== {w.label}")
                     print(f"  {ev.line()}")
                     sys.stdout.flush()
                     w.log_events([ev])
                     w.read_failure_reported = True
                 continue
+            snap = outcome
             w.read_failure_reported = False
             read_ever_succeeded = True
             events = diff_snapshots(w.last, snap)
-            details = Details()
             first = w.last is None
             # A wait can run for minutes and probe every MR every minute. Repeating the whole
             # block per probe buries the one probe that found something, so in wait mode an MR
@@ -759,32 +784,52 @@ def main(argv: list[str] | None = None) -> int:
             if waiting and not first and not events:
                 w.commit(snap)
                 continue
-            print(f"== {w.label}")
-            if first:
-                print("  baseline established (no earlier state for this MR)")
-                print_snapshot(snap)
-                any_baseline = True
-            for ev in events:
-                print(f"  {ev.line()}")
             ids = {e.id for e in events}
             fetch_c = want_comments if not waiting else ("NOTES_CHANGED" in ids)
             fetch_p = want_pipeline if not waiting else ("PIPELINE_CHANGED" in ids)
             if first and waiting:
                 fetch_c = fetch_p = False
-            if fetch_c:
-                fetch_discussions(w.url, details)
-            if fetch_p:
-                fetch_pipeline(w.url, snap, w.sdir, details)
-            if not first and not events and not waiting:
-                print("  no change since the last run")
-                print_snapshot(snap)
-            print_details(details)
-            print(f"  scorecard: {scorecard(snap)}")
-            sys.stdout.flush()
-            if events:
-                w.log_events(events)
-                any_change = True
-            w.commit(snap)
+            details = Details()
+            # The pipeline dump fetches every job trace and costs seconds. On a one-shot read
+            # of a pipeline that did not move since the last dump, the dump on disk is current,
+            # so reuse it unless --pipeline asked for a fresh one.
+            existing_summary = w.sdir / "pipeline-summary.txt"
+            if fetch_p and not waiting and not first and "PIPELINE_CHANGED" not in ids and not args.pipeline and existing_summary.exists():
+                fetch_p = False
+                details.pipeline_dir = str(w.sdir / "pipeline")
+                details.pipeline_summary_file = str(existing_summary)
+                details.notes.append("pipeline unchanged since the last dump, so the dump was reused; pass --pipeline to fetch it again")
+            plan.append((w, snap, events, first, fetch_c, fetch_p, details))
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            futures = {}
+            for w, snap, events, first, fetch_c, fetch_p, details in plan:
+                jobs = []
+                if fetch_c:
+                    jobs.append(pool.submit(fetch_discussions, w.url, details))
+                if fetch_p:
+                    jobs.append(pool.submit(fetch_pipeline, w.url, snap, w.sdir, details))
+                futures[w.label] = jobs
+            for w, snap, events, first, fetch_c, fetch_p, details in plan:
+                for j in futures[w.label]:
+                    j.result()
+                print(f"== {w.label}")
+                if first:
+                    print("  baseline established (no earlier state for this MR)")
+                    print_snapshot(snap)
+                    any_baseline = True
+                for ev in events:
+                    print(f"  {ev.line()}")
+                if not first and not events and not waiting:
+                    print("  no change since the last run")
+                    print_snapshot(snap)
+                print_details(details)
+                print(f"  scorecard: {scorecard(snap)}")
+                sys.stdout.flush()
+                if events:
+                    w.log_events(events)
+                    any_change = True
+                w.commit(snap)
         sys.stdout.flush()
 
         if not waiting:
