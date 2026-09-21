@@ -20,11 +20,11 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 
 Ready-for-review means the MR is **not draft** AND the ticket is in `REVIEW_STATE`. Back-to-work means the MR is **draft** AND the ticket is in `WORK_STATE`. The two flags always move together, and whoever hands the ball over sets both.
 
-After posting a round of findings, the watch sets the MR to draft and moves the ticket to `WORK_STATE`. Every cron pass then checks both flags and does nothing until both say ready-for-review. A ticket in the review state while the MR is still draft is not a handover, and the pass stays silent. This is what keeps the review out of half-finished pushes.
+After posting a round of findings, the watch sets the MR to draft and moves the ticket to `WORK_STATE`. A background watcher, the `glab:mr-watch` agent from the **glab** plugin, then reads both flags every minute and messages the watch when they say ready-for-review; nothing happens until then. A ticket in the review state while the MR is still draft is not a handover, and the watch stays silent. This is what keeps the review out of half-finished pushes. The watcher's 30-minute heartbeat becomes the progress line; a cron on the same interval only checks that the watcher is still alive and speaks only when it has to respawn it.
 
 The author side replies to a `<!-- code-review:watch -->` thread but never resolves one on its own. The watch resolves the threads it verified, so a watch thread resolved without its verdict was closed on a human's decision — by the person, or by the author agent on the person's instruction. When the code at the MR head still shows the problem, the watch un-resolves the thread and names the line that still shows it.
 
-The tracker and its state names are never hardcoded. The command resolves them at run time through the `sdlc:team-workflow-identify` skill, and reads MR state through the `glab:mr-status` skill. Install the **sdlc** and **glab** plugins alongside this one for the full watch. Without them the command falls back to reading the MR through `glab` and listing the tracker's states itself. With no tracker at all it falls back to a push gate on the draft flag plus a new head SHA.
+The tracker and its state names are never hardcoded. The command resolves them at run time through the `sdlc:team-workflow-identify` skill, reads MR state through the `glab:mr-status` skill, and watches through the `glab:mr-watch` agent. Install the **sdlc** and **glab** plugins alongside this one for the full watch. With no tracker at all it falls back to a push gate on the draft flag plus a new head SHA.
 
 ## How it works
 
@@ -73,7 +73,7 @@ A surviving finding that turns on a race, a call ordering, a gap between states,
 - **Agents fetch their own git data** — the orchestrator passes only the branch range (`REVIEW_BASE...REVIEW_HEAD`, resolved to concrete refs), avoiding context-passing errors
 - **Each agent knows its boundaries** — explicit "Out of Scope" sections prevent duplicate findings across agents
 - **No automatic filtering by confidence** — the main agent verifies findings manually rather than relying on a numeric threshold
-- **Platform-agnostic** — works with any code hosting platform and issue tracker
+- **Platform-agnostic review, GitLab-only watch** — `/code-review:full` works with any code hosting platform and issue tracker; `/code-review:post` and `/code-review:watch` are built on the glab plugin
 
 ## Installation
 
