@@ -1,98 +1,76 @@
 ---
 name: mr-status
-description: Determine the review-and-merge status of one merge request or a set of them — draft, rebase, pipeline, approvals, AI-reviewer verdicts, human threads, and what actually blocks the merge. Use when asked "what is the status of MR X", "which MRs are ready to merge", "build the review queue overview", "is this MR green", "who still has to review this", or when a command needs the current review state before it acts. The sdlc and code-review commands invoke this skill by name.
+description: Efficiently determine the review-and-merge status of one merge request or a set of them — draft, rebase, pipeline, approvals, AI-reviewer verdicts, human threads, what changed since the last read, and what actually blocks the merge. Use when asked "what is the status of MR X", "which MRs are ready to merge", "is this MR green", "who still has to review this", or when a command needs the current review state before it acts. The sdlc and code-review commands and the mr-watch agent invoke this skill by name.
 trigger-keywords: mr status, merge request status, review queue, mr overview, is the mr ready, review state, what blocks the merge
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py:*)", "Bash(glab-discussion read:*)", "Bash(glab-pipeline inspect:*)", "Bash(glab api:*)", "Bash(glab mr view:*)", "Bash(git fetch:*)", "Bash(git rev-list:*)", "Bash(git diff:*)"]
 ---
 
 # mr-status
 
-Determine the review-and-merge status of one merge request, or of a set of them. Is it rebased, is CI green, who reviewed it, what is still unresolved, and what blocks the merge right now. Every value is read at run time from the host API and from the MR threads.
+One script reads a merge request; you judge it. `${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py` fetches the MR object, the newest note, approvals, the discussion dump, the pipeline dump and the external commit statuses, remembers what it saw, and prints what changed since the last run. This skill says how to run it, how to read what it prints, and the judgment calls the script cannot make. It covers GitLab, because it ships in the **glab** plugin.
 
-Load the **glab** skill and the **glab-discussion** skill before the first call. The command recipes live in [`references/commands.md`](references/commands.md). Read that file before running anything. This skill covers GitLab, because it ships in the **glab** plugin. The GitHub equivalent lives in a `gh` plugin.
+The script needs `glab` (authenticated), [`glab-discussion`](https://github.com/fprochazka/glab-discussion) and [`glab-pipeline`](https://github.com/fprochazka/glab-pipeline). It runs without the last two, but then it cannot fetch threads or pipeline details, and it prints a `DEPENDENCY MISSING` line with the install command. When you see that line, relay it: tell the user which tool is missing, give the install command `uv tool install glab-discussion glab-pipeline`, and ask whether to install it. Do not work around it with raw API calls.
 
-Prefer `glab-discussion read --dump` for all comment data. It writes one file per thread and it handles pagination. The raw discussions API is the fallback when that CLI is absent.
+## Running the script
 
-## The mistake this skill exists to prevent
+```bash
+${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py                                  # the current branch's MR, full read
+${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py --mr-url <url> [--mr-url <url>]  # a set, across repos and hosts
+${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py --mr-url <url> --wait-for-state-change-timeout-minutes 9
+```
 
-**Read the latest summary verdict per reviewer, plus the count of currently unresolved threads. Never infer "this MR has problems" from the presence of historical finding notes.** A reviewer can post major findings on Monday, see them fixed on Tuesday, and post a clean summary on Wednesday. The old notes stay in the thread list forever. Counting them as live problems produces a false "found issues" status. Exactly two signals are authoritative: the newest summary verdict per reviewer, and the number of threads whose header says `Resolved: no`.
+- **Always identify an MR by its URL** when it is not the current branch's. A set can span repos and hosts, and `glab` outside a checkout falls back to its default host and returns a wrong answer instead of an error. The script carries the host from the URL on every call.
+- **A full read** (no wait flag) fetches everything: `--all` is the default, `--comments` and `--pipeline` narrow it. The first read of an MR establishes a baseline and exits `4`; every later read prints the diff since the previous run and exits `0`.
+- **The wait mode** probes every minute and exits the moment a change appears (exit `0`) or the timeout passes (exit `3`). Keep the timeout under your Bash tool's timeout, at most 8 minutes, since the script does not start a probe it could not finish inside the window. On a change it fetches only what the change needs: the discussion dump when a note moved, the pipeline dump when the pipeline moved. A probe is two API calls per MR, the MR object and the newest note, plus approvals when `updated_at` moved and the project's default branch once, so a set of five MRs costs about ten calls a minute.
+- **State lives in `<tmp>/glab-state/<host>/<project>/mr-<iid>/`**: `state.json` (the last snapshot), `mr.json` (the raw MR object from the last probe), `events.log` (every change ever printed, UTC), `pipeline/` and `pipeline-summary.txt` after a pipeline fetch, `external-statuses.json`. The script prints the diff, flushes, and only then advances `state.json`, so a run killed in between reports the same change again next time. `--reset` forgets the state and starts a new baseline. The discussion dump is `glab-discussion`'s own, under `/tmp/glab-discussion/<host>/mr-<iid>/`, outside the state directory; `--reset` does not touch it.
 
-**Finding the newest verdict is not the same as finding the newest thread.** A reviewer keeps its summary in one thread and either edits that note or appends to it, so the summary thread is usually one of the oldest on the MR while it holds the freshest verdict. Sorting threads by their timestamp and reading the newest one therefore returns a finding note, and reading a thread from the top returns round one of a summary rewritten many times since. Locate the reviewer's summary thread by kind, then read its **last** note. `references/commands.md` §5 has the recipe.
+## Reading the output
 
-## Inputs
+Per MR, the script prints a `== host/project!iid` header, then one line per change, then the detail paths, then a `scorecard:` line. Change lines carry a fixed id:
 
-Normalize every MR reference to `<repo-path>!<iid>`:
+| Id | Meaning |
+|---|---|
+| `STATE_CHANGED` | opened, merged, closed, locked |
+| `DRAFT_CHANGED` | draft or ready |
+| `HEAD_CHANGED` | a push, with the full SHAs; "rebase likely" when the behind count dropped to zero at the same time |
+| `TARGET_CHANGED`, `TITLE_CHANGED` | the target branch or the title changed; a target change means the MR was re-stacked |
+| `PIPELINE_CHANGED` | a new pipeline or a status change; says when it ran on a superseded base |
+| `BEHIND_CHANGED` | commits behind the target branch |
+| `MERGE_STATUS_CHANGED` | mergeability or conflicts, transient values already filtered out |
+| `NOTES_CHANGED` | a new note, or an edit or resolve of an existing one, with the author; on a count-only probe, the count or an unexplained `updated_at` |
+| `DISCUSSIONS_RESOLVED_CHANGED` | the all-blocking-threads-resolved flag flipped |
+| `REVIEWERS_CHANGED`, `ASSIGNEES_CHANGED`, `LABELS_CHANGED` | field diffs; reviewer assignment is visible only here, never as a note |
+| `APPROVALS_CHANGED` | who approved, how many approvals are left |
+| `READ_FAILED` | one MR could not be read this probe; the others were. In wait mode the script keeps probing, and exits `5` only when every probe in the window failed |
 
-- a full MR URL
-- `repo!iid`
-- a bare `!iid` — only when the caller gave a default repo, otherwise ask.
+Then the details. `discussions:` names the dump directory, one `.txt` per thread, and lists the files the dump rewrote as `updated:`, `new:`, `deleted:`. The dump touches only threads whose newest note moved, so **read only the files it lists, or the files newer than your last pass**. `pipeline dump:` names the `glab-pipeline` directory and lists each failed job with its stage and reason; open only `job-logs/<failed-job>.log`, `test-report.json`, or `lint.json` when the summary points at them. `failed external status:` is a commit status posted by something outside the pipeline, with its URL.
 
-A set of MRs can span repos. One change often needs an MR in the service repo and another in a deployment or pipelines repo. Carry the host and the repo per MR. Never assume the current directory's repo.
+A thread file starts with a header: `Discussion: <full id>`, `Type: General | DiffNote`, `File:` and `Line:` for a DiffNote, `Resolved: yes | no` only on a resolvable thread, then one `[<created_at>] @<username> [BOT] (note:<id>):` block per note. The file shows creation times only, so an edited note looks unchanged inside the file; the dump listing is what tells you it moved. **Refer to a thread by its full discussion id**, never a prefix: the CLI rejects prefixes.
 
-## Per-MR data to collect
+## Judgment rules
 
-1. **Identity** — title, ticket reference from the branch name or the title, author, source and target branch, created and updated time.
-2. **Draft** — yes or no.
-3. **Rebased** — `diverged_commits_count` against the target branch: up to date, or behind by N. State that this is a snapshot. The target branch keeps moving.
-4. **Mergeable** — `merge_status`, `has_conflicts`, `detailed_merge_status`. Say whether a clean rebase is possible or a conflict exists.
-5. **Pipeline** — the latest result and which pipeline it belongs to, head or merge result. **The accepted-green set is `success` alone.** `canceled` is not green — nothing ran to completion and the job list shows no red, which is why people misread it. `manual` is an unfinished blocking gate. `skipped` means no pipeline ran for this head. `running` and `pending` are not evidence yet, so re-read instead of judging.
-6. **Approvals** — who approved, and how many approvals are still required.
-7. **Size** — added and removed lines, and the file count. A reader needs the scale of the change.
-8. **AI reviewers** — one entry per reviewer found on the MR. See the next section.
-9. **Human review** — did a real person open a thread or comment? Exclude every AI reviewer identity. **Separate reviewer threads from the MR author's own comments.** Authors post acceptance reports and self-notes, and those are not review. Count resolved and unresolved separately. **Count who wrote notes, not only who opened threads.** A reviewer who never opens a thread but argues inside an AI reviewer's threads is invisible to a per-thread-author count, and that reply is often the most substantive review on the MR. Human approvals come from the approvals endpoint, not from the threads.
-10. **Merge gate** — what blocks the merge right now: red CI, draft status, unresolved threads, conflicts, a missing approval, a blocking review. And **whose court the ball is in**: the author fixes, rebases or replies, or the reviewer reviews and approves.
+**Green is `success` and nothing else.** `canceled` is not green: nothing ran to completion and the job list shows no red, which is why it gets misread. `manual` is an unfinished blocking gate. `skipped` means no pipeline ran for this head. `running` and `pending` are not evidence yet. A pipeline counts only when its SHA equals the MR head; the scorecard says `on an older head` otherwise. A red pipeline on a branch that is behind its target ran on a superseded base, so judge it again after the rebase.
 
-Be economical. Filter threads by author and by resolved state before reading bodies. Read a full note only to get the verdict text out of it.
+**Profile every AI reviewer on the MR at hand, assume nothing.** Reviewers do not behave alike, and the vocabulary one uses means nothing to another. Before reading any verdict, answer six questions per reviewer from its own threads: what it posts (inline findings, one summary, both); how it maintains the summary (edited in place, or re-posted per pass) and therefore where the latest verdict lives; whether it posts non-verdict notes (an acknowledgement, "review skipped, head unchanged" after a rebase) that you must walk past; whether it reads replies, which decides if an unresolved thread with a substantive reply is an active dialogue or a finding that clears only through a code change plus a manual resolve; the exact author string observed on this MR, since a service account can be an opaque hash and the `[BOT]` marker is not reliably set; and whether the verdict names the commit it reviewed, so you can date it against the head. Read the vocabulary the same way: the words a reviewer uses for "mergeable", "nothing actionable but a human must still review", and "actionable findings open" are its own, and the middle one is the one everyone misreads.
 
-## AI reviewers — profile each one, assume nothing
-
-An MR carries zero, one, or several AI reviewers, and they do not behave alike. Identify each reviewer present on the MR at hand, then derive its behavior from its own threads before reading any verdict. Answer six questions per reviewer.
-
-1. **What does it post?** Inline finding threads, one summary comment, or both.
-2. **How does it maintain the summary?** Updated in place, or re-posted once per pass. This decides where the latest verdict lives — the newest note by that author that carries a verdict, or the single edited note.
-3. **Does it post non-verdict notes?** Some reviewers post an acknowledgement, or a "review skipped, no code change since the last pass" note after a rebase. Those are not verdicts. Walk back to the newest note that carries a real one.
-4. **Does it read replies?** A reviewer that reads replies and interacts with threads turns an unresolved thread with a substantive human reply into an active dialogue, not a missed finding. A reviewer that does not read replies makes a reply worth nothing — the finding clears only when the code or the documentation changes and a human then resolves the thread. Getting this backwards either invents a blocker or hides one.
-5. **How do you identify it?** By `author.name`, by the username, or by a `[BOT]` marker in the dump. **Record the exact string observed on this MR.** A service-account username can be an opaque hash, the `author.bot` flag is not reliably set, and a reviewer can post through an account carrying no marker at all. A marker-only search reports an MR as unreviewed while a bot verdict sits in its thread list, so cross-check the thread authors against the MR author and the assigned humans as well. Match on what you saw, never on what you expected.
-6. **Does the verdict name the commit it reviewed?** When it does, compare that commit with the current head, exactly as item 5 of the data list does for the pipeline. **A verdict on a superseded head is stale evidence, not the current state of the MR.** A reviewer that names no commit gives a verdict that cannot be dated against the head at all — say so instead of treating it as current.
-
-### Persist the profile
-
-Once a profile is derived, **propose a Claude memory that holds it** — one memory per reviewer identity, keyed by host plus author string. A later run then reads the profile instead of inferring it again.
-
-If such a memory is already in context, use it, and verify it once against the newest note by that reviewer. If the memory and the MR disagree, report the disagreement and derive the profile again. Never keep a stale profile silently.
-
-An illustrative profile block, with fictional values:
+**If a memory already holds a reviewer's profile, use it and verify it once** against that reviewer's newest note. If the memory and the MR disagree, report the disagreement and derive the profile again. Once you derive a profile, **propose a Claude memory** for it, one per reviewer identity keyed by host plus author string, so the next run reads it instead of inferring it again. An illustrative block, with fictional values:
 
 ```
 reviewer: @qa-review-bot   (host: git.example.com, author.name: "QA Review Bot")
 posts: inline findings + one summary comment
-summary: re-posted per pass — take the newest note that carries a verdict line
+summary: edited in place — the last note of its General thread is the current verdict
 non-verdict notes: "review skipped, head unchanged" after a rebase
 reads replies: no — a finding clears by a code change plus a manual resolve
 verdict names its head: yes — trailing "reviewed <short-sha>", compare it with the current head
 verdict vocabulary: "Ready to merge" / "Needs work" / "No blocking findings"
 ```
 
-The names, the verdict words and the behavior differ per reviewer. Copy nothing from this example into a report.
+**Read the latest verdict per reviewer, plus the count of currently unresolved threads. Never infer "this MR has problems" from historical finding notes.** A reviewer can post major findings on Monday, see them fixed on Tuesday, and post a clean summary on Wednesday; the old notes stay forever. A reviewer that edits its summary in place keeps the freshest verdict in one of the oldest thread files, so sort nothing by name. A verdict on a superseded head is stale evidence, not the current state.
 
-## Overview mode — a set of MRs
+**Separate human review from the author's own comments and from bots.** Take every author string from the threads and the MR's `author`, `assignees` and `reviewers` fields; never compute a slug. A human who only replies inside a bot's thread is often the most substantive reviewer on the MR, so count note authors across every thread, not only thread openers. An author's acceptance report is not review. A system note carrying a human's username ("changed this line in version N of the diff") is not a reply. Human approvals come from the approvals data, not from the threads, and an approval by an AI approver alone means the MR is still awaiting human approval.
 
-Run this mode as a subagent when the caller hands over a list. Write ONE consolidated Markdown file to:
+**Then say what blocks the merge right now, and whose court the ball is in.** Red CI, draft, unresolved threads, conflicts, a missing approval, a blocking review. The author fixes, rebases or replies; the reviewer reviews and approves. State that every value is a snapshot: the target branch keeps moving.
 
-```
-<scratchpad>/mr-status/<scope-slug>-<YYYYMMDD-HHMM>.md
-```
+## Reporting a set
 
-Create the directory first. `<scope-slug>` names the set, for example `review-queue` or `single-4711`. **Choose the path once and keep it.** On a resume, update the same file in place. Refresh the generated timestamp and the changed sections. A stable filename keeps the caller's link valid.
-
-File shape:
-
-- A short header: scope, generated timestamp, the absolute file path, and one line on how to refresh it.
-- Then **one heading per MR, with all of that MR's data under it**, and nothing else. No overview table. The caller builds any roll-up it wants, so status lives in exactly one place and never gets maintained twice.
-- Each heading carries the identifier and a short label, for example `## group/service!4711 — cache eviction on tenant delete`. Never a bare number.
-- Under it, the same labeled fields for every MR: `author`, `draft`, `rebased`, `mergeable`, `pipeline`, `approvals`, `size`, one line per AI reviewer, `human review`, `merge-gate`. Add free detail lines only where a field needs them.
-
-Keep the prose factual. State findings. Promise no future work.
-
-### Resume contract
-
-Reply to the caller with three things: the absolute file path, a one-paragraph summary with counts (ready, blocked, waiting on the author) that names every MR, and this instruction — **resume this subagent to refresh, rather than starting a new one.** The subagent keeps the MR list and updates the same file. A resume can also change scope: add MRs, drop MRs, or re-check a subset. Never silently start over.
+When a caller hands over a list, write one Markdown file, one heading per MR with all of that MR's data under it, no overview table: `## <host>/<project>!<iid> — <short label>`, then `author`, `draft`, `rebased`, `mergeable`, `pipeline`, `approvals`, one line per AI reviewer, `human review`, `merge-gate`. Name every MR by its full identifier; an iid alone or an invented nickname is not an identifier. Keep it factual and promise no work.

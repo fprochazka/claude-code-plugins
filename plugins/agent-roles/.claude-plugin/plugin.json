@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "agent-roles",
-  "version": "0.2.0",
-  "description": "Two roles injected at the start of every agent — the top-level session orchestrates and delegates, every subagent works in the foreground and ends its turn with findings",
+  "version": "0.3.0",
+  "description": "Three roles injected at the start of every agent — the top-level session orchestrates and delegates, a task worker ends its turn with findings, a resident worker stays alive and reports by message",
   "author": {
     "name": "Filip Procházka",
     "url": "https://github.com/fprochazka"
@@ -11,5 +11,13 @@
   "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/agent-roles",
   "dependencies": [
     "noisy-tools-in-subagent"
-  ]
+  ],
+  "userConfig": {
+    "resident_agent_types": {
+      "type": "string",
+      "multiple": true,
+      "title": "Resident agent types",
+      "description": "Agent types that stay alive for a whole run and report through SendMessage; they get the resident worker role instead of the task worker role. glab:mr-watch is always included."
+    }
+  }
 }

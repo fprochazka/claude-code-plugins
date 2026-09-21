@@ -1,6 +1,6 @@
 # glab
 
-Claude Code plugin for GitLab through the [glab CLI](https://gitlab.com/gitlab-org/cli). It carries the `glab` skill, the `mr-status` skill, and slash commands that dump the state of a merge request.
+Claude Code plugin for GitLab through the [glab CLI](https://gitlab.com/gitlab-org/cli). It carries the `glab` skill, the `mr-status` skill with its `mr-state.py` script, the `mr-watch` agent, and slash commands that dump the state of a merge request.
 
 ## Requirements
 
@@ -10,7 +10,7 @@ Claude Code plugin for GitLab through the [glab CLI](https://gitlab.com/gitlab-o
 - [`glab-discussion`](https://github.com/fprochazka/glab-discussion) for discussion handling (`uv tool install glab-discussion`)
 - [`glab-pipeline`](https://github.com/fprochazka/glab-pipeline) for pipeline dumps and triage (`uv tool install glab-pipeline`)
 
-The plugin declares `glab-discussion` and `glab-pipeline` as plugin dependencies, so their skills load alongside it. The script fails with an install hint when either CLI is missing.
+The plugin declares `glab-discussion` and `glab-pipeline` as plugin dependencies, so their skills load alongside it. The CLIs themselves are a manual install. The state script keeps probing without them but cannot fetch threads or pipeline details; it prints a `DEPENDENCY MISSING` line with the install command, and the agent reading it asks you before installing.
 
 ## Installation
 
@@ -37,16 +37,31 @@ Add the following to `~/.claude/settings.json` to allow the skill to load and au
 
 The skill's `allowed-tools` frontmatter auto-allows read-only commands (`mr list`, `mr view`, `mr diff`, `ci status`, `ci get`, `ci trace`, etc.) and `--help` for all subcommands. Write operations (`mr create`, `mr update`, `mr merge`, `mr note`, `ci run`, `ci retry`, etc.) require manual approval.
 
-The `/glab:overview` and `/glab:pipeline` commands carry `Bash(glab-pipeline:*)` in their own `allowed-tools`, so pipeline inspection needs no extra approval.
+The `mr-status` skill and the three commands carry the state script, `glab-discussion read`, `glab-pipeline inspect`, `glab api`, and the read-only `git fetch`, `git rev-list` and `git diff` in their own `allowed-tools`, so a status read and the background watcher run without prompts; the three commands also carry the helper CLIs in full, replies and resolves included, because they act on threads. A prompt that does appear pauses a background watcher until you answer it, so add whatever it asked for to your allowlist.
 
 ## Skills
 
 - `glab:glab` — the CLI reference. Merge requests, discussions, pipelines, issues, repositories, releases, variables, schedules, labels, milestones, and the raw API with pagination and GraphQL.
-- `glab:mr-status` — reads the real review-and-merge state of one MR or a whole set: draft, rebase distance, pipeline, approvals, size, every AI reviewer's latest verdict, human threads, and what blocks the merge right now. It profiles each AI reviewer from its own threads instead of assuming how a bot behaves, and it reads the newest verdict plus the currently unresolved threads rather than counting old finding notes as live problems. In overview mode it runs as a subagent and keeps one status file up to date across refreshes. See [`skills/mr-status/SKILL.md`](skills/mr-status/).
+- `glab:mr-status` — how to read a merge request through `scripts/mr-state.py` and how to judge what it prints: the accepted-green set, a pipeline or verdict on a superseded head, profiling each AI reviewer from its own threads instead of assuming how a bot behaves, the newest verdict plus the currently unresolved threads rather than old finding notes, human review separated from the author's own comments, and what blocks the merge right now. See [`skills/mr-status/SKILL.md`](skills/mr-status/).
+
+## The state script
+
+`scripts/mr-state.py` is one Python file, standard library only, that every reader in this plugin goes through:
+
+- `mr-state.py` reads the MR of the current branch; `--mr-url <url>`, repeated, reads a set across repos and hosts.
+- Every run remembers what it saw under `<tmp>/glab-state/<host>/<project>/mr-<iid>/` and prints what changed since the last run: state, draft, head, pipeline, rebase distance, merge status, notes, reviewers, assignees, labels, approvals. The first run establishes a baseline. It prints the diff, flushes, and only then advances the stored state, so a run killed in between reports the same change again rather than losing it.
+- `--wait-for-state-change-timeout-minutes N` probes every minute and exits on the first change (exit code 0) or on the timeout (exit code 3). A probe is two API calls per MR, the MR object and the newest note by `updated_at`, plus approvals when the MR's `updated_at` moved. A read that fails for one MR is reported and the others still read; exit code 5 means every probe in the window failed. The discussion dump runs only when a note moved, the pipeline dump only when the pipeline moved.
+- `--all`, `--comments`, `--pipeline` narrow a one-shot read. `--reset` forgets the stored state.
+
+Transient GitLab values (`merge_status: checking`, a rebase in progress) are held at their last settled value, not reported as changes. Its unit tests run under `make test`.
+
+## The watcher agent
+
+`glab:mr-watch` is an agent definition that `/sdlc:mr-babysit` and `/code-review:watch` spawn in the background. It preloads `mr-status`, runs the state script in wait mode in a loop, interprets every change, and reports it to the session that spawned it through `SendMessage` without ending its turn. It never acts on an MR. The parent tells it which events to report, which comment markers are its own, how its team defines who holds the ball (the draft flag is one convention, not a rule), and, when it wants ticket-state events, which tracker skill to load. See [`agents/mr-watch.md`](agents/).
 
 ## Commands
 
-Each command auto-detects the MR from the current git branch and dumps its state into files before Claude reads anything. None of them changes code.
+Each command runs the state script for the MR of the current branch, as `glab` detects it, and dumps its state into files before Claude reads anything. None of them changes code.
 
 ### `/glab:overview`
 
@@ -62,24 +77,24 @@ Dumps the pipeline through `glab-pipeline inspect`, triages the failed jobs, and
 
 ## How it works
 
-`scripts/fetch-mr-state.sh` backs all three commands:
+The state script backs all three commands:
 
-1. Auto-detects the MR from the current git branch
-2. Fetches MR info via `glab mr view`
+1. Resolves the MR from the current git branch through `glab mr view`, or from the URLs given
+2. Reads the MR object and the newest note through `glab api`, compares them with the stored state, and prints the diff
 3. Delegates discussion fetching to `glab-discussion read --dump` (per-thread files with incremental updates, bot detection, diff note positions)
 4. Delegates the pipeline to `glab-pipeline inspect --mr-url <url>` (jobs, every job trace, and the conditional lint, test-report, and downstream fetches)
 5. Adds the external commit statuses, which live on the commit rather than in the pipeline, so `glab-pipeline` does not report them
 
-Output, in `/tmp/glab-state-<id>-<timestamp>/`:
+Output, under `<tmp>/glab-state/<host>/<project>/mr-<iid>/`:
 
-- `mr-info.txt` — full MR details
-- `full-pipeline-summary.txt` — the `glab-pipeline` summary plus the external commit statuses
-- `pipeline/` — the `glab-pipeline` dump: `summary.json`, `pipeline.json`, `jobs.json`, `job-logs/<stage>-<name>-<id>.log`, and `lint.json`, `merged.yml`, `test-report.json`, `downstream/` when they apply
+- `state.json` — the last snapshot, `mr.json` — the raw MR object from the last probe, `events.log` — every change printed, UTC
+- `pipeline-summary.txt` and `pipeline/` — the `glab-pipeline` dump: `summary.json`, `pipeline.json`, `jobs.json`, `job-logs/<stage>-<name>-<id>.log`, and `lint.json`, `merged.yml`, `test-report.json`, `downstream/` when they apply
+- `external-statuses.json`
 - `/tmp/glab-discussion/<host>/mr-<iid>/*.txt` — one file per discussion thread, managed by `glab-discussion`
 
 ## Related
 
-The unattended loop that drives an MR to green — rebase, fix CI, answer comments — lives in the [`sdlc`](../sdlc/) plugin as `/sdlc:mr-babysit`.
+The unattended loop that drives an MR to green — rebase, fix CI, answer comments — lives in the [`sdlc`](../sdlc/) plugin as `/sdlc:mr-babysit`, and the reviewer side in the [`code-review`](../code-review/) plugin as `/code-review:watch`. Both spawn this plugin's `mr-watch` agent to do the watching.
 
 ## Known issue
 

@@ -1,13 +1,13 @@
 ---
 name: pipeline
 description: Fix MR pipeline issues (failed CI jobs)
-allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)", "Bash(glab-pipeline:*)"]
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py:*)", "Bash(glab-pipeline:*)"]
 ---
 
 ## Context
 
 ```!
-${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh --pipeline
+${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py --pipeline
 ```
 
 ## Your task
@@ -37,5 +37,7 @@ Invoke the `glab-pipeline` skill before you run the CLI directly. Run it again w
 - With `--with-test-report` when a test job failed but the report is missing.
 
 Use `glab ci retry <job-name>` to retry a job. `glab-pipeline` inspects only, so it has no retry of its own.
+
+## Additional instructions
 
 $ARGUMENTS

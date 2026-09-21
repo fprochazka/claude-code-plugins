@@ -1,13 +1,13 @@
 ---
 name: comments
 description: Fix MR comment issues (unresolved and missed comments)
-allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)", "Bash(glab-discussion:*)"]
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py:*)", "Bash(glab-discussion:*)"]
 ---
 
 ## Context
 
 ```!
-${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh --comments
+${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py --comments
 ```
 
 ## Your task
@@ -44,5 +44,7 @@ glab-discussion resolve <discussion_id>
 ```bash
 glab-discussion write --file <path> --new-line <n> --body "Comment"
 ```
+
+## Additional instructions
 
 $ARGUMENTS

@@ -1,13 +1,13 @@
 ---
 name: overview
 description: Show MR overview (pipeline status, comments, external statuses)
-allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh:*)", "Bash(glab-pipeline:*)", "Bash(glab-discussion:*)"]
+allowed-tools: ["Bash(${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py:*)", "Bash(glab-pipeline:*)", "Bash(glab-discussion:*)"]
 ---
 
 ## Context
 
 ```!
-${CLAUDE_PLUGIN_ROOT}/scripts/fetch-mr-state.sh --all
+${CLAUDE_PLUGIN_ROOT}/scripts/mr-state.py --all
 ```
 
 ## Your task
@@ -29,5 +29,9 @@ Invoke the `glab-pipeline` skill before you run the CLI directly, for example to
 ### Reading the discussions
 
 `glab-discussion` dumped one file per thread into the discussions directory listed above. Read those files. Do not fetch the discussions again.
+
+When the script prints changes since its last run, lead the overview with them. A `DEPENDENCY MISSING` line means a helper CLI is not installed: say which one, give the install command, and ask before installing.
+
+## Additional instructions
 
 $ARGUMENTS
