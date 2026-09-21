@@ -78,13 +78,13 @@ At the **end of the plan file**, append a verbatim "## Implementation Protocol" 
 
 One step at a time, never in parallel. The user may not be watching — the default is to keep going, not to stop and wait.
 
-1. **Before step 1**: create a "continue the plan" cron firing every 30 minutes. Each pass re-derives state from scratch (this plan file, `git status`, `git log`) and continues the run if it stalled. Delete it only after the MR babysitting step is done.
+1. **Before step 1**: create a "continue the plan" cron firing every 30 minutes. Each pass re-derives state from scratch (this plan file, `git status`, `git log`) and continues the run if it stalled. Once `/sdlc:mr-babysit` has started, a pass never re-enters it: babysit runs its own watcher and watchdog, and a second invocation would spawn a second watcher on the same MRs. Delete this cron when babysit has been started, or earlier if the user takes the MR themselves.
 2. **One persistent implementation subagent** — spawn it with the model this plan names and reuse it for every step: message it this plan file's path, the step to do, and "stop and report when done". Start a fresh one only when it runs out of context window or this plan schedules a model swap; the fresh one catches up from the plan file and the branch's commits.
 3. The subagent implements the step, verifies it (build / lint / relevant tests), **stages everything with `git add -A`, does NOT commit**, and reports: what it did, what verification ran and came back, which parts are tricky.
 4. **Check every step at the tier this plan assigns it.** `check: direct` → the orchestrator inspects the staged diff itself. `check: validation subagent` → a fresh subagent with the model the plan names, given *only* this plan file's path, the steps it covers, what to review, and the risks the plan flags — nothing else. Validators read, run the real verification, and report; they never change code.
 5. **Findings go back to the implementation subagent** — the orchestrator never fixes code itself. Re-check after the correction; repeat until clean or the rest is consciously accepted. Then the orchestrator commits with the step's intended message and moves to the next step.
 6. **Mid-flight decisions**: derivable from code, data, or convention → decide, record the decision in this file, continue. A product decision only the user can make → ask, park the dependent steps, continue everything not blocked. Stop and wait only when proceeding would be damaging or hard to reverse.
-7. **Finish without asking**: run the final validation checkpoint, then `/sdlc:mr-open`, then `/sdlc:mr-babysit`, then delete the cron. Skip the MR steps only if the user explicitly said they will handle the MR themselves.
+7. **Finish without asking**: run the final validation checkpoint, then `/sdlc:mr-open`, then delete this cron, then `/sdlc:mr-babysit`, which arms its own. Skip the MR steps only if the user explicitly said they will handle the MR themselves.
 ```
 
 ### Orchestrator craft — follow this yourself, do not copy it into the plan

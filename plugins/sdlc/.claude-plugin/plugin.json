@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "sdlc",
-  "version": "0.17.2",
+  "version": "0.18.0",
   "description": "Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps",
   "author": {
     "name": "Filip Procházka",
