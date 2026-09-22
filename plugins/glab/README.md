@@ -59,6 +59,41 @@ Transient GitLab values (`merge_status: checking`, a rebase in progress) are hel
 
 `glab:mr-watch` is an agent definition that `/sdlc:mr-babysit` and `/code-review:watch` spawn in the background. It preloads `mr-status`, runs the state script in wait mode in a loop, interprets every change, and reports it to the session that spawned it through `SendMessage` without ending its turn. It never acts on an MR. The parent tells it which events to report, which comment markers are its own, how its team defines who holds the ball (the draft flag is one convention, not a rule), and, when it wants ticket-state events, which tracker skill to load. See [`agents/mr-watch.md`](agents/).
 
+### How a watch runs
+
+The parent spawns the watcher once and is idle until a message arrives. The watcher never returns; every finding is a `SendMessage`, and the parent answers with acks so its own moves do not come back as events.
+
+```mermaid
+sequenceDiagram
+  participant P as Parent command<br>(/sdlc:mr-babysit or /code-review:watch)
+  participant W as glab:mr-watch<br>(background agent)
+  participant S as mr-state.py
+  participant G as GitLab API
+  P-)W: spawn with the MR set, the events to report,<br>self markers, handshake definition, ledger path
+  W->>+S: one-shot run (--reset on a new watch)
+  S->>+G: MR object, newest note, approvals
+  G-->>-S: snapshot
+  S-->>-W: baseline, result: no change
+  W-)P: SendMessage: first scorecard, zero events
+  loop until stop, every MR merged or closed, or the idle cap
+    W->>+S: wait mode, 8 minute window
+    loop every minute until a change or the window ends
+      S->>+G: probe
+      G-->>-S: snapshot
+    end
+    S-->>-W: change lines, dump paths, result line
+    W->>W: classify, rewrite the ledger
+    alt result: change detected
+      W-)P: SendMessage: subscribed events + scorecard
+      P->>P: act (actor batch, review round)
+      P-)W: acted: <op> on <url> at <sha>, reviewed at <sha>
+    else result: no change
+      W-)P: HEARTBEAT when 30 minutes since the last message
+    end
+  end
+  Note over P,W: The parent's cron stays silent unless 45 minutes pass without a message
+```
+
 ## Commands
 
 Each command runs the state script for the MR of the current branch, as `glab` detects it, and dumps its state into files before Claude reads anything. None of them changes code.
