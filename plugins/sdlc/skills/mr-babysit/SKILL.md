@@ -95,7 +95,7 @@ Keep them this short: the brief carries the rules, the ledger carries the state.
 
 ```
 MRs: https://git.example.com/group/service/-/merge_requests/123 (worktree /home/me/dev/service), https://git.example.com/group/pipelines/-/merge_requests/456 (worktree /home/me/dev/pipelines)
-Report: pipeline finished, push, behind target, handshake, notes, verdict, approvals, merged/closed, quiet 2m after green, idle 3h
+Report: pipeline finished, push, behind target, handshake, notes, verdict, approvals, merged/closed, quiet 2m after green, pipeline running 30m, idle 3h
 Cadence: working
 Self markers: <!-- sdlc:mr-babysit -->, <!-- sdlc:mr-open -->
 Handshake: ready-for-review = not draft and ticket in "In Review"; back-to-work = ticket in "In Progress"
@@ -148,6 +148,7 @@ The message names the MR, the events, the ids involved, the dump paths, and a sc
 - **`HEAD_CHANGED`** → first match the SHA against the actor's last reported push; the watcher probes every minute and usually sees the run's own push before your ack reaches it. A SHA nobody in this run pushed is an author push from outside; a pipeline will follow.
 - **`VERDICT_CHANGED` or `VERDICT_STALE`** → information for the next thread triage.
 - **`QUIET`** with no row unfinished on any MR → the set may be settled; go to [Handoff](#handoff).
+- **`PIPELINE_STUCK`** → a build that has not ended in 30 minutes. Write one line to the user naming the pipeline and the job it sits in, and dispatch nothing: a wedged build is not a failure signature, so it is neither retried nor fixed, and it is the user's to look at.
 - **`IDLE`** → the watcher hit the cap the prompt named; go to [Stopping](#stopping-instead-of-handing-over).
 - **`TICKET_CHANGED` to a terminal state** → the work moved past review; go to [Stopping](#stopping-instead-of-handing-over).
 - **`READ_FAILED` or `DEPENDENCY MISSING`** → say so in the note; a missing helper goes to the user with the install command and a question.
@@ -162,7 +163,7 @@ The message names the MR, the events, the ids involved, the dump paths, and a sc
 2. **Ack the watcher** for everything the actor pushed, posted, resolved or toggled, one `acted: <op> on <mr url> at <sha or timestamp>` line each, so the watcher does not report the run's own moves back to you as events.
 3. **Decide every `proposed` row.** This is the judgment the command exists for, and it is yours alone:
    - **Approve a `fix`** when the evidence on the row supports it, the change is at the right layer (root cause, not symptom), and it does not contradict a fix already made this run. When the proposal is right about the problem but wrong about the change, approve it with your correction written into the batch.
-   - **Approve a `dismiss`** when the reasoned disagreement holds — the finding misreads the code, is already covered, or would create a new problem. **Overturn it into a `fix`** when the actor was too quick and the finding is right after all. A severity tag is not a reason to approve either way.
+   - **Approve a `dismiss`** when the reasoned disagreement holds — the finding misreads the code, is already covered, or would create a new problem. **Overturn it into a `fix`** when the actor was too quick and the finding is right after all. A severity tag is not a reason to approve either way. **A reviewer that re-raises a rule-and-file pair the ledger already holds as `dismissed` gets an `ask`, never a second dismissal**: the disagreement did not land, and a third round of it is whack-a-mole.
    - **Take an `ask` to the user**, in the progress note, without blocking anything else — dispatch the rest of the batch anyway. Never present the whole triage as options and wait for a go-ahead; only an `ask` reaches the user.
    - Whatever the disposition, **promise nothing on the MR**. The replies state facts — what changed, what SHA carries it, why a finding does not hold. `teamwork:review-handshake` holds the rule.
 4. **Record the outcomes**: `fixed <sha>`, `could-not-fix`, `dismissed`, `ask`, and the attempt count on a failure signature. A `could-not-fix` row is yours to re-decide — a fresh `fix` proposal with a different approach, or an `ask` for the user.

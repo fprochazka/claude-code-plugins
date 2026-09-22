@@ -22,6 +22,7 @@ Every row is named by its id, quoted from the orchestrator's ledger and never by
 
 - **Fetch only the target branch**, never a bare `git fetch origin`: a bare fetch also updates `origin/<source_branch>`, which defeats the no-arg `--force-with-lease` and silently overwrites a teammate's push. To read the remote after a push, use `git rev-parse origin/<source_branch>` or `git ls-remote origin <source_branch>`.
 - **A push has landed only when `git rev-parse origin/<source_branch>` equals your `HEAD`.** The push command's own output does not count.
+- **Re-read the MR's `state` right before every push** (`glab mr view <iid> --output json`, the `state` field). An MR merged or closed while you worked turns the push into a resurrected branch that reports `[new branch]` as success. Anything but `opened` → do not push; report the state and every row of the batch as `could-not-fix`.
 - `--force-with-lease` only when you rewrote history, never bare `--force`. One commit set and one push per batch.
 
 ## Rebase
@@ -57,7 +58,7 @@ A thread is **in scope** iff it is unresolved and the most recent non-system not
 
 One of four dispositions per in-scope thread, critically evaluated. Review feedback, above all from AI review bots, is sometimes correct, sometimes wrong, sometimes pedantic, and sometimes proposes a fix that creates a new problem:
 
-- **`fix`** — the finding is correct, the fix is sound, and it does not ripple into code that was not shown. Re-read the cited file and line yourself (AI quotes routinely misread context), check the fix does not contradict one already made this run, and confirm it is at the right layer. The row carries the full discussion id, the file and line, and the change you propose.
+- **`fix`** — the finding is correct, the fix is sound, and it does not ripple into code that was not shown. Re-read the cited file and line yourself (AI quotes routinely misread context), check the fix does not contradict one already made this run, and confirm it is at the right layer. When the finding names one cell of a combinatorial space (a flag times a state times a type), enumerate the reachable combinations before you fix the reported cell, or the next cell is tomorrow's finding. When the fix adds a caller into shared mutable state, check that state's failure and consistency contract, not only the new call. The row carries the full discussion id, the file and line, and the change you propose.
 - **`dismiss`** — wrong, marginal, pedantic, or already covered. Draft the specific reasoned disagreement into the row ("line X does not say what the finding claims", "applying this would break Y"). A bot's `high` or `critical` tag does not lift a finding above this judgment.
 - **`ask`** — real, but the fix needs a product or design decision: a public API change, a migration, a behavioural trade-off, an off-by-one where the boundary is semantic, architecture pushback, a "why did you" question. Never reach for a blocking prompt; the orchestrator takes it to the user. A finding already deferred that the bot re-raises → `dismiss` with a reference to the standing deferral.
 - **skip** — looks fine but you are not confident. No row; the watcher reports it again if it moves.
