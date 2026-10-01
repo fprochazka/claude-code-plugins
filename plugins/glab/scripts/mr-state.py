@@ -696,6 +696,12 @@ def check_helpers() -> list[str]:
 # ----------------------------------------------------------------------------------------------
 
 
+# A longer interval makes the caller wait minutes for a change it could have seen in one; a
+# shorter one spends API calls without making anyone act sooner.
+POLL_INTERVAL_MIN_SECONDS = 30.0
+POLL_INTERVAL_MAX_SECONDS = 90.0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--mr-url", action="append", default=[], help="MR URL; repeat for a set. Default: the current branch's MR")
@@ -703,7 +709,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--comments", action="store_true", help="one-shot: fetch the discussion dump")
     p.add_argument("--pipeline", action="store_true", help="one-shot: fetch the pipeline dump")
     p.add_argument("--wait-for-state-change-timeout-minutes", type=float, default=None, metavar="N", help="probe until a change or N minutes; keep it under the caller's tool timeout")
-    p.add_argument("--poll-interval-seconds", type=float, default=60.0, metavar="S")
+    p.add_argument("--poll-interval-seconds", type=float, default=60.0, metavar="S", help=f"seconds between probes in wait mode, {POLL_INTERVAL_MIN_SECONDS:g} to {POLL_INTERVAL_MAX_SECONDS:g} (default: 60)")
     p.add_argument("--state-dir", type=Path, default=None, help="override the state root (default: <tmp>/glab-state)")
     p.add_argument("--reset", action="store_true", help="forget the stored state first; the run then establishes a new baseline")
     return p
@@ -720,6 +726,8 @@ def main(argv: list[str] | None = None) -> int:
         # In wait mode the fetches are driven by what moved, so an explicit flag would be read
         # as a promise the run cannot keep. Say so rather than accept it and ignore it.
         parser.error("--all, --comments and --pipeline are one-shot flags and cannot be combined with --wait-for-state-change-timeout-minutes; the wait fetches the discussion dump when a note moves and the pipeline dump when the pipeline moves")
+    if not POLL_INTERVAL_MIN_SECONDS <= args.poll_interval_seconds <= POLL_INTERVAL_MAX_SECONDS:
+        parser.error(f"--poll-interval-seconds must be between {POLL_INTERVAL_MIN_SECONDS:g} and {POLL_INTERVAL_MAX_SECONDS:g}, got {args.poll_interval_seconds:g}")
     if not which("glab"):
         die("glab CLI is not installed")
 

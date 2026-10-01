@@ -616,6 +616,24 @@ class MainLoop(unittest.TestCase):
                     mr_state.main(["--mr-url", self.URL, "--wait-for-state-change-timeout-minutes", "2", flag])
             self.assertEqual(raised.exception.code, 2, flag)
 
+    def test_a_poll_interval_outside_the_allowed_range_is_rejected(self):
+        for seconds in ("29", "91", "300"):
+            with self.assertRaises(SystemExit) as raised:
+                with redirect_stdout(io.StringIO()), mock.patch.object(mr_state.sys, "stderr", io.StringIO()):
+                    mr_state.main(["--mr-url", self.URL, "--wait-for-state-change-timeout-minutes", "2", "--poll-interval-seconds", seconds])
+            self.assertEqual(raised.exception.code, 2, seconds)
+
+    def test_a_poll_interval_at_the_upper_bound_is_accepted(self):
+        code, out, probe = self.run_main(
+            ["--wait-for-state-change-timeout-minutes", "2", "--poll-interval-seconds", "90"],
+            lambda _self: snap(),
+            monotonic=clock(0, 50),
+            seed=snap(),
+        )
+        self.assertEqual(code, mr_state.EXIT_OK)
+        self.assertEqual(probe.call_count, 1)
+        self.assertIn("result: no change", out)
+
 
 if __name__ == "__main__":
     sys.exit(unittest.main())
