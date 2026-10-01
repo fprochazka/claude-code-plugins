@@ -21,9 +21,9 @@ This command is the **author** side of an MR. It is the mirror image of `/code-r
 
 ## Autonomy — you are pre-authorized; pausing to ask is a failure
 
-**This command intentionally runs at maximum autonomy, and for its duration that supersedes your usual defaults.** Standing guidance you'd normally follow — global/project `CLAUDE.md` ("be restrained about implementing", "outline a plan and wait for my OK"), the general "confirm hard-to-reverse or outward-facing actions first" default — is **deliberately overridden** for the pre-authorized operations below. You already have the OK: the user invoked babysit precisely so these run unattended, and re-asking for it defeats the command. This override is **scoped**: it applies only to the named operations, only until the run hands back, and it never extends to the explicit halt conditions under [Stopping instead of handing over](#stopping-instead-of-handing-over) — a genuine product/design decision, an unresolvable conflict, or a cap hit still stop and ask. Normal caution resumes the moment the run ends.
+**This command intentionally runs at maximum autonomy, and for its duration that supersedes your usual defaults.** Standing guidance you'd normally follow — global/project `CLAUDE.md` ("be restrained about implementing", "outline a plan and wait for my OK"), the general "confirm hard-to-reverse or outward-facing actions first" default — is **deliberately overridden** for the pre-authorized operations below. You already have the OK: the user invoked babysit precisely so these run unattended, and re-asking for it defeats the command. This override is **scoped**: it applies only to the named operations, only until the run hands back, and it never extends to the explicit halt conditions under [Stopping instead of handing over](#stopping-instead-of-handing-over) — a genuine product/design decision still goes to the user as an `ask`, and an unresolvable conflict or a cap hit still stops the run. Normal caution resumes the moment the run ends.
 
-The run's entire value is that it is **unattended**. `git rebase`, `git push --force-with-lease`, `git push`, retrying CI jobs, and replying to or resolving threads are all authorized **without stopping to ask** — doing exactly these is the job, not a risk to escalate. **The grant extends to every subagent**: they inherit it in full, and none pauses mid-task for permission to read, rebase, force-push, retry, reply or resolve. Do not pause for it yourself either; that defeats the purpose and is itself a failure. Stop and hand back **only** for the explicit halt conditions. Everything else, just do.
+The run's entire value is that it is **unattended**. `git rebase`, `git push --force-with-lease`, `git push`, retrying CI jobs, and replying to or resolving threads are all authorized **without stopping to ask** — doing exactly these is the job, not a risk to escalate. **The grant extends to every subagent**: they inherit it in full, and none pauses mid-task for permission to read, rebase, force-push, retry, reply or resolve. Do not pause for it yourself either; that defeats the purpose and is itself a failure. Stop and hand back **only** for the explicit halt conditions, and wait on a human **only** in [Needs human](#needs-human). Everything else, just do.
 
 A bot's `high`/`critical` **severity tag does not elevate a finding above this grant** — a severity-tagged reviewer thread that has been reasoned through is dismissed-and-resolved like any other, not escalated for a sign-off.
 
@@ -70,7 +70,7 @@ Spawn no actor yet — there is nothing to do until the watcher reports somethin
 
 - MRs: <host/project!iid — worktree path> (one line each)
 - Ticket: <TICKET-ID> (<url>) — handshake: ticket-led | draft-only · work state "<WORK_STATE>" · review state "<REVIEW_STATE>"
-- Mode: working | handoff-wait
+- Mode: working | needs-human (ready-for-review) | needs-human (decisions-needed)
 - Watcher: <agent id> · ledger ./.claude/review-report/<topic>.mr-watch.md · Watchdog cron: <job id> · Actor: <agent id | none>
 
 ## Rows
@@ -81,9 +81,20 @@ Spawn no actor yet — there is nothing to do until the watcher reports somethin
 | `job test:OrderSpec#total @ pipeline 8812` | !123 | dismiss | dismissed | runner lost, retried 1 of 2 |
 | `rebase !456` | !456 | fix | fixing | conflicts in `src/api/orders.py`: ours renames the handler, theirs adds a parameter |
 | `thread 9df2b6c0…` | !123 | ask | ask | migration drops a column the reviewer wants kept; suggested reply: keep it nullable for one release |
+| `thread 51aa07e3…` | !456 | skip | skipped | naming nit on a test helper; the reviewer's intent is unclear |
+
+## Review state
+
+| MR | AI reviewer | Latest verdict | Reading | On head | At | Re-reviews on push |
+|---|---|---|---|---|---|---|
+| !123 | `@qa-review-bot` | "No blocking findings" | nothing-actionable | `a1b2c3d` | 14:02Z | yes |
+
+- Approvals: !123 — human: none · AI: `@qa-review-bot`; !456 — human: `@jane` · AI: none
 ```
 
-`Status` runs `proposed` → `approved` → `fixing` → `fixed <sha>` | `could-not-fix`, or `proposed` → `dismissed` | `ask`. An `ask` row carries the question and your suggested answer, so the final summary and the user read it from the file. Attempt counts on a failure signature and the oscillation count live in the note. Nothing else: the watcher's ledger records movement and messages, and this file is the state of what is or is not solved and what waits on a human.
+`Status` runs `proposed` → `approved` → `fixing` → `fixed <sha>` | `could-not-fix`, or `proposed` → `dismissed` | `ask` | `skipped`. An `ask` row carries the question and your suggested answer, so the `NEEDS HUMAN` block, the final summary and the user read it from the file. A `skipped` row carries the one-line reason the actor gave and changes nothing on the MR; it exists so the `NEEDS HUMAN` block can list it. Attempt counts on a failure signature and the oscillation count live in the note. Nothing else: the watcher's ledger records movement and messages, and this file is the state of what is or is not solved and what waits on a human.
+
+`Review state` holds the [AI reviewer gate](#the-ai-reviewer-gate): one row per AI reviewer seen on each MR, fed by the actor's first triage report and then by every `VERDICT_CHANGED` and `VERDICT_STALE`, and the approvals split human and AI, fed by `APPROVALS_CHANGED`. Reviewer identity, vocabulary and the re-review habit come from the `glab:mr-status` profiling rules as the watcher and the actor report them; never fill this table from a bot name you assume.
 
 **Name every row by its id, never by position.** The ids are `thread <full discussion id>`, `job <job name> @ pipeline <pipeline id>`, and `rebase !<iid>`; the watcher's messages, the actor's reports and this table all use them unchanged.
 
@@ -95,7 +106,7 @@ Keep them this short: the brief carries the rules, the ledger carries the state.
 
 ```
 MRs: https://git.example.com/group/service/-/merge_requests/123 (worktree /home/me/dev/service), https://git.example.com/group/pipelines/-/merge_requests/456 (worktree /home/me/dev/pipelines)
-Report: pipeline finished, push, behind target, handshake, notes, verdict, approvals, merged/closed, quiet 2m after green, pipeline running 30m, idle 3h
+Report: pipeline finished, push, behind target, handshake, notes, verdict, approvals, merged/closed, quiet 2m and 15m after green, pipeline running 30m, idle 3h
 Cadence: working
 Self markers: <!-- sdlc:mr-babysit -->, <!-- sdlc:mr-open -->
 Handshake: ready-for-review = not draft and ticket in "In Review"; back-to-work = ticket in "In Progress"
@@ -141,13 +152,14 @@ Report one line per row, `<row id> fixed <sha>` / `could-not-fix <why>` / `poste
 The message names the MR, the events, the ids involved, the dump paths, and a scorecard line per MR. Decide what it means, dispatch, rewrite the ledger, and write a progress note of at most three lines. Never read the MR yourself.
 
 - **`STATE_CHANGED` to merged or closed** → drop the MR from the set; if the set is empty, go to [Stopping](#stopping-instead-of-handing-over).
-- **`HANDSHAKE back-to-work` while in handoff-wait** → the reviewer handed it back. Set `Mode: working`, message the watcher `cadence: working`, and treat the new threads as ordinary in-scope threads.
+- **`HANDSHAKE back-to-work` while in `needs-human (ready-for-review)`** → the reviewer handed it back. Set `Mode: working`, message the watcher `cadence: working`, and treat the new threads as ordinary in-scope threads.
 - **`PIPELINE_CHANGED` to `failed`** → a triage batch: `pipeline <id> on !<iid>` with the dump path from the message. A pipeline that ran on a superseded base is judged after the rebase.
 - **`NOTES_CHANGED`** with threads the watcher classed as reviewer or human → a triage batch: `threads <ids> on !<iid>`. Threads under your own markers need nothing; a thread under another automation's marker is triaged like any reviewer's, and the actor's brief says which of those it may not resolve.
 - **`BEHIND_CHANGED` to a non-zero count** → `rebase !<iid>` in the next batch. When the watcher says the MR is stacked on another branch, rebase the base MR first.
 - **`HEAD_CHANGED`** → first match the SHA against the actor's last reported push; the watcher probes every minute and usually sees the run's own push before your ack reaches it. A SHA nobody in this run pushed is an author push from outside; a pipeline will follow.
-- **`VERDICT_CHANGED` or `VERDICT_STALE`** → information for the next thread triage.
-- **`QUIET`** with no row unfinished on any MR → the set may be settled; go to [Handoff](#handoff).
+- **`VERDICT_CHANGED` or `VERDICT_STALE`** → rewrite the reviewer's row in `Review state`: the verdict text, the reading, the head it was given on, the time. An `actionable-open` reading on the current head sends its threads to the next triage batch; any other change re-checks the [entry condition](#the-entry-condition), since a verdict is often the last thing the set waited for.
+- **`APPROVALS_CHANGED`** → rewrite the approvals line, human and AI apart. An AI approval alone is not the human review. Nothing is merged on an approval: a human approval only shows up in the scorecard and the `NEEDS HUMAN` block.
+- **`QUIET`** → `QUIET 2m` with no row unfinished on any MR means the set may be settled; check the [entry condition](#the-entry-condition). `QUIET 15m` closes the re-review window of the [AI reviewer gate](#the-ai-reviewer-gate); check the entry condition again.
 - **`PIPELINE_STUCK`** → a build that has not ended in 30 minutes. Write one line to the user naming the pipeline and the job it sits in, and dispatch nothing: a wedged build is not a failure signature, so it is neither retried nor fixed, and it is the user's to look at.
 - **`IDLE`** → the watcher hit the cap the prompt named; go to [Stopping](#stopping-instead-of-handing-over).
 - **`TICKET_CHANGED` to a terminal state** → the work moved past review; go to [Stopping](#stopping-instead-of-handing-over).
@@ -164,10 +176,11 @@ The message names the MR, the events, the ids involved, the dump paths, and a sc
 3. **Decide every `proposed` row.** This is the judgment the command exists for, and it is yours alone:
    - **Approve a `fix`** when the evidence on the row supports it, the change is at the right layer (root cause, not symptom), and it does not contradict a fix already made this run. When the proposal is right about the problem but wrong about the change, approve it with your correction written into the batch.
    - **Approve a `dismiss`** when the reasoned disagreement holds — the finding misreads the code, is already covered, or would create a new problem. **Overturn it into a `fix`** when the actor was too quick and the finding is right after all. A severity tag is not a reason to approve either way. **A reviewer that re-raises a rule-and-file pair the ledger already holds as `dismissed` gets an `ask`, never a second dismissal**: the disagreement did not land, and a third round of it is whack-a-mole.
-   - **Take an `ask` to the user**, in the progress note, without blocking anything else — dispatch the rest of the batch anyway. Never present the whole triage as options and wait for a go-ahead; only an `ask` reaches the user.
+   - **Take an `ask` to the user**, in the progress note, without blocking anything else — dispatch the rest of the batch anyway. Never present the whole triage as options and wait for a go-ahead; only an `ask` reaches the user. The `NEEDS HUMAN (decisions-needed)` block collects every open `ask` again.
+   - **Record a `skip`** as a `skipped` row with the actor's one-line reason. It changes nothing on the MR, and the watcher reports the thread again if it moves.
    - Whatever the disposition, **promise nothing on the MR**. The replies state facts — what changed, what SHA carries it, why a finding does not hold. `teamwork:review-handshake` holds the rule.
-4. **Record the outcomes**: `fixed <sha>`, `could-not-fix`, `dismissed`, `ask`, and the attempt count on a failure signature. A `could-not-fix` row is yours to re-decide — a fresh `fix` proposal with a different approach, or an `ask` for the user.
-5. **Dispatch the next batch**: the approved `fix` rows, the approved dismissals, and any reclaim or ready, to the actor as one implementation batch. Resume the same actor while it has context — it holds the code and the reasoning behind every row — and spawn a fresh one, pointed at the ledger, only when it runs out.
+4. **Record the outcomes**: `fixed <sha>`, `could-not-fix`, `dismissed`, `ask`, `skipped`, and the attempt count on a failure signature, plus each AI reviewer's latest verdict and its head from the triage report into `Review state`. A `could-not-fix` row is yours to re-decide — a fresh `fix` proposal with a different approach, or an `ask` for the user.
+5. **Dispatch the next batch**: the approved `fix` rows, the approved dismissals, and any reclaim or ready, to the actor as one implementation batch. Resume the same actor while it has context — it holds the code and the reasoning behind every row — and spawn a fresh one, pointed at the ledger, only when it runs out. When there is nothing to dispatch, check the [entry condition](#the-entry-condition): a triage that left only `ask` and `skipped` rows can settle the set.
 6. Post a progress note of **at most three lines** to the user.
 
 ### The watchdog is silent while the watcher lives
@@ -179,43 +192,90 @@ The heartbeat proves the watcher is alive; nothing proves it is dead, because a 
 
 The progress line the user sees every 30 minutes comes from the watcher's `HEARTBEAT`, not from the cron: on every heartbeat write **one line, even when nothing changed** — for example "!123 pipeline running · fixing 2 rows, batch pushed at `a1b2c3d` · !456 handed over, idle 40m", composed from the ledger and the scorecard in the message. A run that says nothing for an hour is a dead run.
 
-## Handoff
+## Needs human
 
-### The handoff condition
+The run enters `needs-human` when it has solved everything it can solve on its own. What is left belongs to a human: a review, or a decision on design, business rules or a product trade-off. The run does not stop there. The watcher, its heartbeat and the watchdog cron stay alive, so you keep reacting to MR events while the human has the ball, and the run goes back to `working` the moment an event brings autonomous work again.
 
-Hand the set over when **every MR** satisfies **all** of these, read off the watcher's scorecard and the ledger:
+### The entry condition
+
+The set enters `needs-human` when **every MR** satisfies **all** of these, read off the watcher's scorecard and the ledger:
 
 1. The pipeline is **green** (`success`) on the current head. `canceled`, `manual` and `skipped` are not green.
-2. It has been **≥2 minutes quiet** — the watcher's `QUIET` event: a green pipeline on the current head with no note movement for two minutes, which gives an AI reviewer time to weigh in on the final commit.
-3. Every actionable comment has a reply, and every thread the actor handled is resolved. Watch threads carry a reply and stay unresolved, which is the settled state for them.
-4. The only remaining open threads, if any, are `ask` rows or skips, watch threads already answered, or human threads left for the human to close.
-5. **No row is unfinished** — no `ask`, no `approved`, no `fixing`, no `could-not-fix`. Every one of those means the change is not finished, so the ticket stays in the work state — and an MR never handed over stays draft — and you hand back to the user instead.
-6. The branch is **not behind its target branch** — or the divergence provably does not touch this MR. Master often moves faster than a long pipeline finishes, so a rebase-then-wait cycle can never converge. The actor's rebase report gives the two file sets and whether they intersect; hand over behind **only** when they do not, and say it in the handover line: "4 commits behind master, docs-only, no overlap with this MR". Any overlap means rebase first and let the watcher report the resulting pipeline.
+2. It has been **≥2 minutes quiet** — the watcher's `QUIET 2m`: a green pipeline on the current head with no note movement for two minutes.
+3. **Every `fix` and `dismiss` row is finished**: pushed, replied, and resolved as the actor's resolve rules say. Watch threads carry a reply and stay unresolved, which is the settled state for them. No row is `proposed`, `approved`, `fixing` or `could-not-fix`; re-decide a `could-not-fix` row first, into a new proposal, an `ask`, or a [halt](#stopping-instead-of-handing-over).
+4. The branch is **not behind its target branch** — or the divergence provably does not touch this MR. Master often moves faster than a long pipeline finishes, so a rebase-then-wait cycle can never converge. The actor's rebase report gives the two file sets and whether they intersect; enter behind **only** when they do not, and say it in the `NEEDS HUMAN` block: "4 commits behind master, docs-only, no overlap with this MR". Any overlap means rebase first and let the watcher report the resulting pipeline.
+5. The [AI reviewer gate](#the-ai-reviewer-gate) holds.
+6. What is still open is only `ask` rows, `skipped` rows, human threads left for the human to close, watch threads already answered, and a missing human approval.
+
+The variant follows from what is open, and it is chosen for the whole set, like the handover: one MR waiting on a decision keeps its siblings out of review.
+
+- **`ready-for-review`** — no `ask` row is open on any MR. [Hand the ball over](#hand-the-ball-over).
+- **`decisions-needed`** — at least one `ask` row is open. Nothing is handed over: an MR never handed over stays draft, the ticket stays in the work state, and the ball is with the author's human, not with the reviewers. A set handed over earlier was already taken back by the triage that produced the `ask`.
+
+On entry, set the Mode, message the watcher `cadence: waiting`, and emit the [`NEEDS HUMAN` line](#the-needs-human-line); for `ready-for-review`, emit it once the handover has landed.
+
+### The AI reviewer gate
+
+The gate keeps a late verdict, or one on an older head, from reaching the human as a finished MR. It reads the `Review state` table of the ledger.
+
+- **The gate holds** when every AI reviewer seen on the MR has a latest verdict on the current head that reads `positive` or `nothing-actionable`. An `actionable-open` verdict on the current head is not the human's: its threads go to triage, and the set stays `working`.
+- **After a push, a reviewer that re-reviews on push gets a re-review window** of 15 minutes, which ends with the watcher's `QUIET 15m`: fifteen minutes after the pipeline went green on the new head, with no note movement in between. The 15 minutes are a default; when the user asks for another window, change the `Report:` line of the watcher prompt to match. A verdict on the new head inside the window decides the gate as above. When the window closes without one, the gate passes on the older verdict, and the `NEEDS HUMAN` block says so: "`@qa-review-bot` has not re-reviewed `a1b2c3d` after 15m". Treat a reviewer whose re-review habit is unknown as one that re-reviews, and an `unknown` reading on the current head as a missing verdict.
+- **A reviewer that does not re-review on push** needs no window: its verdict on the older head stands, and the block names the head it was given on.
+- **A reviewer that reviews only after the handover**, `/code-review:watch`, recognized by its marker, is not part of the gate. It reviews once the ball is with it, and `teamwork:review-handshake` covers that exchange.
+- **An MR with no AI reviewer** passes the gate, and the block says "no AI reviewer on !<iid>".
+
+### The `NEEDS HUMAN` line
+
+This line is a contract: a later skill or hook may key on it, so the marker text is stable. On entering `needs-human`, the first line of your message is exactly
+
+```
+NEEDS HUMAN (<variant>): <one-sentence reason>
+```
+
+with `<variant>` either `ready-for-review` or `decisions-needed`. This command writes the line and nothing else; it does not define how the human is alerted. Below the line, compactly:
+
+- **Per MR**: the URL, the head SHA, the pipeline, each AI reviewer's latest verdict on the current head quoted short (or the older verdict and the window that passed, or "no AI reviewer"), and the approvals split human and AI. A branch behind its target says how far and that the divergence does not overlap.
+- **Decisions needed**: every open `ask` row — the thread location, the quoted comment, your suggested answer or change and why.
+- **Open human threads and `skipped` rows**, one line each.
+- **What the run does meanwhile**: watching in the waiting cadence, one heartbeat line every 30 minutes, and the end on the 3-hour idle cap.
+
+**Emit the line only on a transition**: entering `needs-human`, switching the variant, or an event that changes what the human must do — a new `ask` row, a new human thread, a negative verdict. Heartbeats and FYI lines never repeat it. Leaving `needs-human` for `working`, because autonomous work appeared, is one plain line without the marker: "!123 back to working: pipeline failed on `b4c5d6e`".
+
+A halt is not a `NEEDS HUMAN` emission; it keeps its own final summary.
 
 ### Hand the ball over
 
-Hand over per `teamwork:review-handshake`: an implementation batch of `ready !<iid>` for every MR in the set, then your ticket move, **once**, when every MR on that ticket qualifies. One MR going green while its sibling is still red is not a handover.
+In the `ready-for-review` variant, hand over per `teamwork:review-handshake`: an implementation batch of `ready !<iid>` for every MR in the set, then your ticket move, **once**, when every MR on that ticket qualifies. One MR going green while its sibling is still red is not a handover.
 
-Then ack the watcher for whatever moved, message it `cadence: waiting`, and set `Mode: handoff-wait`. Do **not** stop: the reviewer has the ball.
+Then ack the watcher for whatever moved, set `Mode: needs-human (ready-for-review)`, and emit the line. Do **not** stop: the reviewer has the ball.
 
-### Handoff-wait
+### Waiting for the human
 
-Nothing polls. The watcher keeps watching in the waiting cadence and messages you on a handshake flip, new notes, the merge, or the idle cap; every heartbeat gets its one line, for example "!123 handed over, waiting on reviewer, idle 1h10m". No actor runs in handoff-wait: with the table settled, there is nothing to dispatch.
+Nothing polls. The watcher keeps watching in the waiting cadence and messages you on a handshake flip, new notes, a verdict, an approval, the merge, or the idle cap; every heartbeat gets its one line, for example "!123 handed over, waiting on reviewer, idle 1h10m" or "!123 waiting on 2 decisions, idle 25m". No actor runs unless an event below dispatches one.
 
-**Each message does one of four things:**
+**In both variants:**
+
+- **The user answers an `ask`** → turn the row into the approved `fix` or `dismiss` the answer implies, set `Mode: working`, message the watcher `cadence: working`, and dispatch the batch. The set re-enters `needs-human` once that work is finished.
+- **An event that brings autonomous work** — a failed pipeline, a push from outside, a branch behind its target with overlap, an `actionable-open` verdict on the current head → write the one plain leaving line, set `Mode: working`, message the watcher `cadence: working`, and dispatch as in a working cycle. A set already handed over is taken back first.
+- **`HEARTBEAT` with nothing moved** → write the one line, naming how long the set has been idle.
+- **Every MR merged or closed, or the ticket reached a terminal state** → stop the watcher, confirm the actor has returned, delete the cron job, report, and stop for good.
+
+**In `decisions-needed`**, the ball is already with the author side, so a new note is not a hand-back to wait out:
+
+- **`NOTES_CHANGED`** → a triage batch, as in a working cycle. The mode holds while the triage runs. A `fix` or `dismiss` row in its return sends the set back to `working`; only `ask` and `skipped` rows keep it in `decisions-needed`, and a new `ask` or a new human thread re-emits the line.
+
+**In `ready-for-review`**, the reviewer has the ball:
 
 - **`HANDSHAKE back-to-work`** → the reviewer handed it back. Set `Mode: working`, message the watcher `cadence: working`. New reviewer threads are ordinary in-scope threads, and their triage comes back to you like any other.
-- **`HEARTBEAT` with the flags unmoved** → nothing moved. Write the one line, naming how long the set has been idle.
-- **Every MR merged or closed, or the ticket reached a terminal state** → stop the watcher, confirm the actor has returned, delete the cron job, report, and stop for good.
 - **`NOTES_CHANGED` while the flags did not move** → a reviewer is mid-review, and a comment is not a hand-back. Write one line as an FYI — "!123 handed over, 3 new comments since 14:02, reviewer still active" — and keep waiting. Take the work back on one of two signals only: the handshake flips (the bullet above), or the newest comment is **at least 30 minutes old** with the flags still unmoved, which you read off the watcher's next heartbeat — the reviewer left comments and walked away without handing over. On that second signal set `Mode: working`, move the ticket to the work state yourself, dispatch the thread triage with a `reclaim !<iid>` row so the actor says why on the MR, and message the watcher `cadence: working`.
 
 **Idle cap: 3 hours.** The watcher reports `IDLE` when nothing has moved for the cap its prompt named. End the run: stop the watcher, confirm the actor has returned, delete the cron job, and report. Say plainly that it stopped on an **idle timeout, not on a merge**, name what is still outstanding, and name the way back in — running `/sdlc:mr-babysit` again picks the same set up.
 
-The user can opt out of the wait with an explicit "stop after handoff". Then the handover is the last thing this command does — report and end, stopping the watcher, deleting the cron job and leaving no subagent running.
+The user can opt out of the wait with an explicit "stop after handoff". Then the handover is the last thing this command does — report and end, stopping the watcher, deleting the cron job and leaving no subagent running. A set in `decisions-needed` keeps waiting even then, because nothing was handed over yet.
 
 ### Stopping instead of handing over
 
-**Stop and hand back to the user** on any of: all MRs merged/closed; a rebase conflict that encodes a genuine product/design decision; a CI failure triaged as `ask`, or a failure signature that hit its 2-attempt cap and is still red; a `could-not-fix` row with no way forward; a reply or resolve that kept failing after a retry; oscillation (this batch's fix contradicting the last one's); or an outstanding `ask` with nothing else left to solve. A halt on one MR doesn't have to halt the others — keep babysitting the rest and report the one that needs you.
+**Stop and hand back to the user** on any of: all MRs merged/closed; a rebase conflict that encodes a genuine product/design decision; a CI failure triaged as `ask`, or a failure signature that hit its 2-attempt cap and is still red; a `could-not-fix` row with no way forward; a reply or resolve that kept failing after a retry; oscillation (this batch's fix contradicting the last one's). An `ask` on a review thread does not halt the run; it is `needs-human (decisions-needed)`. An `ask` that leaves the pipeline red or the branch unrebased does, because the set can never meet the entry condition. A halt on one MR doesn't have to halt the others — keep babysitting the rest and report the one that needs you.
 
 Whenever you stop this way, the set stays back-to-work, per `teamwork:review-handshake`.
 

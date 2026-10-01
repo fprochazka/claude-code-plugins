@@ -52,6 +52,8 @@ The watcher covers **every** MR in the set — a change spanning a service repo 
 
 It runs unattended by design. Rebasing, force-pushing with lease, retrying jobs, and replying to or resolving threads are all pre-authorized for every subagent, and pausing to ask for them defeats the command. It stops for a rebase conflict that encodes a real product decision, a CI failure it cannot confidently fix, an attempt cap, oscillation, or three hours with nothing moving.
 
+When it has solved everything it can solve on its own, the run enters `needs-human` and says so in one line, `NEEDS HUMAN (<variant>): <reason>`, followed by the state of each MR and what is left for you. The variant is `ready-for-review` when nothing waits on you, and the run then hands the MRs over; it is `decisions-needed` when review threads need a design or product call from you, and the MRs then stay with the author side. Before it enters, the pipeline must be green on the current head and every AI reviewer's latest verdict must be non-blocking; a reviewer that re-reviews on push gets 15 minutes after the green pipeline to review the new head. The run keeps watching in both variants and picks the work up again when you answer or when the MR changes. The marker text is stable, so a hook or another skill can key on it; the command itself does not alert you in any other way.
+
 If your permission setup makes Claude Code prompt for those git operations, allowlist them once so the loop runs uninterrupted:
 
 ```jsonc
