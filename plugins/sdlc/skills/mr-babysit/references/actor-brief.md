@@ -52,7 +52,7 @@ A pipeline that ran on a superseded base (the branch was behind its target) is j
 
 The prompt names the threads and the dump directory, `/tmp/glab-discussion/<host>/mr-<iid>/`, one file per thread. Read the files named and nothing else.
 
-A thread is **in scope** iff it is unresolved and the most recent non-system note's body does not end with the marker `<!-- sdlc:mr-babysit -->` (last-line equality, never a substring; review prose often quotes the marker in backticks). Skip threads where every note is a system note.
+A thread is **in scope** iff it is unresolved and the most recent non-system note's body does not end with the marker `<!-- sdlc:mr-babysit -->` (last-line equality, never a substring; review prose often quotes the marker in backticks). Skip threads where every note is a system note. Pending drafts in the dump are not threads and not notes: a `draft-<id>.txt` file is skipped, and a `[DRAFT]` block never counts as a thread's most recent note.
 
 **Your own authorship is irrelevant to scope.** A thread posted earlier in this session under a different hat, `/code-review:post` for example, is in scope like any other; dismissing a wrong finding of your own is not circular, it is the job.
 
@@ -65,6 +65,7 @@ One of four dispositions per in-scope thread, critically evaluated. Review feedb
 
 ## Posting
 
+- **Never write draft comments on the MR.** Publishing a review on your own MR would make you a reviewer of it. When the `write` output says a comment was saved as a draft, delete it with `glab-discussion delete draft:<id>` and post it again with `--no-draft`.
 - Post a dismissal reply once the orchestrator approved it, and a fix reply only with the SHA that carries the fix. A reply announcing a fix you cannot point at is a promise.
 - Every reply body ends with a blank line then `<!-- sdlc:mr-babysit -->`, the signing convention in `teamwork:review-handshake`, so handled threads are not re-processed. Write multi-line bodies to a file, then `glab-discussion write --reply-to <id> --body - < <file>`, then `glab-discussion resolve <id>`. Reply first, then resolve; if a reply fails after one retry, do not resolve, report it.
 - **A watch thread gets a reply and never a resolve.** A thread whose most recent reviewer note ends with `<!-- code-review:watch -->` belongs to `/code-review:watch`; `teamwork:review-handshake` names the one exception.

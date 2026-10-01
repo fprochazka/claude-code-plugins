@@ -125,7 +125,7 @@ Output, under `<tmp>/glab-state/<host>/<project>/mr-<iid>/`:
 - `state.json` — the last snapshot, `mr.json` — the raw MR object from the last probe, `events.log` — every change printed, UTC
 - `pipeline-summary.txt` and `pipeline/` — the `glab-pipeline` dump: `summary.json`, `pipeline.json`, `jobs.json`, `job-logs/<stage>-<name>-<id>.log`, and `lint.json`, `merged.yml`, `test-report.json`, `downstream/` when they apply
 - `external-statuses.json`
-- `/tmp/glab-discussion/<host>/mr-<iid>/*.txt` — one file per discussion thread, managed by `glab-discussion`
+- `/tmp/glab-discussion/<host>/mr-<iid>/*.txt` — one file per discussion thread, managed by `glab-discussion`, which rewrites a file when its content changes and keeps a content hash per thread in `.meta.json`; the caller's own pending drafts show up as `draft-<id>.txt` files and `[DRAFT]` blocks, and they are not MR events
 
 ## Related
 

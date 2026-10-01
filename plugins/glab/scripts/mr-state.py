@@ -657,7 +657,7 @@ def print_snapshot(snap: dict[str, Any]) -> None:
 
 def print_details(d: Details) -> None:
     if d.discussions_dir:
-        print(f"  discussions: {d.discussions_dir}/ (one file per thread; .meta.json maps id -> last activity)")
+        print(f"  discussions: {d.discussions_dir}/ (one file per thread, rewritten when its content changes; draft-<id>.txt files and [DRAFT] blocks are your own unpublished drafts, not MR events)")
         lines = d.discussions_summary.splitlines()
         changed = [l for l in lines if l.strip().startswith(("updated:", "new:", "deleted:"))]
         for l in changed:
