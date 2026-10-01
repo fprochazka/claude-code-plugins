@@ -1,12 +1,12 @@
 ---
 name: post
-description: Post the existing code-review report to the current GitLab MR as inline diff comments + a summary comment
+description: Publish the existing code-review report to the current GitLab MR as one review — inline diff comments written as drafts, published together with a summary and a verdict
 disable-model-invocation: true
 ---
 
 # Post Code Review to MR
 
-Post the code-review report from **this session** to the current GitLab merge request as a combination of inline diff comments (for findings anchored to specific file/line locations) and one standalone summary comment (for everything else plus the final verdict).
+Post the code-review report from **this session** to the current GitLab merge request as one review: inline diff comments (for findings anchored to specific file/line locations) written as GitLab draft notes, then published together with one summary note (for everything else plus the final verdict). The MR gets one notification, and nobody, human or watcher, sees a half-posted review.
 
 **This command only posts.** It does not re-run the review and it does not re-analyze the diff. If no review report exists in this session, stop and tell the user to run `/code-review:full` first.
 
@@ -26,9 +26,16 @@ Before making any GitLab calls, invoke the `glab-discussion` skill to load its u
 
 If the skill is unavailable, stop and tell the user.
 
-## Phase 3 — Identify the target MR
+Drafts need glab-discussion 0.5.0 or newer. If a `glab-discussion` call fails with an unknown command or flag, run `glab-discussion drafts --help`. If that fails too, stop and tell the user to upgrade with `uv tool upgrade glab-discussion` (0.5.0 or newer).
+
+## Phase 3 — Identify the target MR and its pending drafts
 
 You should already know the MR from the `/code-review:full` context loaded earlier in this session. Use that MR. If the MR is ambiguous or missing, ask the user for the MR URL before posting anything.
+
+Then run `glab-discussion read` and look for pending drafts: `draft-<id>.txt` files and `[DRAFT] (draft:<id>)` blocks inside thread files. GitLab shows a user only their own drafts, and the publish in Phase 7 publishes every one of them, so sort them before you write anything:
+
+- **A draft whose last line is exactly `<!-- code-review:post -->` or `<!-- code-review:watch -->`** is left over from an earlier run that never published. It goes out with this review. Delete it with `glab-discussion delete draft:<id>` when it duplicates a finding of this run or is an earlier run's summary, which this run's summary replaces; fix it with `glab-discussion edit draft:<id> --body - < <file>` when it is outdated.
+- **Any other draft** is the user's own review in progress. Stop and ask the user before writing anything: publishing this review would publish their drafts too.
 
 ## Phase 4 — Plan the comment placement
 
@@ -57,9 +64,9 @@ If a finding's intended line is not actually present in the diff (e.g. the agent
 
 A migration safety entry anchors on the first line of the statement it assesses (the report carries it as `path:LINE`). When that line is not in the diff — the migration was reworked and the line moved — anchor on the statement's new first line, and when the file is no longer in the diff at all, drop the entry and tell the user.
 
-## Phase 6 — Post inline diff comments
+## Phase 6 — Write inline diff comments as drafts
 
-For each inline finding, post one diff comment with `glab-discussion write`. Use a consistent body format so threads are easy to scan:
+For each inline finding, write one diff comment with `glab-discussion write --draft`. Use a consistent body format so threads are easy to scan:
 
 ```
 **[<severity>]** <short title>
@@ -79,9 +86,9 @@ _confidence: <n>/100 · from `/code-review:full` (<agent-name>)_
 - A finding that carries a `mermaid` fence in the report keeps it in the comment, copied character for character between the body and the suggested fix. Do not redraw it, do not re-wrap it, and do not restate it in a sentence. **At most three fences reach the MR** — GitLab auto-renders 2000 characters of mermaid per page and the budget is shared. If the report somehow holds more, post the ones on `Blocking` findings first, drop the fences off the rest, and say so in Phase 8.
 - One finding per thread. Do **not** batch multiple findings into one comment.
 - Keep the body tight; the reviewer can expand if needed.
-- Post threads sequentially (not in parallel) so failures are easy to diagnose and the MR doesn't get spammed if something goes wrong mid-run.
+- Write drafts sequentially, not in parallel, so a failure is easy to diagnose.
 
-Post each migration safety entry as its own thread, in file order, with this body:
+Write each migration safety entry as its own draft thread, in file order, with this body:
 
 ```
 **[Migration safety]** <verdict> — `<statement, shortened to one line>`
@@ -109,11 +116,11 @@ _from `/code-review:full` (review-release)_
 
 Keep the numbers and the URLs from the report. The reader of this thread decides when to deploy; a verdict without its reasons is not enough for that.
 
-If a `glab-discussion write` call fails, stop, show the error, and ask the user how to proceed — do **not** silently skip and continue.
+If a `glab-discussion write --draft` call fails with a transient error (a timeout, a 5xx, a dropped connection), retry it once. If the retry fails too, or the error is not transient (a 401 or 403, a missing `glab-discussion`, an unknown command or flag — see the version check in Phase 2), stop and show the error. Nothing is public yet: only the user sees the drafts written so far. Report which drafts exist (`glab-discussion read` lists them) and ask whether to finish the rest and publish, or delete them all with `glab-discussion drafts delete --force`. Do **not** silently skip a finding and continue.
 
-## Phase 7 — Post the summary comment
+## Phase 7 — Publish the review
 
-Post exactly **one** standalone (non-diff) comment on the MR via `glab-discussion write` (no file/line — a plain MR-level discussion). Structure:
+Write exactly **one** summary to a file. It is not a separate comment: it is the body of the publish below, which posts it as a new top-level MR note together with every draft. Structure:
 
 ```markdown
 ## Code review summary
@@ -159,13 +166,29 @@ Only include sections that have content. Skip empty sections rather than printin
 
 Inline-anchored findings live in the diff threads, not here — do not duplicate them in the summary. The one exception is the migration safety list: one line per migration with its verdict, so the approver sees every verdict in one place. The reasons stay in the diff thread.
 
+Publish the drafts and the summary as one review:
+
+```
+glab-discussion drafts publish --body - --verdict <verdict> < <summary file>
+```
+
+- **`--verdict requested-changes`** when the summary's `### Verdict` requests changes or the review has a Blocking finding; **`--verdict reviewed`** otherwise.
+- **Never `approve`.** The publish runs with the user's token, and approving the MR is a human's decision (`teamwork:review-handshake`). An approve recommendation stays text in the summary.
+- **Always pass `--verdict`.** Without it, the publish refuses and publishes nothing when the user gave this MR a verdict before.
+- The publish adds the user as a reviewer when they are not one yet, and revokes their approval when they had given one; its output says so.
+
+If the publish fails, say so plainly and quote its output. A non-zero exit usually means nothing was published. When the output says the drafts were published but the verdict was not applied, the review is public without its verdict: report exactly that.
+
+After a successful publish, run `glab-discussion read --dump` once. A draft has only its `draft:<id>` and no URL; the dump gives each published thread its discussion id and the summary note its link.
+
 ## Phase 8 — Report back to the user
 
-After posting, reply in the conversation with:
+After publishing, reply in the conversation with:
 
-- Number of inline diff comments posted, grouped by severity
-- Number of migration safety comments posted, each with its verdict
-- A link / reference to the summary comment
+- Number of inline diff comments published, grouped by severity
+- Number of migration safety comments published, each with its verdict
+- The link to the summary note, and the verdict the publish set
+- Leftover drafts of an earlier run that this review published or deleted
 - Any findings you intentionally moved from inline → summary because their line wasn't in the diff
 - Any diagram fences you left off a finding to stay inside the three-fence budget
-- Any failures, if you stopped early
+- Any failures, and the drafts still pending if you stopped early

@@ -43,7 +43,7 @@ Nothing else writes to git. Note what the sync is **not**: it moves the branch p
 
 ## Autonomy — scoped grant
 
-These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, resolving your own threads, **un-resolving your own threads**, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, spawning and stopping the watcher, and arming or deleting the watchdog cron job. This override is scoped to those operations and ends when the watch ends.
+These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, publishing them as a review with a `reviewed` or `requested-changes` verdict, resolving your own threads, **un-resolving your own threads**, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, spawning and stopping the watcher, and arming or deleting the watchdog cron job. This override is scoped to those operations and ends when the watch ends.
 
 The hand-back moves are pre-authorized as `teamwork:review-handshake` defines them, its no-tracker mode included.
 
@@ -67,7 +67,7 @@ The top-level session is the **orchestrator**. It never sleeps, never polls, and
 
 ### 0.1 Tooling
 
-Invoke the `glab` skill and the `glab-discussion` skill before making any GitLab calls. `glab`, `glab-discussion` and `glab-pipeline` are required; when the state script reports one missing, tell the user which, give the install command `uv tool install glab-discussion glab-pipeline`, and ask before installing.
+Invoke the `glab` skill and the `glab-discussion` skill before making any GitLab calls. `glab`, `glab-discussion` 0.5.0 or newer and `glab-pipeline` are required (`post.md` Phase 2 says what to do when `glab-discussion` is older); when the state script reports one missing, tell the user which, give the install command `uv tool install glab-discussion glab-pipeline`, and ask before installing.
 
 This command also uses skills from other plugins: `glab:mr-status` for MR state (0.2, and inside the watcher from Phase 6 on), and `teamwork:workflow-identify` and `teamwork:review-handshake` for the tracker, its state names and the handshake (0.4). The glab and teamwork plugins are declared dependencies. If the teamwork skills are unavailable, say so in one line and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
 
@@ -222,10 +222,10 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/post/SKILL.md` and execute it against the rep
 
 ## Phase 4 — Hand the work back to the author
 
-Once the comments are posted, hand the work back per `teamwork:review-handshake`.
+Once the review is published, hand the work back per `teamwork:review-handshake`.
 
-- Hand back **only after** every comment from Phase 3 has actually posted. Work handed back before the findings are visible tells the author nothing.
-- Add a short tracker comment naming the MR and pointing at the review summary comment. State the findings count by severity, facts only.
+- Hand back **only after** the Phase 3 publish succeeded. Work handed back before the findings are visible tells the author nothing.
+- Add a short tracker comment naming the MR and pointing at the review's summary note. State the findings count by severity, facts only.
 - If the work is already handed back, leave it alone and note it.
 - If the ticket move fails (permissions, a workflow transition the tracker forbids), do not fight it. Record the failure in the ledger, tell the user, and use the push gate for this watch.
 
@@ -258,6 +258,8 @@ Write a ledger next to the review report, at `./.claude/review-report/<topic>.wa
 
 `Last movement` is the timestamp of the last thing that actually moved: an author push, a draft toggle either way, a new comment from anyone, or a finding changing status. The first three come from the watcher's messages, the last from your own rounds. The idle cap under [Termination](#termination) reads it.
 
+Thread ids come from the `glab-discussion read --dump` that follows each publish; a draft has no discussion id until it is published.
+
 `Status` is one of `open`, `addressed`, `refuted`, `superseded`. Only `Blocking` and `Suggestion` rows gate termination. Record `Nitpick` and `Positive` rows for completeness, but they never keep the watch alive.
 
 Record each migration safety thread as a row with `Migration safety` in the Severity column and the verdict in the Title. These rows never gate on their own — a `Do not run as written` verdict gates through its matching Blocking row.
@@ -277,7 +279,7 @@ Ledger: ./.claude/review-report/<topic>.mr-watch.md
 Reviewed at: <REVIEW_HEAD sha>
 ```
 
-Omit the `Ticket:` line under the push gate and write the `Handshake:` line on the draft flag alone. `Reviewed at` is the SHA of the round you just posted; the watcher reports a ready-for-review reading on that same head with no new notes as `no push since <sha>`, which is the stale case in 7.2. Send `reviewed at <sha>` again after every round.
+Omit the `Ticket:` line under the push gate and write the `Handshake:` line on the draft flag alone. `Reviewed at` is the SHA of the round you just published; the watcher reports a ready-for-review reading on that same head with no new notes as `no push since <sha>`, which is the stale case in 7.2. Send `reviewed at <sha>` again after every round.
 
 Then arm the **watchdog** with `CronCreate`, recurring, every 30 minutes on an off-minute (`cron`: `"7,37 * * * *"`), with a one-sentence plain-text prompt naming the MR `!iid`, the ticket, and the ledger path — never a slash command, which would re-enter this command on every firing. Record both ids in the ledger. The heartbeat proves the watcher is alive; nothing proves it is dead, since a watcher that ran out of context, was killed, or is paused on a permission prompt sends nothing, and no message ever wakes you. The cron is the one clock that fires without it. Each firing checks two things and nothing else: is the watcher alive per `ListAgents`, and is `Last message to parent` under 45 minutes old per the watcher's own ledger — a liveness read, never a substitute for a message. Both hold → say nothing and end the turn. Either fails → message the watcher (a message to an ended agent resumes it) or spawn a fresh one against the ledger, and say so in one line. The watchdog never reads the MR itself and never runs a round.
 
@@ -289,7 +291,7 @@ Then report the initial pass to the user and end the turn. Do not sleep, poll, o
 
 ## Phase 7 — The follow-up round (on a watcher message)
 
-A round starts when the watcher's message says the handshake flipped to ready-for-review — or, when `Last reviewed SHA` is still empty because the initial run found the pipeline in flight, when `PIPELINE_CHANGED` reports a settled status while the last handshake reading is ready-for-review; that round is the initial review, Phases 2 to 5, not 7.3 to 7.6. Every other message is information: update the ledger's `Last movement`, write one line to the user if it changes what they would do, and end the turn. A push while the ticket is still in `WORK_STATE` is not a round. A new note is not a round; you read it in the next round. `STATE_CHANGED` to merged or closed goes to [Termination](#termination).
+A round starts when the watcher's message says the handshake flipped to ready-for-review — or, when `Last reviewed SHA` is still empty because the initial run found the pipeline in flight, when `PIPELINE_CHANGED` reports a settled status while the last handshake reading is ready-for-review; that round is the initial review, Phases 2 to 5, not 7.3 to 7.7. Every other message is information: update the ledger's `Last movement`, write one line to the user if it changes what they would do, and end the turn. A push while the ticket is still in `WORK_STATE` is not a round. A new note is not a round; you read it in the next round. `STATE_CHANGED` to merged or closed goes to [Termination](#termination).
 
 ### 7.1 Re-derive state from the ledger and the message
 
@@ -305,7 +307,7 @@ git fetch origin "$TARGET_BRANCH" "$SOURCE_BRANCH"
 
 The gate is the watcher's `ready-for-review` reading; a `half-set` reading is a no-op, per `teamwork:review-handshake`.
 
-**Watch for a stale review state.** If the gate opens but the head SHA still equals `Last reviewed SHA` and the watcher reported no new notes since your last round, the author changed nothing. Do not re-review the same code and do not re-post. Reply once in the summary thread naming the findings still `open`, then hand the work back as in Phase 4 and end the turn.
+**Watch for a stale review state.** If the gate opens but the head SHA still equals `Last reviewed SHA` and the watcher reported no new notes since your last round, the author changed nothing. Do not re-review the same code and do not re-post. Reply once in the last summary's thread naming the findings still `open`, as a plain published reply (`glab-discussion write --no-draft --reply-to <id>`) since there is no review to publish, then hand the work back as in Phase 4 and end the turn.
 
 **Push-gate fallback.** When Phase 0.4 found no ticket, or the Phase 4 ticket move failed, the round starts on the watcher reporting the MR not draft with a head SHA that differs from `Last reviewed SHA`. Otherwise it is a no-op.
 
@@ -321,16 +323,16 @@ If the sync is refused by a guard, say so loudly in the pass report and continue
 
 **Every round revisits every still-open finding from every previous round, and every one of them gets a reply.** This is not optional and it is not limited to the findings the author happened to mention. A finding you posted in round 1 and never returned to is a finding the author cannot close.
 
-Read all threads with `glab-discussion read --dump`. Then, for **each** ledger row still `open`, verify it against the code at the current `REVIEW_HEAD` and reach a verdict. A finding leaves `open` only on **evidence**, never on the author's assertion alone:
+Read all threads with `glab-discussion read --dump`, and sort any pending drafts as `post.md` Phase 3 says before you write. Then, for **each** ledger row still `open`, verify it against the code at the current `REVIEW_HEAD` and reach a verdict. A finding leaves `open` only on **evidence**, never on the author's assertion alone:
 
 - **addressed** — you read the current code and confirmed the problem is gone. The author's reply saying "fixed" is a pointer to check, not proof. If the reply claims a fix but the code still has the problem, the finding **stays open**, and your reply names the exact line that still shows it.
 - **refuted** — the author replied with a substantive reason the finding is wrong, marginal, or out of scope, and you have weighed that reason and accept it. **A reply is mandatory**: a thread the author resolved with no reply, or with an empty or content-free reply ("ok", "done", a thumbs-up), does **not** count as refuted — re-open your assessment and say so in the thread. If you disagree with the author's reasoning, the finding stays `open` and your reply gives the specific counter-argument.
 - **superseded** — the code moved on and the finding no longer applies to anything in the diff.
 - **still open** — neither fixed nor answered.
 
-**Then act on the verdict, in the thread, in this pass:**
+**Then act on the verdict, in the thread, in this pass.** Every reply is a draft, `glab-discussion write --draft --reply-to <id> --body - < <file>`, and a reply that resolves adds `--resolve`, so the thread resolves when the round is published in 7.6:
 
-| Verdict | Reply | Resolve |
+| Verdict | Reply | Resolve (`--resolve`) |
 |---|---|---|
 | `addressed` | Confirm what you verified, citing the SHA and the file:line that now satisfies it | **Yes** |
 | `refuted` | State that you accept the author's reasoning, and why | **Yes** |
@@ -344,16 +346,16 @@ Read all threads with `glab-discussion read --dump`. Then, for **each** ledger r
   glab-discussion resolve <discussion_id> --unresolve
   ```
 
-  A resolved thread without your verdict behind it was closed by a person: un-resolve on evidence only, and address that person.
+  `resolve --unresolve` has no draft form, so run it after the round's publish in 7.6; a thread re-opened earlier would sit open without the reply that explains why. A resolved thread without your verdict behind it was closed by a person: un-resolve on evidence only, and address that person.
 - **Never resolve without a reply.** A silently resolved thread destroys the record of why the finding went away.
-- **One reply per thread per round.** Do not re-state an unchanged verdict every round — a thread that was `still open` last round and is unchanged this round gets one fresh reply only if the author changed something in it or in the code it points at. Otherwise leave it and let the round's summary comment carry the status.
+- **One reply per thread per round.** Do not re-state an unchanged verdict every round — a thread that was `still open` last round and is unchanged this round gets one fresh reply only if the author changed something in it or in the code it points at. Otherwise leave it and let the round's summary carry the status.
 - Reply bodies state findings and verification results, and **promise nothing** — see `teamwork:review-handshake`. End every body with a blank line and `<!-- code-review:watch -->`.
 
 Record the evidence for each transition in the ledger's `Evidence` column: a SHA and file:line for `addressed`, the note id for `refuted`.
 
 ### 7.5 Review what the author changed
 
-Compare the MR's current `sha` with `Last reviewed SHA` in the ledger. If they match, the author changed no code this round — skip to 7.6.
+Compare the MR's current `sha` with `Last reviewed SHA` in the ledger. If they match, the author changed no code this round — skip to 7.6, which still publishes the replies.
 
 **`git diff <last_reviewed_sha>..<new_sha>` is the wrong tool here.** If the author rebased, that diff mixes their edits together with every commit master gained in the meantime, and the author's actual work drowns in unrelated churn. The two questions are separate, so ask them separately.
 
@@ -390,21 +392,35 @@ Scope the re-review proportionally, using the agent-selection judgment from `ful
 
 Watch for **fixes that introduce new problems** — a hurried fix for a blocking finding is a common source of fresh bugs, and the `!` interdiffs are where they show up.
 
-Then post the update, following `post.md`:
+Then write the update as drafts, following `post.md`:
 
-- Post inline threads for **new** findings only. Never re-post a finding already in the ledger — repeat comments on an unchanged point are noise. A finding still `open` is carried by its existing thread (7.4), not by a new one.
-- A migration file the round reworked (a `!` interdiff or a `>` commit touching it) gets a fresh assessment from `review-release`, because the old one describes a statement that no longer exists. Post it as a new thread, reply in the old thread with a pointer to the new one, resolve the old thread, and mark its ledger row `superseded`. A migration the round did not touch keeps its thread untouched.
-- Post **one** summary comment for this round, with: the round number, the SHA range reviewed, whether the branch was rebased and onto what, the round's new findings not anchored to the diff, and a status table of every gating finding (`addressed` / `refuted` / `open`).
-- Give that comment a `### Coverage` section for this round, in the shape `post.md` Phase 7 uses: the agents run, the agents skipped with a one-line reason, and the count of findings dropped in validation. A round that re-reviewed only part of the delta says which part.
+- Write inline drafts for **new** findings only. Never re-post a finding already in the ledger — repeat comments on an unchanged point are noise. A finding still `open` is carried by its existing thread (7.4), not by a new one.
+- A migration file the round reworked (a `!` interdiff or a `>` commit touching it) gets a fresh assessment from `review-release`, because the old one describes a statement that no longer exists. Write it as a new draft thread, reply in the old thread with a draft that resolves it (`--resolve`) and names the file and line of the new assessment, since a draft has no link yet, and mark its ledger row `superseded`. A migration the round did not touch keeps its thread untouched.
+- Write **one** summary for this round, with: the round number, the SHA range reviewed, whether the branch was rebased and onto what, the round's new findings not anchored to the diff, and a status table of every gating finding (`addressed` / `refuted` / `open`).
+- Give that summary a `### Coverage` section for this round, in the shape `post.md` Phase 7 uses: the agents run, the agents skipped with a one-line reason, and the count of findings dropped in validation. A round that re-reviewed only part of the delta says which part.
 - Add the new findings to the ledger as `open` rows.
 
-### 7.6 Hand the work back, update the ledger, end the pass
+### 7.6 Publish the round
 
-If any gating finding is still `open` — carried over or newly found — hand the work back as in Phase 4. The next round waits for the author to hand over again.
+Each round is one review. Publish its drafts, the 7.4 replies and the 7.5 findings, with the round's summary as the body:
+
+```
+glab-discussion drafts publish --body - --verdict <requested-changes | reviewed> < <summary file>
+```
+
+The round's summary is always the publish body, a new top-level note, never a `--reply-to` into an earlier round's summary thread. The verdict is `requested-changes` while any Blocking finding stays open and `reviewed` once they are all settled, never `approve`. Always pass `--verdict`: every round after the first follows an earlier verdict, and a publish without one refuses. `post.md` Phase 7 says how to report a failed publish; if it fails, do not hand back, tell the user, and leave the drafts in place for the next attempt.
+
+After the publish succeeds, un-resolve the threads 7.4 found closed over a problem that is still there, then run `glab-discussion read --dump` once and record the new thread ids in the ledger.
+
+The publish moves the MR in ways the watcher reports: the verdict's system note, `REVIEWERS_CHANGED` when the publish added the user as a reviewer, `APPROVALS_CHANGED` when it revoked the user's approval. They are this run's own action: they do not update `Last movement`, and they are not reviewer movement.
+
+### 7.7 Hand the work back, update the ledger, end the pass
+
+If any gating finding is still `open` — carried over or newly found — hand the work back as in Phase 4, after the publish succeeded. The next round waits for the author to hand over again.
 
 If nothing is left open, leave the handshake as it is and go to [Termination](#termination).
 
-Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new handshake reading, the round count, and the new `Last movement` and `Last round` timestamps. Message the watcher `acted: hand-back on <mr url> at <UTC timestamp>` and `reviewed at <sha>`, so it does not report your own ticket move back to you. Then end the turn. The watcher's next message resumes you.
+Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new handshake reading, the round count, and the new `Last movement` and `Last round` timestamps. Message the watcher `acted: review published on <mr url> at <UTC timestamp>`, `acted: hand-back on <mr url> at <UTC timestamp>` and `reviewed at <sha>`, so it does not report your own publish and ticket move back to you. Then end the turn. The watcher's next message resumes you.
 
 Report what changed: what the author pushed, which findings moved status, what you posted and resolved.
 
@@ -414,7 +430,7 @@ Report what changed: what the author pushed, which findings moved status, what y
 
 Open `Nitpick` rows never keep the watch alive.
 
-On a clean termination: leave the handshake at ready-for-review, and post one final summary comment on the MR stating that every gating finding is settled, with the outcome per finding. The handshake stays on ready-for-review because the review is what finished, not the merge — the MR is now a human's to approve and merge.
+On a clean termination: leave the handshake at ready-for-review, and publish one final review whose body states that every gating finding is settled, with the outcome per finding: `glab-discussion drafts publish --body - --verdict reviewed < <summary file>`. The handshake stays on ready-for-review because the review is what finished, not the merge — the MR is now a human's to approve and merge.
 
 **Also stop early**, stopping the watcher, deleting the watchdog cron job and reporting, on any of:
 

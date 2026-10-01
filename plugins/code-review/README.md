@@ -11,8 +11,8 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 ```
 
 - `/code-review:full` — runs the multi-phase review and writes a report.
-- `/code-review:post` — posts the report from the current session to the GitLab MR as inline diff comments + one summary comment. Requires a `/code-review:full` run earlier in the same session. GitLab-only.
-- `/code-review:watch` — full + post, then follows the MR across review rounds until every blocker and suggestion is settled. It is the reviewer side of an MR, the mirror image of `/sdlc:mr-babysit`. It never edits code, commits, or pushes. GitLab-only. See [the handshake](#the-handshake-with-the-author).
+- `/code-review:post` — posts the report from the current session to the GitLab MR as one review: inline diff comments written as GitLab draft notes, published together with one summary note and a `reviewed` or `requested-changes` verdict, so the MR gets one notification and nobody sees a half-posted review. Requires a `/code-review:full` run earlier in the same session, and glab-discussion 0.5.0 or newer. GitLab-only.
+- `/code-review:watch` — full + post, then follows the MR across review rounds until every blocker and suggestion is settled, publishing each round as one review the same way. It is the reviewer side of an MR, the mirror image of `/sdlc:mr-babysit`. It never edits code, commits, or pushes. GitLab-only. See [the handshake](#the-handshake-with-the-author).
 
 ## The handshake with the author
 
