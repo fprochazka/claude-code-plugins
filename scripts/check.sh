@@ -33,6 +33,14 @@ PLUGIN_HOMEPAGE_PREFIX='https://github.com/fprochazka/claude-code-plugins/tree/m
 PLUGIN_JSON_REQUIRED=('$schema' name version description author license homepage)
 MARKETPLACE_CATEGORIES=(productivity security)
 
+# Sections every plugins/<name>/DESIGN.md must have, matched as whole "## " heading lines.
+DESIGN_SECTIONS=("## Purpose" "## Goals" "## Non-goals and scope" "## Principles" "## Decisions" "## How changes are checked")
+# Whether every plugin must have a DESIGN.md. While it is 0, a plugin without one passes; set it to 1
+# once every plugin has its design written down.
+DESIGN_REQUIRED=0
+# Where the path-scoped rule that points a session at plugins/<name>/DESIGN.md lives, as <name>.md.
+DESIGN_RULES_DIR=".claude/rules/plugins"
+
 # Hook events Claude Code dispatches. A key outside this set is a hook that never fires.
 HOOK_EVENTS=(PreToolUse PostToolUse PostToolUseFailure UserPromptSubmit UserPromptExpansion Stop
   SubagentStart SubagentStop SessionStart SessionEnd PreCompact Notification PermissionRequest)
@@ -365,6 +373,46 @@ check_hooks_json() {
   finish hooks-json "$before" "$items"
 }
 
+# A plugin's DESIGN.md reaches a session through a path-scoped project rule, .claude/rules/plugins/<name>.md,
+# which Claude Code injects when a file under plugins/<name>/ is read or edited. The rule tells the agent to read
+# the design. It cannot import it: an @-import inside a rule loads at session start, whatever the paths say.
+# A CLAUDE.md inside the plugin directory is not an alternative, because the plugin validator rejects it.
+check_design() {
+  local before=$fails items=0 name dir rule frontmatter section rule_file
+  while read -r name; do
+    dir="plugins/$name"
+    rule="$DESIGN_RULES_DIR/$name.md"
+    if [ -f "$dir/CLAUDE.md" ]; then
+      fail design "$dir/CLAUDE.md" "a plugin directory must not have a CLAUDE.md; put the pointer to DESIGN.md in $rule"
+    fi
+    if [ ! -f "$dir/DESIGN.md" ]; then
+      if [ "$DESIGN_REQUIRED" -eq 1 ] && ! is_pending "$name"; then
+        fail design "$dir" "no DESIGN.md"
+      fi
+      continue
+    fi
+    items=$((items + 1))
+    for section in "${DESIGN_SECTIONS[@]}"; do
+      grep -qxF "$section" "$dir/DESIGN.md" || fail design "$dir/DESIGN.md" "no \"$section\" section"
+    done
+    if [ ! -f "$rule" ]; then
+      fail design "$dir" "has DESIGN.md but no $rule, so sessions never see the design"
+      continue
+    fi
+    frontmatter=$(awk 'NR == 1 && $0 != "---" { exit } NR > 1 && $0 == "---" { exit } NR > 1 { print }' "$rule")
+    printf '%s\n' "$frontmatter" | grep -qE "^[[:space:]]*-[[:space:]]*[\"']?$dir/\*\*[\"']?[[:space:]]*\$" ||
+      fail design "$rule" "paths frontmatter does not list \"$dir/**\""
+    grep -qF "$dir/DESIGN.md" "$rule" || fail design "$rule" "does not name $dir/DESIGN.md"
+  done < <(plugin_dirs)
+  # A rule left behind after its plugin or its design was removed points the agent at a file that is not there.
+  for rule_file in "$DESIGN_RULES_DIR"/*.md; do
+    [ -f "$rule_file" ] || continue
+    name=$(basename "$rule_file" .md)
+    [ -f "plugins/$name/DESIGN.md" ] || fail design "$rule_file" "points at plugins/$name/DESIGN.md, which does not exist"
+  done
+  finish design "$before" "$items"
+}
+
 check_shellcheck() {
   local before=$fails items=0 file output
   while read -r file; do
@@ -400,7 +448,7 @@ run_frontmatter() {
   fails=$((fails + fail_n))
 }
 
-BASH_CHECKS=(plugin-manifest plugin-json marketplace-sync readme-table dependencies hooks-json shellcheck tracked-junk)
+BASH_CHECKS=(plugin-manifest plugin-json marketplace-sync readme-table dependencies design hooks-json shellcheck tracked-junk)
 PYTHON_CHECKS=(frontmatter-parse frontmatter-keys description skill-name references)
 
 ONLY="${1:-}"
@@ -422,6 +470,7 @@ if [ -z "$ONLY" ]; then
 elif in_list "$ONLY" "${PYTHON_CHECKS[@]}"; then
   run_frontmatter "$ONLY"
 fi
+if wanted design; then check_design; fi
 if wanted hooks-json; then check_hooks_json; fi
 if wanted shellcheck; then check_shellcheck; fi
 if wanted tracked-junk; then check_tracked_junk; fi

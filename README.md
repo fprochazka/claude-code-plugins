@@ -95,9 +95,13 @@ Plugins that explore an idea. They work, but the shape can change without notice
 
 ### Checks
 
-Run `make all` before you push. It runs three things: `make check` (the repository checks in `scripts/check.sh` — manifests, marketplace and README consistency, frontmatter, references, hooks, shellcheck), `make validate` (`claude plugin validate --strict` over the marketplace and every plugin), and `make test` (the hook test suites). The same target runs in CI on every push and pull request. To debug one check, pass its id: `scripts/check.sh references`. A plugin's `plugin.json` is the source of its description: the marketplace entry and the README row below are copies of it, and `make check` fails when they drift apart.
+Run `make all` before you push. It runs three things: `make check` (the repository checks in `scripts/check.sh` — manifests, marketplace and README consistency, frontmatter, references, plugin design, hooks, shellcheck), `make validate` (`claude plugin validate --strict` over the marketplace and every plugin), and `make test` (the hook test suites). The same target runs in CI on every push and pull request. To debug one check, pass its id: `scripts/check.sh references`. A plugin's `plugin.json` is the source of its description: the marketplace entry and the README row below are copies of it, and `make check` fails when they drift apart.
 
 Run `make hooks` once per clone. It points `core.hooksPath` at `scripts/hooks`, where a pre-commit and a commit-msg hook refuse anything whose staged lines or commit message contain a private identifier — a customer, host, bot or ticket prefix that has no business in a public repository. The hooks read the identifiers from a file outside the repository, named by `git config hooks.forbiddenPatternsFile`, because listing them here would publish the very strings they exist to keep out. Until that config key points at a real file, both hooks refuse the commit and print how to create it.
+
+### Plugin design
+
+Before you change a plugin, read its `DESIGN.md`: why the plugin exists, what is out of scope, and what was already tried and rejected. When a Claude Code session reads or edits a file under `plugins/<name>/`, Claude Code injects the path-scoped rule `.claude/rules/plugins/<name>.md`, which tells the session to read the design. The rule names the file instead of importing it with `@`, because an import inside a rule loads at session start whatever its `paths` say. A plugin directory gets no `CLAUDE.md`: `claude plugin validate --strict` rejects one, and Claude Code would not load it for people who install the plugin anyway. A change that contradicts a principle or reverses a decision needs the maintainer's approval and a new entry under Decisions. Plugins with evals are checked with the private `claude-code-plugins-evals` repository; a session without access to it says so instead of skipping the evals in silence. `scripts/check.sh design` checks that each `DESIGN.md` has the required sections and a rule that points at it.
 
 ### Creating a New Plugin
 
@@ -105,6 +109,8 @@ Run `make hooks` once per clone. It points `core.hooksPath` at `scripts/hooks`, 
 - [ ] Create `plugins/<name>/.claude-plugin/plugin.json` with name, version, description
 - [ ] Add plugin content (skills/, agents/, hooks/, etc.)
 - [ ] Create `plugins/<name>/README.md`
+- [ ] Create `plugins/<name>/DESIGN.md` with the sections Purpose, Goals, Non-goals and scope, Principles, Decisions, and How changes are checked
+- [ ] Create `.claude/rules/plugins/<name>.md` with `paths: ["plugins/<name>/**"]` frontmatter and one paragraph that tells the agent to read `plugins/<name>/DESIGN.md` before changing the plugin (copy `.claude/rules/plugins/prose.md`)
 - [ ] Add entry to `.claude-plugin/marketplace.json` with matching version
 - [ ] Add row to "Available Plugins" table in the root README
 
@@ -112,6 +118,7 @@ Run `make hooks` once per clone. It points `core.hooksPath` at `scripts/hooks`, 
 
 - [ ] Update version in `plugins/<name>/.claude-plugin/plugin.json`
 - [ ] Update version in `.claude-plugin/marketplace.json`
+- [ ] If the release changes a principle or reverses a decision, update Decisions in `plugins/<name>/DESIGN.md`
 - [ ] Commit and push
 
 ### Notes
