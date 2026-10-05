@@ -86,5 +86,5 @@ The Phase 5 file is the argument. The user reads the conclusion first: invoke th
 - Do NOT write a plan. Do NOT enter plan mode. Do NOT start implementing.
 - Phases run strictly in order — never overlap them. Parallelism is allowed only inside Phase 4, and only for deep dives that barely overlap. No background subagents.
 - Do NOT skip Phase 3 to jump straight into deep dives — the surface map is what makes the deep dives focused.
-- A constraint the user stated — in **Scope** or in the conversation ("only the Airflow side", "do not touch repo X") — goes into every subagent prompt verbatim. Intersect each phase's template with what the user said. Never expand a template with detail the user did not ask for.
+- A constraint the user stated — in **Scope** or in the conversation ("only the backend side", "do not touch repo X") — goes into every subagent prompt verbatim. Intersect each phase's template with what the user said. Never expand a template with detail the user did not ask for.
 - Reply as `brief-next-steps` prescribes (path, line count, step headings), plus one line naming the Phase 5 file. Then stop and wait for the user to discuss before doing anything else.
