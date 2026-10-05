@@ -66,7 +66,11 @@ Write the briefing to `./.claude/plans/pre-plan-<short-slug>.md` (slug from tick
 - **Problem** — what we're solving and why (from ticket / args / conversation).
 - **Current state** — how the relevant code works today, synthesized across subdomains.
 - **What would have to change** — areas of pressure. Not a chosen design.
-- **Open questions & trade-offs** — what needs the user's input before a plan can be written.
+- **Open questions & trade-offs** — what needs the user's input before a plan can be written. Each item is a question that ends in an actual choice, followed by a sublist:
+  - **Recommended:** the approach you would pick, and why — anchored in what the deep dives found (a file, a constraint, a measured fact), not in taste.
+  - **Rejected:** one bullet per alternative worth naming, strongest first, each with the reason it loses to the recommendation. An alternative nobody would seriously pick is left out.
+
+  When you genuinely have no preference, say so in the **Recommended** bullet and name what would decide it. Never invent a recommendation to fill the slot.
 - **Suggested next steps** — a short bulleted list of *directions* to consider (e.g. "approach A: change X here; approach B: extract Y"). Not a committed plan.
 
 Omit sections that have nothing to say. No filler.

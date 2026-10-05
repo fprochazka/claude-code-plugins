@@ -34,7 +34,11 @@ As short as the material allows, hard ceiling ~170 lines, **no floor** — paddi
 - **Two or three sentences of context** at the top. No further preamble.
 - If two terms were actually being confused, one short section separating them.
 - **Steps in implementation order.** Each heading names the **problem in plain language, not the mechanism** ("The quantities we ordered are never refreshed on the mirror", not "Add a refresh job"). Within each: what is wrong → what we change and which parts we touch → what that gets us → what it unlocks next. Each step ships on its own; if two are independent, say so in one line instead of inventing a dependency.
-- **Closing section: decisions the user still owes** — one line each, ending in an actual choice, pointing at its step. **Mandatory — this is the point of the file**; dropping the unblocking decisions is the failure mode in the other direction.
+- **Closing section: decisions the user still owes** — each a one-line question that ends in an actual choice and points at its step. **Mandatory — this is the point of the file**; dropping the unblocking decisions is the failure mode in the other direction. Each question gets a short sublist:
+  - **Recommended:** the approach and why, in one sentence.
+  - **Rejected:** only the strongest alternative and why it loses, in one sentence. When the source document (the pre-plan, or another `./.claude/plans/` file) discusses more alternatives, end the bullet with a pointer to it, e.g. "weaker alternatives in `pre-plan-<slug>.md`". When the session offers no real alternative, leave the bullet out.
+
+  When there is genuinely no preference, the **Recommended** bullet says so and names what would decide it.
 - **Second closing section: not yet verified** — one line each, no elaboration.
 
 Write it to the user in the second person.
@@ -45,7 +49,7 @@ Only: file path, line count, and the step headings as a bare list. Nothing else.
 
 ## Hard rules
 
-- **Only the final proposal.** No alternatives, comparisons, `Decided`/`Open` taxonomies, rule numbers, or revision history.
+- **Only the final proposal.** No alternatives, comparisons, `Decided`/`Open` taxonomies, rule numbers, or revision history. The one exception is the single rejected alternative under each owed decision.
 - **No narration.** Only the current state — never what changed or what an earlier version said.
 - **Layman's terms.** Define internal vocabulary on first use, one clause, inline — no glossary section.
 - **A `mermaid` fence in a source document is copied over verbatim, or left out entirely** — never turned into prose. A diagram that earned its place in the long document earns it in the briefing too, and a paragraph describing a picture is worse than either.
