@@ -31,7 +31,7 @@ A bot's `high`/`critical` **severity tag does not elevate a finding above this g
 
 The grant also covers the **handoff controls**: every hand-over and take-back move `teamwork:review-handshake` defines, the ticket side yours and the MR side the actor's, plus spawning and stopping the watcher and arming or deleting the watchdog cron job. Do them, do not ask for them.
 
-(If your harness's safety classifier blocks these git or discussion operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README. If a block lands mid-run, don't stall on it: note the exact blocked command **loudly** in the progress note, carry on with everything else and the other MRs, and let the allowlist fix land out of band — never sit and wait for a go-ahead on an operation this run already authorized. A permission prompt that reaches a background subagent pauses that subagent until the user answers; the watchdog notices a silent watcher, and you name the blocked command.)
+(If your harness's safety classifier blocks these git or discussion operations, that's an environment problem, not a signal to ask each time — the fix is to allowlist them once; see the plugin README. If a block lands mid-run, don't stall on it: note the exact blocked command **loudly** in the progress note, carry on with everything else and the other MRs, and let the allowlist fix land out of band. Do not run the blocked command yourself and do not send it to a fresh actor: the classifier reads either as a way around its denial, even under this grant. It runs again only after the user answers the note in a new message, and then you run it yourself — never sit and wait for a go-ahead on an operation this run already authorized. A permission prompt that reaches a background subagent pauses that subagent until the user answers; the watchdog notices a silent watcher, and you name the blocked command.)
 
 ## Prerequisites
 
@@ -121,7 +121,8 @@ Omit the `Ticket:` line for `tracker: none`, and write the `Handshake:` line on 
 ```
 First read ${CLAUDE_PLUGIN_ROOT}/skills/mr-babysit/references/actor-brief.md in full and load the skills it names.
 Worktree /home/me/dev/service, source branch feat/orders-api, target master.
-Triage, change nothing:
+The user asked: "/sdlc:mr-babysit !123 !456". The run drives !123 and !456 to mergeable: it rebases each MR's source branch (feat/orders-api here) onto master and force-pushes it with lease, pushes fixes to it, retries failed CI jobs, replies to and resolves review threads, and marks both MRs ready. Later messages will ask you for those writes, row by row; they are part of the request above.
+This turn: triage these rows and propose a disposition for each. The only change this turn makes is a clean rebase and its push:
 - pipeline 8812 on !123, dump at /tmp/glab-state/git.example.com/group__service/mr-123/pipeline/
 - threads 7b3e01aa…, 2c8d44f1… on !123, dump at /tmp/glab-discussion/git.example.com/mr-123/
 - rebase !456: the branch is 4 behind master; attempt it, push if clean, propose a row if it conflicts
@@ -131,12 +132,14 @@ Report one line per row, `<row id> proposed <disposition> — <evidence>`, plus 
 **Actor, implementation batch:**
 
 ```
-Same worktree, same brief. Implement these rows and post what is listed, nothing else:
+Next step of the run in your first prompt, same worktree and brief. Implement these rows on !123 and post what is listed, nothing else:
 thread 7b3e01aa… — `src/api/orders.py:88` returns 200 on a rejected order; raise the domain error and let the handler map it. Reply on the thread naming the SHA, then resolve.
 job test:OrderSpec#total @ pipeline 8812 — total omits the discount line; the assertion is right and the code is wrong.
 dismiss thread 2c8d44f1… — reply: line 88 already returns 409 through the handler; the finding reads the wrapper, not the handler. Then resolve.
 Report one line per row, `<row id> fixed <sha>` / `could-not-fix <why>` / `posted <note id>` / `resolved`, the remote SHA you verified, and the verification per row. Then end your turn.
 ```
+
+**The actor's first prompt names every write of the run; the batches only point back to it.** The auto mode classifier reads that first prompt as the user's instruction and every batch after it as a coordinator's message, which can never carry the user's consent. So the triage template quotes the user's invocation verbatim and names each write by action and target, and no batch adds an approval claim ("confirmed", "the user authorized this force-push"). When the user later named an operation in their own words ("undraft it once the backtesting finishes"), quote those words verbatim with attribution at the top of the batch. A resumed implementation subagent from `/sdlc:write-plan` already had these writes named in its first prompt. When an actor's first prompt did not name them, or said "change nothing" or "read-only", spawn a fresh actor briefed with this template before the first write batch instead of resuming it. Decide this before a write is sent, never after a denial; a denial is handled as [Autonomy](#autonomy--you-are-pre-authorized-pausing-to-ask-is-a-failure) says.
 
 **Rules for the watchdog cron prompt:**
 - **Arm the cron by calling it, not by printing it.** Pass 0 ends with a real `CronCreate` call, and your first note names the job id it returned. Writing the prompt line into the report as text arms nothing, and then a dead watcher is never noticed.

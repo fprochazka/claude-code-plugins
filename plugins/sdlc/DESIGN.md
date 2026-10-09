@@ -91,7 +91,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 ### ticket-attach-docs and wrap-up
 
 - Documents are attached late, from `wrap-up`, to avoid churn while they still change. The carrier depends on what the tracker offers: a document, an attachment, or a comment. The skill proposes before it acts.
-- A sonnet subagent takes the inventory of what the ticket holds. The same subagent is resumed for the upload, so it does not load the ticket again.
+- A sonnet subagent takes the inventory of what the ticket holds. The same subagent is resumed for the upload, so it does not load the ticket again. Its first prompt quotes the user's request and names the upload, and under `wrap-up` also the comments and the state change, as later turns. It never says "read-only".
 - `wrap-up` runs in the session that did the work, because the findings that the diff does not show live only there. Production numbers are the core of the comment. The comment is dense, at most about 50 lines, and is split into several comments when one would bury its best parts. It links an MR only when it discusses several MRs separately.
 
 ## Decisions
@@ -153,6 +153,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 | 2026-10-01 | The watcher's poll interval must be 30–90 seconds; the waiting cadence moved from 300 to 90 seconds | Agents set intervals too high and changes were noticed late |
 | 2026-10-01 | Pending drafts are ignored, and the run never writes draft comments | A reviewer and babysit can run under the same user. A draft on its own MR would make the author a reviewer |
 | 2026-10-05 | Every open decision in `pre-plan` gets a recommended approach and the rejected alternatives, each with a reason. The briefing shows only the strongest alternative | The user wants to see why the recommendation wins without reading the argument again |
+| 2026-10-09 | A subagent that a later turn resumes for a write gets the user's request quoted and every later write named, by action and target, in its first prompt. It is never briefed "read-only" or "change nothing", and the resume message points back to the first prompt without an approval claim of its own | The auto mode classifier treats a subagent's first prompt as the user's instruction and a later message from the orchestrator as no consent at all. Over a month it blocked every resumed comment or chat post whose first prompt forbade writes, even with the user's words quoted in the resume. Resumed writes whose first prompt forbade nothing went through. Resume messages that claimed an approval ("confirmed", "authorized by the user") were blocked |
 
 ## How changes are checked
 

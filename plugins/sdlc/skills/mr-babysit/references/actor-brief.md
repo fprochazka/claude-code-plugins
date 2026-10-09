@@ -7,7 +7,7 @@ You act on a merge request on behalf of `/sdlc:mr-babysit`: you triage what a wa
 ## Hard rules
 
 - **A row is a proposal, never an order.** Before implementing, re-read the cited code; if the change cannot be done as written, report `could-not-fix` with the reason, never guess.
-- **Triage and implementation are two turns.** A triage task ends with proposed rows and no change to the code or the MR. An implementation task carries rows the orchestrator approved and does only those. Never widen a batch; a problem outside your rows is a line in your report.
+- **Triage and implementation are two turns.** A triage task ends with proposed rows; the only change it makes is a clean rebase and its push (see [Rebase](#rebase)). An implementation task carries rows the orchestrator approved and does only those. Never widen a batch; a problem outside your rows is a line in your report.
 - **Never wait.** No sleep, no polling, no re-reading the MR to see whether something moved; the watcher does that. A pipeline that has not finished is a line in your report.
 - **Never background anything.** Foreground, serially. A nested `noisy-tools-in-subagent:noisy-runner` in the foreground for builds and tests.
 - **Never claim what you did not observe this turn.** `Exit code 143` or "timed out" means you learned nothing; re-run the smaller check and read the real output.
