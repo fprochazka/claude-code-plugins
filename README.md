@@ -18,22 +18,21 @@ claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins --sc
 
 ### Plugin dependencies
 
-Some plugins declare `dependencies` in their `plugin.json`. Installing such a plugin installs its dependencies too. Dependencies that live in another marketplace resolve only when that marketplace is already added, so add these before you install `sdlc`, `code-review`, `glab`, or `noisy-tools-in-subagent`:
+Some plugins declare `dependencies` in their `plugin.json`. Installing such a plugin installs its dependencies too. Dependencies that live in another marketplace resolve only when that marketplace is already added, so add these before you install `sdlc`, `code-review`, or `noisy-tools-in-subagent`:
 
 ```bash
 claude plugin marketplace add fprochazka/glab-cli-extras --scope user
-claude plugin marketplace add fprochazka/glab-discussion --scope user
-claude plugin marketplace add fprochazka/glab-pipeline --scope user
 claude plugin marketplace add fprochazka/bash-classify --scope user
 ```
 
-A dependency installed this way is a Claude Code plugin (skill, hook, agent). It does not install the CLI binary the plugin wraps — `glab`, `jq`, `glab-discussion`, `glab-pipeline`, and `bash-classify` stay a manual install, see each plugin's README.
+A dependency installed this way is a Claude Code plugin (skill, hook, agent). It does not install the CLI the plugin wraps — `glab`, `jq`, glab-cli-extras (`uv tool install glab-cli-extras`), and `bash-classify` stay a manual install, see each plugin's README.
+
+The `glab` plugin that `sdlc` and `code-review` depend on is `glab@fprochazka-glab-cli-extras`. If you installed the older `glab` from this marketplace, or `glab-pipeline` and `glab-discussion` from their own, uninstall them at every scope first: two enabled plugins named `glab` collide, and the old guards deny the same commands a second time.
 
 | Plugin | Depends on |
 |--------|-----------|
 | `sdlc` | `teamwork`, `prose`, `git`, `code-review`, `diagrams`, `glab` (glab-cli-extras) |
 | `code-review` | `teamwork`, `prose`, `diagrams`, `glab` (glab-cli-extras) |
-| `glab` | `glab-discussion`, `glab-pipeline` |
 | `noisy-tools-in-subagent` | `bash-classify-hook` |
 | `agent-roles` | `noisy-tools-in-subagent` |
 | `prose` | `skill-keyword-reminder` |
@@ -57,7 +56,6 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [teamwork](plugins/teamwork/) | Team-process conventions shared by the sdlc and code-review plugins — the workflow-identify skill that resolves the tracker, team and state names at run time, and the review-handshake skill that says whose court the ball is in |
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel |
 | [git](plugins/git/) | Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history |
-| [glab](plugins/glab/) | GitLab through the glab CLI — the glab skill, the mr-status skill and its state script, the mr-watch agent, and MR commands for pipeline and comment state |
 | [prose](plugins/prose/) | How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command |
 | [diagrams](plugins/diagrams/) | Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket |
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
@@ -75,8 +73,7 @@ Each of these is a CLI with its own Claude Code plugin in the same repository. T
 
 | Plugin | Description |
 |--------|-------------|
-| [glab-discussion](https://github.com/fprochazka/glab-discussion) | Skill for working with GitLab MR discussions via the glab-discussion CLI |
-| [glab-pipeline](https://github.com/fprochazka/glab-pipeline) | Agent-friendly GitLab CI pipeline inspector — dumps full pipeline state and prints a problem-driven summary |
+| [glab-cli-extras](https://github.com/fprochazka/glab-cli-extras) | The `glab` plugin: GitLab through the glab CLI and glab-cli-extras — watch MRs and pipelines, read MR status, inspect pipelines, read and write discussions |
 | [bash-classify](https://github.com/fprochazka/bash-classify) | Auto-allows low-risk bash commands in Claude Code using bash-classify |
 | [slackcli](https://github.com/fprochazka/slackcli) | Skill for interacting with Slack workspaces using the slackcli CLI |
 | [metabasecli](https://github.com/fprochazka/metabasecli) | Skill for interacting with Metabase using the metabase CLI |

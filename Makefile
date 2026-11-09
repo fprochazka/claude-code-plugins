@@ -20,7 +20,6 @@ validate:
 
 test:
 	python3 -m unittest discover -s plugins/noisy-tools-in-subagent/hooks -p 'test_*.py'
-	python3 -m unittest discover -s plugins/glab/scripts -p 'test_*.py'
 	bash plugins/rabbitmqadmin/scripts/test-validate-readonly.sh
 	bash plugins/agent-roles/hooks/test-inject-role.sh
 

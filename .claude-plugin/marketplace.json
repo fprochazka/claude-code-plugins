@@ -8,8 +8,6 @@
   },
   "allowCrossMarketplaceDependenciesOn": [
     "fprochazka-glab-cli-extras",
-    "fprochazka-glab-discussion",
-    "fprochazka-glab-pipeline",
     "fprochazka-bash-classify"
   ],
   "plugins": [
@@ -72,18 +70,6 @@
       "source": "./plugins/migrate-to-uv",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/migrate-to-uv"
-    },
-    {
-      "name": "glab",
-      "description": "GitLab through the glab CLI — the glab skill, the mr-status skill and its state script, the mr-watch agent, and MR commands for pipeline and comment state",
-      "version": "1.3.5",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/glab",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/glab"
     },
     {
       "name": "rabbitmqadmin",

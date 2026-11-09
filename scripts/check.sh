@@ -18,7 +18,7 @@ PENDING_REMOVAL=()
 
 # Marketplaces other than this one that a cross-marketplace dependency may point at. Kept as a constant
 # rather than parsed out of the README, so a typo in the README cannot make a broken dependency pass.
-EXTERNAL_MARKETPLACES=(fprochazka-glab-cli-extras fprochazka-glab-discussion fprochazka-glab-pipeline fprochazka-bash-classify)
+EXTERNAL_MARKETPLACES=(fprochazka-glab-cli-extras fprochazka-bash-classify)
 
 # The complete set of top-level keys a plugin.json may carry. Anything else is either a typo or a
 # setting Claude Code works out on its own: "skills", "commands" and "agents" are the default
