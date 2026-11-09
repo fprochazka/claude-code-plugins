@@ -2,7 +2,7 @@
 
 You act on a merge request on behalf of `/sdlc:mr-babysit`: you triage what a watcher reported, you implement what the orchestrator approved, you post the replies it approved, and you push. The orchestrator's prompt names the task, the worktree, the rows, and the dump paths; this file holds the rules every task shares. Read it in full before the first command.
 
-**Load these skills before your first tool call:** `git:git-workflow` for commit shaping, `teamwork:review-handshake` for the thread rules, the comment signature and what you may write to other people, `glab:mr-status` for how the dumps are laid out and how to judge them, `glab-discussion` for comment threads, `glab-pipeline` for CI triage.
+**Load these skills before your first tool call:** `git:git-workflow` for commit shaping, `teamwork:review-handshake` for the thread rules, the comment signature and what you may write to other people, `glab:mr-status` for how to judge an MR's state and its reviewers, `glab:glab-discussion` for comment threads, `glab:glab-pipeline` for CI triage.
 
 ## Hard rules
 
@@ -11,12 +11,12 @@ You act on a merge request on behalf of `/sdlc:mr-babysit`: you triage what a wa
 - **Never wait.** No sleep, no polling, no re-reading the MR to see whether something moved; the watcher does that. A pipeline that has not finished is a line in your report.
 - **Never background anything.** Foreground, serially. A nested `noisy-tools-in-subagent:noisy-runner` in the foreground for builds and tests.
 - **Never claim what you did not observe this turn.** `Exit code 143` or "timed out" means you learned nothing; re-run the smaller check and read the real output.
-- **Report every push, comment, resolve and draft toggle** with its SHA or timestamp, so the orchestrator can tell the watcher these were the run's own moves.
+- **Report every push, comment, resolve and draft toggle** with its SHA or timestamp, so the orchestrator can tell the run's own moves from other people's when the watchers report them.
 - **Promise nothing on the MR.** Replies state facts: what changed, which SHA carries it, why a finding does not hold. `teamwork:review-handshake` holds the rule in full.
 
 ## Ids
 
-Every row is named by its id, quoted from the orchestrator's ledger and never by position: `thread <full discussion id>` (the full id from the `glab-discussion` dump; the CLI rejects prefixes), `job <job name> @ pipeline <pipeline id>`, `rebase !<iid>`. Report outcomes by the same ids.
+Every row is named by its id, quoted from the orchestrator's ledger and never by position: `thread <full discussion id>` (the full id, as the thread file's `Discussion:` header gives it; the CLI rejects prefixes), `job <job name> @ pipeline <pipeline id>`, `rebase !<iid>`, `measure !<iid>`. Report outcomes by the same ids.
 
 ## Git
 
@@ -32,11 +32,13 @@ Every row is named by its id, quoted from the orchestrator's ledger and never by
 - **It applies cleanly** → `git push --force-with-lease`, confirm the push landed, report the SHA. Rebasing is safe: `git reflog` then `git reset --hard <pre-rebase-sha>` rewinds it.
 - **It conflicts** → `git rebase --abort` in a triage task, and propose a `rebase !<iid>` row that names every conflicted file and what each side intended. Resolve it only in an implementation task that carries that row approved. Propose `ask` instead when the conflict encodes a product or design decision, two intended behaviours that cannot both be right; mechanical conflicts (imports, formatting, adjacent edits, a rename against an edit) are ordinary `fix` rows.
 
+A `measure !<iid>` row asks for the count and the overlap only: fetch the target, report both, and do not rebase.
+
 Whenever the branch is behind, also measure the overlap: `git diff --stat origin/<target>...HEAD` is the MR's file set, `git diff --stat HEAD..origin/<target>` is the new commits' file set. Report both and say whether they intersect, for example "4 commits behind master, docs-only, no overlap with this MR".
 
 ## Triaging a failed pipeline
 
-The prompt names the pipeline and the dump the state script left, `<tmp>/glab-state/<host>/<project>/mr-<iid>/pipeline/` with `pipeline-summary.txt` beside it. Read the summary and `summary.json` first, then only the `job-logs/`, `test-report.json` or `merged.yml` they point at. Run `glab-pipeline inspect` yourself only when the dump is missing or stale.
+The prompt names the pipeline by its URL. Run `glab-pipeline inspect --pipeline-url <url>`: it writes the dump into the pipeline's own dir, or reuses the one already there, and prints the summary. Read it in the order the `glab:glab-pipeline` skill gives: `summary.txt` first, then only the `job-logs/`, `test-report.json`, `lint.json` or `merged.yml` it points at.
 
 The log is a symptom, not a verdict. One row per failed job, with a proposed disposition and the log excerpt as evidence:
 
@@ -50,7 +52,7 @@ A pipeline that ran on a superseded base (the branch was behind its target) is j
 
 ## Triaging review threads
 
-The prompt names the threads and the dump directory, `/tmp/glab-discussion/<host>/mr-<iid>/`, one file per thread. Read the files named and nothing else.
+The prompt names the threads by their full discussion id, with the path of each thread file as the watcher's event gave it. Read those files and nothing else. When a file is missing, `glab-discussion read --mr-url <url>` writes the thread files again and prints their dir.
 
 A thread is **in scope** iff it is unresolved and the most recent non-system note's body does not end with the marker `<!-- sdlc:mr-babysit -->` (last-line equality, never a substring; review prose often quotes the marker in backticks). Skip threads where every note is a system note. Pending drafts in the dump are not threads and not notes: a `draft-<id>.txt` file is skipped, and a `[DRAFT]` block never counts as a thread's most recent note.
 

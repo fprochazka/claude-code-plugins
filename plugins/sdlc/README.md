@@ -24,7 +24,11 @@ Keep steps 1 to 3 in one context window: the discussion and the plan build on wh
 
 ## Installation
 
+The `glab` dependency comes from the glab-cli-extras marketplace, which has to be added first, and its commands come from the glab-cli-extras package:
+
 ```bash
+uv tool install glab-cli-extras
+claude plugin marketplace add fprochazka/glab-cli-extras --scope user
 claude plugin marketplace add fprochazka/claude-code-plugins --scope user
 claude plugin install sdlc@fprochazka-claude-code-plugins --scope user
 ```
@@ -38,7 +42,7 @@ Each is a skill with `disable-model-invocation` off, so Claude may also reach fo
 - `/sdlc:ticket-new [extra context]` — drafts a ticket from the conversation and files it in the issue tracker. Written from the product-engineer angle: business context and acceptance criteria, no solution dictated to the implementor.
 - `/sdlc:write-plan [topic, ticket ref, or briefing path]` — enters plan mode and writes an implementation plan whose steps map onto the intended atomic commits. Appends an implementation protocol so the execution rules travel with the plan file. Normally run after `/sdlc:pre-plan` and a design discussion.
 - `/sdlc:mr-open [ticket-id]` — opens a draft MR/PR for the current branch, then writes each piece where it belongs. The Why — problem, constraints, the decision behind the approach — goes into the ticket: into the body when it is empty or a stub, as a comment when the body already carries content. The reading guide for the reviewer, the release procedure and the measured results go onto the MR as separate comment threads, each posted only when it has something to say and each signed `<!-- sdlc:mr-open -->`. The description stays one screen: the ticket link, three to six sentences on what the change does, and a pointer to the release comment when there is one. A change a reviewer would follow faster from a picture gets a diagram in the guidelines comment, drawn through `diagrams:mermaid`.
-- `/sdlc:mr-babysit [MR refs]` — drives one or more MRs toward mergeable: keeps each rebased, fixes failing CI, and answers review comments, handing back only for genuine product decisions. When the set is green and settled it marks the MRs ready, moves the ticket to the review state, and keeps a background watcher on the MRs in case the reviewer hands the work back. GitLab-only. See below.
+- `/sdlc:mr-babysit [MR refs]` — drives one or more MRs toward mergeable: keeps each rebased, fixes failing CI, and answers review comments, handing back only for genuine product decisions. When the set is green and settled it marks the MRs ready, moves the ticket to the review state, and keeps background watchers on the MRs in case the reviewer hands the work back. GitLab-only. See below.
 - `/sdlc:ticket-attach-docs [ticket ref]` — attaches the documents the work produced to the ticket: the briefing and the implementation plan always, the rest by judgment. It reads what the ticket already holds, then picks the carrier the tracker offers: a document it can update in place, an attachment, an inline comment, or a link to the file on the branch. It never attaches the pre-plan ticket dump, which is the ticket's own content read back out.
 - `/sdlc:wrap-up [ticket ref]` — closes finished work out. Attaches the documents first, so they land even when the close decision needs you. Then posts a dense comment to the ticket — outcome, the production checks with their real numbers, findings the diff does not show, limits, possible follow-ups — and marks the ticket completed. It splits into several comments when one would bury its own best parts. Facts only: it never commits anyone to future work.
 
@@ -46,9 +50,9 @@ Each is a skill with `disable-model-invocation` off, so Claude may also reach fo
 
 `/sdlc:mr-babysit` is the **author** side of an MR — the mirror image of `/code-review:watch`, which is the reviewer side. It changes code; the reviewer command never does.
 
-The command runs in your session and decides; it does not watch and it does not write code. The `glab:mr-watch` agent from the **glab** plugin watches the MRs in the background and messages the command every time something moves: a pipeline finishing, a push, new comments, a draft or ticket flip, the merge. An actor subagent — the implementation subagent from the plan when it is still alive, a fresh one otherwise — then reads the evidence and turns every failed job and open thread into a proposal: fix it, dismiss it, or ask you. The command approves or overturns each proposal, keeps the ledger of what is and is not solved, and sends the approved rows back to the actor to implement, post and push. Its rules live in [`skills/mr-babysit/references/actor-brief.md`](skills/mr-babysit/references/actor-brief.md). The watcher sends a heartbeat every 30 minutes, which becomes your progress line whether or not anything moved; a cron on the same interval only checks that the watcher is still alive and speaks only when it has to respawn it.
+The command runs in your session and decides; it does not write code. It starts one `glab-watch` background task per MR, and one per target branch, and each messages the session every time something moves: a pipeline finishing, a push, new comments, a draft flip, a green head going quiet, the merge. The command classifies those events itself, reads the ticket, and decides whose turn it is. An actor subagent — the implementation subagent from the plan when it is still alive, a fresh one otherwise — then reads the evidence and turns every failed job and open thread into a proposal: fix it, dismiss it, or ask you. The command approves or overturns each proposal, keeps the ledger of what is and is not solved, and sends the approved rows back to the actor to implement, post and push. Its rules live in [`skills/mr-babysit/references/actor-brief.md`](skills/mr-babysit/references/actor-brief.md). A cron every 30 minutes reads the ticket and writes your progress line, whether or not anything moved.
 
-The watcher covers **every** MR in the set — a change spanning a service repo and a pipelines repo is two MRs, and babysitting only the one in the current directory is the failure this guards against.
+The watchers cover **every** MR in the set — a change spanning a service repo and a pipelines repo is two MRs, and babysitting only the one in the current directory is the failure this guards against.
 
 It runs unattended by design. Rebasing, force-pushing with lease, retrying jobs, and replying to or resolving threads are all pre-authorized for every subagent, and pausing to ask for them defeats the command. It stops for a rebase conflict that encodes a real product decision, a CI failure it cannot confidently fix, an attempt cap, oscillation, or three hours with nothing moving.
 
@@ -58,25 +62,25 @@ If your permission setup makes Claude Code prompt for those git operations, allo
 
 ```jsonc
 // .claude/settings.json → "permissions": { "allow": [ ... ] }
-"Bash(git push:*)", "Bash(git rebase:*)", "Bash(git fetch:*)", "Bash(glab ci retry:*)", "Bash(glab mr update:*)"
+"Bash(git push:*)", "Bash(git rebase:*)", "Bash(git fetch:*)", "Bash(glab ci retry:*)", "Bash(glab mr update:*)", "Bash(glab-watch:*)", "Bash(glab-mr-status:*)"
 ```
 
 Review feedback is evaluated, never rubber-stamped. Every thread ends as a fix, a dismissal with a reasoned reply, or a question for you. A bot's `critical` tag does not exempt a finding from that judgment. A thread whose last reviewer note is marked `<!-- code-review:watch -->` is the exception to the resolve rules: it gets the fix and a reply, and stays unresolved. `teamwork:review-handshake` says why.
 
 ### The handshake with the reviewer
 
-The protocol lives in the [teamwork plugin](../teamwork/), shared with `/code-review:watch`: `teamwork:review-handshake` for the handover, `teamwork:workflow-identify` for the state names, both read at run time, plus `glab:mr-status` and the `glab:mr-watch` agent from the **glab** plugin for MR state. `/sdlc:mr-babysit` moves the ticket back to the work state, with a comment saying why, whenever it takes work back after a handover — behind its target branch, red pipeline, open threads, or a fix about to land. When everything is green, quiet and settled, it moves the ticket to the review state and marks every MR ready, then keeps watching in case the reviewer hands the work back. It stops for good when the MRs merge, when the ticket reaches a terminal state, or after three hours with nothing moving; say "stop after handoff" to opt out of the wait.
+The protocol lives in the [teamwork plugin](../teamwork/), shared with `/code-review:watch`: `teamwork:review-handshake` for the handover, `teamwork:workflow-identify` for the state names, both read at run time, plus the `glab:mr-status` and `glab:glab-watch` skills from the **glab** plugin of the [glab-cli-extras](https://github.com/fprochazka/glab-cli-extras) marketplace for MR state. `/sdlc:mr-babysit` moves the ticket back to the work state, with a comment saying why, whenever it takes work back after a handover — behind its target branch, red pipeline, open threads, or a fix about to land. When everything is green, quiet and settled, it moves the ticket to the review state and marks every MR ready, then keeps watching in case the reviewer hands the work back. It stops for good when the MRs merge, when the ticket reaches a terminal state, or after three hours with nothing moving; say "stop after handoff" to opt out of the wait.
 
-Two CLIs are required, and the command asks you to install them when they are missing:
+glab-cli-extras is required, for `glab-watch`, `glab-mr-status`, `glab-discussion` and `glab-pipeline`, and the command asks you to install it when it is missing:
 
 ```bash
-uv tool install glab-pipeline glab-discussion
+uv tool install glab-cli-extras
 ```
 
 ## Assumptions
 
 - **Subagent-driven execution.** The plan produced by `/sdlc:write-plan` expects a main agent that orchestrates and one persistent implementation subagent that works step after step, keeping its repo exploration in context. The subagent stages its work and stops. The main agent checks every step — directly for trivial ones, through a fresh validation subagent for the rest — and owns the commit.
-- **A skill per external system.** Most commands never name a specific CLI. They tell the agent to load the skill for the system in play — your issue tracker, your git host, your chat tool — so install those separately. Three commands are deliberate exceptions: `/sdlc:write-plan` and `/sdlc:mr-open` load `git:git-workflow` by name for commit shaping, `/sdlc:mr-open` also names `glab-discussion` for the MR comment threads it posts on GitLab, and `/sdlc:mr-babysit` is GitLab-only because its loop is built on `glab`.
+- **A skill per external system.** Most commands never name a specific CLI. They tell the agent to load the skill for the system in play — your issue tracker, your git host, your chat tool — so install those separately. Three commands are deliberate exceptions: `/sdlc:write-plan` and `/sdlc:mr-open` load `git:git-workflow` by name for commit shaping, `/sdlc:mr-open` also names `glab:glab-discussion` for the MR comment threads it posts on GitLab, and `/sdlc:mr-babysit` is GitLab-only because its loop is built on `glab`.
 - **Plan files live in `./.claude/plans/`** in the working tree, not in the scratchpad. They are meant to survive the session.
 
 ## License
