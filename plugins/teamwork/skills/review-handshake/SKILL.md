@@ -21,7 +21,7 @@ So **ready for review** is the ticket in `REVIEW_STATE` and the MR not draft; **
 
 The state names come from the `teamwork:workflow-identify` skill, resolved once per run and never hardcoded. With `tracker: none` nothing but the draft flag is left to carry the ball, so it carries it both ways: draft is back to work, ready is ready for review, and the reviewer re-drafts to hand back.
 
-This is a convention of this protocol, not a law of the tracker. A watcher that reads the handshake for a command takes the definition from that command's prompt, written as conditions over the fields it observes.
+This is a convention of this protocol, not a law of the tracker. Each command evaluates it itself, as conditions over the fields it observes, whenever one of them changes; a watcher reports the fields, never the reading.
 
 ## What each side does to the other's threads
 
@@ -38,11 +38,11 @@ Every comment a command posts on an MR ends with a blank line and an HTML commen
 <!-- <plugin>:<command> -->
 ```
 
-The marker is invisible in rendered Markdown and stays in the API body. It tells a reader which automation wrote the comment, lets a later pass of the same command recognize its own threads, and lets a watcher tell one side's notes from the other's. Recognition is a **last-line equality** check, never a substring match, because review prose often quotes a marker in backticks. A command that runs another command's posting steps signs with its own name, since it is the cause. The git-host skill in play carries the same rule for its CLI; on GitLab that is the `glab` skill.
+The marker is invisible in rendered Markdown and stays in the API body. It tells a reader which automation wrote the comment, lets a later pass of the same command recognize its own threads, and lets each side tell its own notes from the other's. Recognition is a **last-line equality** check, never a substring match, because review prose often quotes a marker in backticks. A command that runs another command's posting steps signs with its own name, since it is the cause. The git-host skill in play carries the same rule for its CLI; on GitLab that is the `glab:glab-discussion` skill.
 
 ## Where the ledgers live
 
-Every command that runs across more than one turn keeps its state in `./.claude/review-report/<topic>.<command>.md` in the working tree, one file per command per topic: `<topic>.babysit.md`, `<topic>.watch.md`, `<topic>.mr-watch.md`. The directory is in the repository so a fresh context window can pick the run up, and the sibling naming keeps the author's, the reviewer's and the watcher's files apart on one MR. A command writes only its own file and reads the others.
+Every command that runs across more than one turn keeps its state in `./.claude/review-report/<topic>.<command>.md` in the working tree, one file per command per topic: `<topic>.babysit.md`, `<topic>.watch.md`. The directory is in the repository so a fresh context window can pick the run up, and the sibling naming keeps the author's and the reviewer's files apart on one MR. A command writes only its own file and reads the others.
 
 ## Writing to other people
 
