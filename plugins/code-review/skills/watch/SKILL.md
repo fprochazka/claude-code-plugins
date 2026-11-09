@@ -1,13 +1,13 @@
 ---
 name: watch
-description: Review the current branch's MR, post the findings, then watch it through the glab:mr-watch agent until every blocker and suggestion is addressed or refuted
+description: Review the current branch's MR, post the findings, then watch it with a background glab-watch task until every blocker and suggestion is addressed or refuted
 argument-hint: [focus area or specific concerns]
 disable-model-invocation: true
 ---
 
 # Watch the MR Until the Review Is Settled
 
-Run a full code review of the current branch's merge request, post it, hand the work back to the author, and then watch it through the watcher agent until every blocking finding and every suggestion has been **addressed in code** or **refuted with a reply**.
+Run a full code review of the current branch's merge request, post it, hand the work back to the author, and then watch it with a `glab-watch` background task until every blocking finding and every suggestion has been **addressed in code** or **refuted with a reply**.
 
 **The handshake invariant.** The ticket carries the ball, as `teamwork:review-handshake` defines it; Phase 0.4 loads that skill.
 
@@ -43,7 +43,7 @@ Nothing else writes to git. Note what the sync is **not**: it moves the branch p
 
 ## Autonomy — scoped grant
 
-These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, publishing them as a review with a `reviewed` or `requested-changes` verdict, resolving your own threads, **un-resolving your own threads**, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, spawning and stopping the watcher, and arming or deleting the watchdog cron job. This override is scoped to those operations and ends when the watch ends.
+These are **pre-authorized** for the duration of this command, and you do not stop mid-pass to ask permission for any of them: posting review comments, replying in threads, publishing them as a review with a `reviewed` or `requested-changes` verdict, resolving your own threads, **un-resolving your own threads**, moving the ticket between `WORK_STATE` and `REVIEW_STATE`, commenting on the ticket, the single Phase 1 server-side rebase, the guarded local sync, starting and stopping the watcher, and arming or deleting the watchdog cron job. This override is scoped to those operations and ends when the watch ends.
 
 The hand-back moves are pre-authorized as `teamwork:review-handshake` defines them, its no-tracker mode included.
 
@@ -53,11 +53,11 @@ Stop and hand back only for the halt conditions under [Termination](#termination
 
 The top-level session is the **orchestrator**. It never sleeps, never polls, and never uses the Monitor tool. **This command has nothing to wait for**: it waits on a human, and a human hands the work back hours later. The waiting is the watcher's job, and the watcher tells you when something moved.
 
-**The watcher is the `glab:mr-watch` agent**, spawned once in Phase 6 with `subagent_type: glab:mr-watch`, in the background. It runs the state script in a loop, interprets every change on the MR, and messages you through `SendMessage` without ending its turn. Its messages are what re-invoke you: a handshake flip, a push, new notes, the pipeline finishing, the MR merging. You never poll the MR yourself after Phase 6; a round still reads threads and code as 7.4 and 7.5 say, but what starts a round is the watcher's message, then the ledger. It is read-only by definition and posts nothing.
+**The watcher is a `glab-watch mr` background task**, started once in Phase 6 from this session. It reports every change on the MR as a `<glab-cli-extras-watcher>` message: a push, a draft flip, new or changed threads, the pipeline finishing, the MR merging. Those messages are what re-invoke you. It reads GitLab only, so the ticket and the handshake reading are yours (Phase 6). You never poll the MR yourself after Phase 6; a round still reads threads and code as 7.4 and 7.5 say, but what starts a round is a watcher message or a watchdog firing, then the ledger. It is read-only and posts nothing.
 
-**Four things re-invoke you, and nothing else:** a watcher message, the watchdog cron every 30 minutes, the review agents returning during a round, and the user. Between them you are idle.
+**Five things re-invoke you, and nothing else:** a watcher message, the watcher's background task ending, the watchdog cron every 30 minutes, the review agents returning during a round, and the user. Between them you are idle.
 
-**The one-shot state read in 0.2** goes through a subagent on `sonnet` whose prompt opens with `First, invoke the glab:mr-status skill to load its usage guidance before running any commands.` It runs the state script once, reports the scorecard and the fields 0.2 names, and ends its turn. Read its result back before acting on it; a subagent that timed out read nothing.
+**The one-shot state read in 0.2 and 7.1** goes through a subagent on `sonnet` whose prompt opens with `First, invoke the glab:mr-status skill to load its usage guidance before running any commands.` It runs `glab-mr-status` once, reports the scorecard and the fields 0.2 names, and ends its turn. Read its result back before acting on it; a subagent that timed out read nothing.
 
 **The review round is the one wide fan-out.** `/code-review:full` runs its review agents in parallel, past the usual ceiling of three subagents at a time. That is deliberate here; leave it as it is.
 
@@ -67,9 +67,9 @@ The top-level session is the **orchestrator**. It never sleeps, never polls, and
 
 ### 0.1 Tooling
 
-Invoke the `glab` skill and the `glab-discussion` skill before making any GitLab calls. `glab`, `glab-discussion` 0.5.0 or newer and `glab-pipeline` are required (`post.md` Phase 2 says what to do when `glab-discussion` is older); when the state script reports one missing, tell the user which, give the install command `uv tool install glab-discussion glab-pipeline`, and ask before installing.
+Invoke the `glab:glab` skill and the `glab:glab-discussion` skill before making any GitLab calls. `glab` and glab-cli-extras are required: glab-cli-extras provides `glab-mr-status`, `glab-watch`, `glab-discussion` and `glab-pipeline`. When a command is missing, tell the user which, give the install command `uv tool install glab-cli-extras`, and ask before installing.
 
-This command also uses skills from other plugins: `glab:mr-status` for MR state (0.2, and inside the watcher from Phase 6 on), and `teamwork:workflow-identify` and `teamwork:review-handshake` for the tracker, its state names and the handshake (0.4). The glab and teamwork plugins are declared dependencies. If the teamwork skills are unavailable, say so in one line and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
+This command also uses skills from other plugins: `glab:mr-status` for MR state and for classifying what the watcher reports, `glab:glab-watch` for the watcher (Phase 6), and `teamwork:workflow-identify` and `teamwork:review-handshake` for the tracker, its state names and the handshake (0.4). The glab and teamwork plugins are declared dependencies. If the teamwork skills are unavailable, say so in one line and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
 
 ### 0.2 Identify the MR and its refs
 
@@ -98,7 +98,7 @@ Fetching the source branch is safe here **because this command never pushes** �
 
 The watch is paced by the handshake, not by pushes, so resolve the ticket now and fail fast if you cannot.
 
-Invoke the `teamwork:workflow-identify` skill and carry its output block for the whole watch, every round included. The watcher gets the same block in its spawn prompt, together with the name of the tracker skill, so it can read the ticket. It names the tracker, the ticket ID pattern, and the `WORK_STATE` / `REVIEW_STATE` names this command moves the ticket between, and it asks the user once when a role has several plausible names. Then load the installed skill that covers the resolved tracker — that skill holds the command syntax, and this command names no tracker CLI of its own.
+Invoke the `teamwork:workflow-identify` skill and carry its output block for the whole watch, every round included; the watchdog reads the ticket with it. It names the tracker, the ticket ID pattern, and the `WORK_STATE` / `REVIEW_STATE` names this command moves the ticket between, and it asks the user once when a role has several plausible names. Then load the installed skill that covers the resolved tracker — that skill holds the command syntax, and this command names no tracker CLI of its own.
 
 Invoke `teamwork:review-handshake` as well: it holds the two flags this watch is paced by, the rules for whose threads each side resolves, the comment signature, and the ledger paths.
 
@@ -207,7 +207,7 @@ Add any Phase 1 rebase failure to the report's **Blocking** section.
 
 **A head pipeline that is not green is itself a Blocking finding.** Read `head_pipeline.status` on `REVIEW_HEAD`. The accepted-green set is `success` alone, as `glab:mr-status` states — `canceled` ran nothing to completion, `manual` is an unfinished blocking gate, and `skipped` means no pipeline ran for this head. Any other value gets a Blocking finding titled "head pipeline is not green", naming the status, the SHA, and the pipeline URL. Do not diagnose the failure and do not propose the fix — that is the author's side.
 
-**`running` and `pending` are not a verdict, and a head in flight is not reviewable.** Read the pipeline status before the review agents start. If it is still running, do not wait for it: treat the gate as closed for this round, note the pipeline in flight in the one-line report, and let the watcher's `PIPELINE_CHANGED` message start the round — a review of a head that then goes red is a review the author has to redo. On the initial run, skip ahead: write the ledger (Phase 5) with `Last reviewed SHA` empty and spawn the watcher (Phase 6); its pipeline message opens the gate on the same handshake and runs the round then.
+**`running` and `pending` are not a verdict, and a head in flight is not reviewable.** Read the pipeline status before the review agents start. If it is still running, do not wait for it: treat the gate as closed for this round, record the pipeline and the head as `Deferred` in the ledger, note the pipeline in flight in the one-line report, and let the watcher's `pipeline_finished` event start the round — a review of a head that then goes red is a review the author has to redo. On the initial run, skip ahead: write the ledger (Phase 5) with `Last reviewed SHA` empty and start the watcher (Phase 6); its `pipeline_finished` event opens the gate on the same handshake and runs the round then.
 
 ## Phase 3 — Post the review
 
@@ -245,7 +245,9 @@ Write a ledger next to the review report, at `./.claude/review-report/<topic>.wa
 - Rounds completed: <n>
 - Last movement: <UTC timestamp>
 - Last round: <UTC timestamp>
-- Watcher: <agent id> · ledger ./.claude/review-report/<topic>.mr-watch.md
+- Last author comment: <UTC timestamp>
+- Deferred: <pipeline id on sha | none>
+- Watcher: <background task id> · `glab-watch mr <web_url> --idle-after=4h`
 - Watchdog cron id: <id>
 
 ## Findings
@@ -256,7 +258,7 @@ Write a ledger next to the review report, at `./.claude/review-report/<topic>.wa
 | 2 | Suggestion | ... | (summary) | <discussion-id> | open | — |
 ```
 
-`Last movement` is the timestamp of the last thing that actually moved: an author push, a draft toggle either way, a new comment from anyone, or a finding changing status. The first three come from the watcher's messages, the last from your own rounds. The idle cap under [Termination](#termination) reads it.
+`Last movement` is the timestamp of the last thing that actually moved: an author push, a draft toggle either way, a new comment from anyone, or a finding changing status. The first three come from the watcher's events, the last from your own rounds. The idle cap under [Termination](#termination) reads it.
 
 Thread ids come from the `glab-discussion read --dump` that follows each publish; a draft has no discussion id until it is published.
 
@@ -264,52 +266,51 @@ Thread ids come from the `glab-discussion read --dump` that follows each publish
 
 Record each migration safety thread as a row with `Migration safety` in the Severity column and the verdict in the Title. These rows never gate on their own — a `Do not run as written` verdict gates through its matching Blocking row.
 
-## Phase 6 — Spawn the watcher and arm the watchdog
+## Phase 6 — Start the watcher and arm the watchdog
 
-Spawn the watcher **by calling the Agent tool, not by describing it**: `subagent_type: glab:mr-watch`, `run_in_background: true`. If you cannot name its agent id in the ledger, nothing is watching. The prompt:
+Load the `glab:glab-watch` skill: it says how to start a watcher, read its startup header, react to each event, and stop it. This phase adds only what the review watch needs.
 
-```
-MRs: <web_url> (worktree <path>)
-Report: handshake, push, notes, verdict, pipeline finished, merged/closed, idle 4h
-Cadence: waiting
-Self markers: <!-- code-review:watch -->, <!-- code-review:post -->
-Handshake: ready-for-review = not draft and ticket in "<REVIEW_STATE>"; back-to-work = ticket in "<WORK_STATE>"
-Ticket: <TICKET-ID> — work state "<WORK_STATE>", review state "<REVIEW_STATE>", terminal states <...>; load the <tracker skill name> skill before reading it
-Ledger: ./.claude/review-report/<topic>.mr-watch.md
-Reviewed at: <REVIEW_HEAD sha>
+Start the watcher **by calling the Bash tool, not by describing it**, with `run_in_background: true`, from this session and never from a subagent:
+
+```bash
+glab-watch mr <web_url> --idle-after=4h
 ```
 
-Omit the `Ticket:` line under the push gate and write the `Handshake:` line on the draft flag alone. `Reviewed at` is the SHA of the round you just published; the watcher reports a ready-for-review reading on that same head with no new notes as `no push since <sha>`, which is the stale case in 7.2. Send `reviewed at <sha>` again after every round.
+Never pass `--events-stream`. Record the background task id in the ledger; if you cannot name it, nothing is watching. Read the startup header in the task output before anything else. A `stream fallback:` line means no event will reach this session: stop the task, tell the user the reason that line gives, and end the watch as under [Termination](#termination).
 
-Then arm the **watchdog** with `CronCreate`, recurring, every 30 minutes on an off-minute (`cron`: `"7,37 * * * *"`), with a one-sentence plain-text prompt naming the MR `!iid`, the ticket, and the ledger path — never a slash command, which would re-enter this command on every firing. Record both ids in the ledger. The heartbeat proves the watcher is alive; nothing proves it is dead, since a watcher that ran out of context, was killed, or is paused on a permission prompt sends nothing, and no message ever wakes you. The cron is the one clock that fires without it. Each firing checks two things and nothing else: is the watcher alive per `ListAgents`, and is `Last message to parent` under 45 minutes old per the watcher's own ledger — a liveness read, never a substitute for a message. Both hold → say nothing and end the turn. Either fails → message the watcher (a message to an ended agent resumes it) or spawn a fresh one against the ledger, and say so in one line. The watchdog never reads the MR itself and never runs a round.
+The events arrive as `<glab-cli-extras-watcher>` messages. Classify each per the glab-watch and `glab:mr-status` skills, reading only the thread files in its `artifacts`. On top of that:
 
-The progress line comes from the watcher's `HEARTBEAT`: on every heartbeat **write one line to the user, even when nothing changed** — the gate it is waiting on, the count of findings still open, and how long the MR has been idle: "!123 still with the author, 2 findings open, idle 1h40m". A watch that says nothing for an hour is a dead watch.
+- **The handshake reading is yours.** glab-watch does not read the tracker. Evaluate the handshake per `teamwork:review-handshake` on `draft_changed` and `reviewers_changed`, on every watchdog firing, which reads the ticket state, on any event while the last reading is `half-set`, and on every `thread_created` or `thread_updated` that is not your own while the last reading is `back-to-work`, reading the ticket again each time: a hand-over flips the draft flag, when it is not ready already, and moves the ticket one after the other, and a note signed `<!-- sdlc:mr-babysit -->` usually comes with it. The note alone never starts a round. Evaluate it once when Phase 6 starts too, so the ledger has a reading to gate on. Under the push gate the reading is the draft flag and the head SHA. Record the reading and its UTC time as `Last handshake reading`; a reading that did not change is not news.
+- **Your own moves come back as events**: the publish's system note, `reviewers_changed` when the publish added the user as a reviewer, `approvals_changed` when it revoked the user's approval, and `thread_resolved` or `thread_unresolved` for the threads the round resolved or re-opened. Recognize a comment as yours by its last line, `<!-- code-review:watch -->` or `<!-- code-review:post -->`, and the rest by the round you just ran. None of them updates `Last movement`.
+- **`watch_ended`** with reason `merged` or `closed` goes to [Termination](#termination), and reason `idle` is the idle cap there. Any other reason, on a watcher you did not stop yourself, means nothing is watching: start the same command again, record the new task id, and say so in one line. `not_found` goes to the user instead, and a second `watch_ended` with the same reason within minutes is a halt under [Termination](#termination), not another restart.
+
+Then arm the **watchdog** with `CronCreate`, recurring, every 30 minutes on an off-minute (`cron`: `"7,37 * * * *"`), with a one-sentence plain-text prompt naming the MR `!iid`, the ticket, and the ledger path — never a slash command, which would re-enter this command on every firing. Record its id in the ledger. The watcher cannot read the ticket, so the cron is the clock for it. Each firing reads the ticket state once with the tracker skill, evaluates the handshake as above, and **writes one line to the user, even when nothing changed** — the gate it is waiting on, the count of findings still open, and how long the MR has been idle: "!123 still with the author, 2 findings open, idle 1h40m". Under the push gate it only writes the line. A `Last movement` more than 4 hours old goes to [Termination](#termination) as the idle cap. A watch that says nothing for an hour is a dead watch. The watchdog never reads the MR itself; a ready-for-review reading it finds starts a round as in Phase 7.
 
 Do **not** warn the user that the cron job is session-only or that it expires after 7 days. They know, and it is not a problem.
 
 Then report the initial pass to the user and end the turn. Do not sleep, poll, or wait for the author.
 
-## Phase 7 — The follow-up round (on a watcher message)
+## Phase 7 — The follow-up round (on a handshake flip)
 
-A round starts when the watcher's message says the handshake flipped to ready-for-review — or, when `Last reviewed SHA` is still empty because the initial run found the pipeline in flight, when `PIPELINE_CHANGED` reports a settled status while the last handshake reading is ready-for-review; that round is the initial review, Phases 2 to 5, not 7.3 to 7.7. Every other message is information: update the ledger's `Last movement`, write one line to the user if it changes what they would do, and end the turn. A push while the ticket is still in `WORK_STATE` is not a round. A new note is not a round; you read it in the next round. `STATE_CHANGED` to merged or closed goes to [Termination](#termination).
+A round starts when your handshake reading flips to ready-for-review — or, when `Last reviewed SHA` is still empty because the initial run found the pipeline in flight, when `pipeline_finished` reports a settled status while the last handshake reading is ready-for-review; that round is the initial review, Phases 2 to 5, not 7.3 to 7.7. A round deferred because its pipeline was in flight, recorded as `Deferred` in the ledger, starts on that pipeline's `pipeline_finished` while the reading is still ready-for-review, as 7.1 to 7.7. Every other event is information: a `pushed`, a `draft_changed`, or a thread event that is not your own updates the ledger's `Last movement`, and a comment by the author also `Last author comment`; then write one line to the user if it changes what they would do, and end the turn. A push while the ticket is still in `WORK_STATE` is not a round. A new note is not a round; you read it in the next round. `state_changed` to merged or closed goes to [Termination](#termination).
 
-### 7.1 Re-derive state from the ledger and the message
+### 7.1 Re-derive state from the ledger and a fresh read
 
-Do not trust what you believed last round. Re-read the ledger, then take `state`, `draft`, `sha` and the pipeline status from the watcher's scorecard line, and fetch the refs:
+Do not trust what you believed last round. Re-read the ledger, then take `state`, `draft`, `sha` and the pipeline status from a one-shot state read, as in 0.2, and fetch the refs:
 
 ```bash
 git fetch origin "$TARGET_BRANCH" "$SOURCE_BRANCH"
 ```
 
-**Pin the round to a SHA.** Set `REVIEW_HEAD` to the head SHA the message names, never to `origin/<source_branch>`: a push can land while the review agents run, and a ref would move under them so that some read the old tree and some the new. A push the watcher reports during a round means "re-review next round", never a ref update. `REVIEW_BASE` stays `origin/<target_branch>`.
+**Pin the round to a SHA.** Set `REVIEW_HEAD` to the head SHA that read names, never to `origin/<source_branch>`: a push can land while the review agents run, and a ref would move under them so that some read the old tree and some the new. A `pushed` event during a round means "re-review next round", never a ref update. `REVIEW_BASE` stays `origin/<target_branch>`.
 
 ### 7.2 The handshake gate
 
-The gate is the watcher's `ready-for-review` reading; a `half-set` reading is a no-op, per `teamwork:review-handshake`.
+The gate is your `ready-for-review` reading; a `half-set` reading is a no-op, per `teamwork:review-handshake`.
 
-**Watch for a stale review state.** If the gate opens but the head SHA still equals `Last reviewed SHA` and the watcher reported no new notes since your last round, the author changed nothing. Do not re-review the same code and do not re-post. Reply once in the last summary's thread naming the findings still `open`, as a plain published reply (`glab-discussion write --no-draft --reply-to <id>`) since there is no review to publish, then hand the work back as in Phase 4 and end the turn.
+**Watch for a stale review state.** If the gate opens but the head SHA still equals `Last reviewed SHA` and no `thread_created` or `thread_updated` from anyone but you arrived since your last round, the author changed nothing; `Last author comment` older than `Last round` says no comment came. Do not re-review the same code and do not re-post. Reply once in the last summary's thread naming the findings still `open`, as a plain published reply (`glab-discussion write --no-draft --reply-to <id>`) since there is no review to publish, then hand the work back as in Phase 4 and end the turn.
 
-**Push-gate fallback.** When Phase 0.4 found no ticket, or the Phase 4 ticket move failed, the round starts on the watcher reporting the MR not draft with a head SHA that differs from `Last reviewed SHA`. Otherwise it is a no-op.
+**Push-gate fallback.** When Phase 0.4 found no ticket, or the Phase 4 ticket move failed, the round starts when the MR is not draft and the head SHA, the `to` of the last `pushed` event, differs from `Last reviewed SHA`. Otherwise it is a no-op.
 
 ### 7.3 Sync the local branch to the author's latest push
 
@@ -412,21 +413,21 @@ The round's summary is always the publish body, a new top-level note, never a `-
 
 After the publish succeeds, un-resolve the threads 7.4 found closed over a problem that is still there, then run `glab-discussion read --dump` once and record the new thread ids in the ledger.
 
-The publish moves the MR in ways the watcher reports: the verdict's system note, `REVIEWERS_CHANGED` when the publish added the user as a reviewer, `APPROVALS_CHANGED` when it revoked the user's approval. They are this run's own action: they do not update `Last movement`, and they are not reviewer movement.
+The publish moves the MR in ways the watcher reports, as Phase 6 lists. They are this run's own action: they do not update `Last movement`, and they are not reviewer movement.
 
 ### 7.7 Hand the work back, update the ledger, end the pass
 
 If any gating finding is still `open` — carried over or newly found — hand the work back as in Phase 4, after the publish succeeded. The next round waits for the author to hand over again.
 
-If nothing is left open, leave the handshake as it is and go to [Termination](#termination).
+If nothing is left open and no `pushed` to a SHA other than `REVIEW_HEAD` arrived during the round, leave the handshake as it is and go to [Termination](#termination). Otherwise the new head gets its own round.
 
-Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new handshake reading, the round count, and the new `Last movement` and `Last round` timestamps. Message the watcher `acted: review published on <mr url> at <UTC timestamp>`, `acted: hand-back on <mr url> at <UTC timestamp>` and `reviewed at <sha>`, so it does not report your own publish and ticket move back to you. Then end the turn. The watcher's next message resumes you.
+Rewrite the ledger with the new statuses, the new `Last reviewed SHA`, the new handshake reading, the round count, and the new `Last movement` and `Last round` timestamps. Then end the turn. The next watcher message or watchdog firing resumes you.
 
 Report what changed: what the author pushed, which findings moved status, what you posted and resolved.
 
 ## Termination
 
-**Stop the watch** — message the watcher `stop`, delete the watchdog cron job with `CronDelete`, write the final ledger, and report — when **every** `Blocking` and `Suggestion` row in the ledger is `addressed`, `refuted`, or `superseded`, each transition has recorded evidence, and each corresponding thread has a reply and is resolved.
+**Stop the watch** — stop the watcher's background task, delete the watchdog cron job with `CronDelete`, write the final ledger, and report — when **every** `Blocking` and `Suggestion` row in the ledger is `addressed`, `refuted`, or `superseded`, each transition has recorded evidence, and each corresponding thread has a reply and is resolved.
 
 Open `Nitpick` rows never keep the watch alive.
 
@@ -439,8 +440,8 @@ On a clean termination: leave the handshake at ready-for-review, and publish one
 - the author (or the user) asks you to stop;
 - you lose access — `glab` or the tracker starts failing authentication;
 - the same finding has bounced between `open` and a claimed fix **three times** without converging. Report it as a stalemate that needs a human conversation, and name it explicitly rather than watching it forever;
-- **the idle cap: `Last movement` is more than 4 hours old.** Nobody is working the MR. The watcher reports the cap itself when its own last observed movement crosses it; your `Last movement` also counts a finding changing status, so you may end the watch before the watcher does.
+- **the idle cap: `Last movement` is more than 4 hours old.** Nobody is working the MR. The watcher ends itself with `watch_ended` reason `idle` after 4 hours without an event; your `Last movement` also counts a finding changing status, so you may end the watch before the watcher does.
 
-**Leave nothing running.** A stop is complete only when the watcher has acknowledged the stop and ended its turn and the watchdog cron is deleted.
+**Leave nothing running.** A stop is complete only when the watcher's task has ended, by its `watch_ended` or by the task stop tool, and the watchdog cron is deleted.
 
 On termination, present a final summary to the user: the MR state, the round count, the per-finding outcome table from the ledger, every finding that was refuted and why you accepted the refutation, and anything you deliberately left to the author (the Phase 1 rebase failure belongs here if it happened). When the idle cap ended it, say so plainly — it **stopped on an idle timeout, not because the review settled** — name what is still open, and name the way back in: running `/code-review:watch` again picks the MR back up.

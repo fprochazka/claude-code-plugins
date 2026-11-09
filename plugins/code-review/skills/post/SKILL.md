@@ -22,11 +22,11 @@ Do not invent findings. Use only what the existing report says.
 
 ## Phase 2 — Load tooling
 
-Before making any GitLab calls, invoke the `glab-discussion` skill to load its usage guidance for MR diff comments, replies, and standalone discussions.
+Before making any GitLab calls, invoke the `glab:glab-discussion` skill to load its usage guidance for MR diff comments, replies, and standalone discussions.
 
 If the skill is unavailable, stop and tell the user.
 
-Drafts need glab-discussion 0.5.0 or newer. If a `glab-discussion` call fails with an unknown command or flag, run `glab-discussion drafts --help`. If that fails too, stop and tell the user to upgrade with `uv tool upgrade glab-discussion` (0.5.0 or newer).
+Drafts need the `glab-discussion` that glab-cli-extras provides. If a `glab-discussion` call fails with an unknown command or flag, run `glab-discussion drafts --help`. If that fails too, stop and tell the user to install it with `uv tool install glab-cli-extras`, after `uv tool uninstall glab-discussion` when the old standalone package is still installed.
 
 ## Phase 3 — Identify the target MR and its pending drafts
 
@@ -58,7 +58,7 @@ glab-discussion diff --file <path>
 
 Do **not** dump the whole MR diff in one call — iterate per file. This keeps output focused and avoids overwhelming context.
 
-From that output, extract the SHAs and line refs you need to anchor a diff note (base/head/start SHAs, old/new line numbers, position type). The `glab-discussion` skill documents the exact fields required by `glab-discussion write` for a diff note.
+From that output, extract the SHAs and line refs you need to anchor a diff note (base/head/start SHAs, old/new line numbers, position type). The `glab:glab-discussion` skill documents the exact fields required by `glab-discussion write` for a diff note.
 
 If a finding's intended line is not actually present in the diff (e.g. the agent flagged surrounding code that wasn't changed), move that finding to the **summary** bucket — do not post a diff comment on an unchanged line.
 
@@ -158,7 +158,7 @@ _Generated from a `/code-review:full` report and posted via `/code-review:post`.
 <!-- code-review:post -->
 ```
 
-Every body ends with the signature line, following the `glab` skill's comment-signing convention. A command that runs these steps on its own behalf replaces it with its own signature.
+Every body ends with the signature line, following the `glab:glab-discussion` skill's comment-signing convention. A command that runs these steps on its own behalf replaces it with its own signature.
 
 A summary-bucket finding whose report entry carries a `mermaid` fence keeps it under its own bullet, unchanged, and it counts against the same three-fence budget as the inline ones.
 

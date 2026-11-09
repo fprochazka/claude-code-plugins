@@ -26,7 +26,7 @@ If the project uses a code hosting platform with MR/PR workflows, load the MR/PR
 - All comment threads (resolved and unresolved) — pay close attention to **unresolved threads**, reviewers may have already flagged issues
 - Pipeline/CI status
 
-Use the appropriate skill or CLI for the platform: on GitLab, invoke the `glab:mr-status` skill and run its state script once for the current branch's MR, which dumps the description, every thread and the pipeline into files you then read; on GitHub, `gh pr view`.
+Use the appropriate skill or CLI for the platform: on GitLab, invoke the `glab:mr-status` skill and run `glab-mr-status` once for the current branch's MR, which writes the MR object with its description, every thread and the pipeline dump into files whose paths it prints, and then read those files; on GitHub, `gh pr view`.
 
 If there is no MR/PR, fall back to `master` or `main` (whichever exists) as the base branch.
 

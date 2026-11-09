@@ -21,6 +21,7 @@ claude plugin install skill-keyword-reminder@fprochazka-claude-code-plugins --sc
 Some plugins declare `dependencies` in their `plugin.json`. Installing such a plugin installs its dependencies too. Dependencies that live in another marketplace resolve only when that marketplace is already added, so add these before you install `sdlc`, `code-review`, `glab`, or `noisy-tools-in-subagent`:
 
 ```bash
+claude plugin marketplace add fprochazka/glab-cli-extras --scope user
 claude plugin marketplace add fprochazka/glab-discussion --scope user
 claude plugin marketplace add fprochazka/glab-pipeline --scope user
 claude plugin marketplace add fprochazka/bash-classify --scope user
@@ -31,7 +32,7 @@ A dependency installed this way is a Claude Code plugin (skill, hook, agent). It
 | Plugin | Depends on |
 |--------|-----------|
 | `sdlc` | `teamwork`, `prose`, `git`, `code-review`, `diagrams`, `glab`, `glab-discussion`, `glab-pipeline` |
-| `code-review` | `teamwork`, `prose`, `diagrams`, `glab`, `glab-discussion` |
+| `code-review` | `teamwork`, `prose`, `diagrams`, `glab` (glab-cli-extras) |
 | `glab` | `glab-discussion`, `glab-pipeline` |
 | `noisy-tools-in-subagent` | `bash-classify-hook` |
 | `agent-roles` | `noisy-tools-in-subagent` |

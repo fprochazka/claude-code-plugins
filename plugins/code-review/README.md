@@ -11,12 +11,12 @@ Multi-agent branch code review plugin for Claude Code. Reviews conventions, arch
 ```
 
 - `/code-review:full` — runs the multi-phase review and writes a report.
-- `/code-review:post` — posts the report from the current session to the GitLab MR as one review: inline diff comments written as GitLab draft notes, published together with one summary note and a `reviewed` or `requested-changes` verdict, so the MR gets one notification and nobody sees a half-posted review. Requires a `/code-review:full` run earlier in the same session, and glab-discussion 0.5.0 or newer. GitLab-only.
+- `/code-review:post` — posts the report from the current session to the GitLab MR as one review: inline diff comments written as GitLab draft notes, published together with one summary note and a `reviewed` or `requested-changes` verdict, so the MR gets one notification and nobody sees a half-posted review. Requires a `/code-review:full` run earlier in the same session, and glab-cli-extras for `glab-discussion`. GitLab-only.
 - `/code-review:watch` — full + post, then follows the MR across review rounds until every blocker and suggestion is settled, publishing each round as one review the same way. It is the reviewer side of an MR, the mirror image of `/sdlc:mr-babysit`. It never edits code, commits, or pushes. GitLab-only. See [the handshake](#the-handshake-with-the-author).
 
 ## The handshake with the author
 
-`/code-review:watch` is paced by the ticket state it shares with `/sdlc:mr-babysit`; the protocol, and what each side may do to the other's threads, is in the [teamwork plugin](../teamwork/) — `teamwork:review-handshake` for the handover and `teamwork:workflow-identify` for the state names, both read at run time. After posting a round of findings the watch moves the ticket to `WORK_STATE` and leaves the draft flag alone, then waits for the `glab:mr-watch` agent from the **glab** plugin to report ready-for-review again; its 30-minute heartbeat is the progress line, and a cron on the same interval only respawns a dead watcher. The watch resolves the threads it verified, and un-resolves one whose problem the code at the MR head still shows. The **teamwork** and **glab** plugins are declared dependencies, so installing this one installs both; with no tracker at all the watch falls back to a push gate on the draft flag plus a new head SHA.
+`/code-review:watch` is paced by the ticket state it shares with `/sdlc:mr-babysit`; the protocol, and what each side may do to the other's threads, is in the [teamwork plugin](../teamwork/) — `teamwork:review-handshake` for the handover and `teamwork:workflow-identify` for the state names, both read at run time. After posting a round of findings the watch moves the ticket to `WORK_STATE` and leaves the draft flag alone, then waits for ready-for-review again: a `glab-watch` background task reports every change on the MR, and a 30-minute cron reads the ticket and writes the progress line. The **glab** plugin, from the [glab-cli-extras](https://github.com/fprochazka/glab-cli-extras) marketplace, teaches both `glab-watch` and `glab-mr-status`. The watch resolves the threads it verified, and un-resolves one whose problem the code at the MR head still shows. The **teamwork** and **glab** plugins are declared dependencies, so installing this one installs both; with no tracker at all the watch falls back to a push gate on the draft flag plus a new head SHA.
 
 ## How it works
 
@@ -69,7 +69,11 @@ A surviving finding that turns on a race, a call ordering, a gap between states,
 
 ## Installation
 
+The `glab` dependency comes from the glab-cli-extras marketplace, which has to be added first, and its commands come from the glab-cli-extras package:
+
 ```bash
+uv tool install glab-cli-extras
+claude plugin marketplace add fprochazka/glab-cli-extras --scope user
 claude plugin marketplace add fprochazka/claude-code-plugins --scope user
 claude plugin install code-review@fprochazka-claude-code-plugins --scope user
 ```
