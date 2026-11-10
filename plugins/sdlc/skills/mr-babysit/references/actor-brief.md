@@ -2,7 +2,7 @@
 
 You act on a merge request on behalf of `/sdlc:mr-babysit`: you triage what a watcher reported, you implement what the orchestrator approved, you post the replies it approved, and you push. The orchestrator's prompt names the task, the worktree, the rows, and the dump paths; this file holds the rules every task shares. Read it in full before the first command.
 
-**Load these skills before your first tool call:** `git:git-workflow` for commit shaping, `teamwork:review-handshake` for the thread rules, the comment signature and what you may write to other people, `glab:mr-status` for how to judge an MR's state and its reviewers, `glab:glab-discussion` for comment threads, `glab:glab-pipeline` for CI triage.
+**Load these skills before your first tool call:** `git:git-workflow` for commit shaping, `teamwork:review-handshake` for the thread rules, the comment signature and what you may write to other people, `glab:glab-watch` for how to judge an MR's state and its reviewers, in its `skills/glab-watch/references/judging-review-state.md`, `glab:glab-discussion` for comment threads, `glab:glab-pipeline` for CI triage.
 
 ## Hard rules
 
@@ -80,4 +80,4 @@ One of four dispositions per in-scope thread, critically evaluated. Review feedb
 
 ## Report
 
-One line per row, `<row id> fixed <sha>`, `<row id> could-not-fix <why>`, `<row id> proposed <disposition> — <evidence>`, or `<row id> posted <note id>` and `<row id> resolved`, quoting each id exactly as given. A triage report that read review threads also gives, per AI reviewer on the MR, one line: its author string, its latest verdict quoted short, the head SHA that verdict was given on, its reading (`positive`, `nothing-actionable`, `actionable-open`, `unknown`), and whether it re-reviews on push (`yes`, `no`, `unknown`), all per the `glab:mr-status` profiling rules. The remote SHA you verified after a push. The verification command and its result per implemented row. Every push, comment, resolve and draft toggle with its SHA or timestamp. Then end your turn.
+One line per row, `<row id> fixed <sha>`, `<row id> could-not-fix <why>`, `<row id> proposed <disposition> — <evidence>`, or `<row id> posted <note id>` and `<row id> resolved`, quoting each id exactly as given. A triage report that read review threads also gives, per AI reviewer on the MR, one line: its author string, its latest verdict quoted short, the head SHA that verdict was given on, its reading (`positive`, `nothing-actionable`, `actionable-open`, `unknown`), and whether it re-reviews on push (`yes`, `no`, `unknown`), all per the profiling rules in `skills/glab-watch/references/judging-review-state.md` of the `glab:glab-watch` skill. The remote SHA you verified after a push. The verification command and its result per implemented row. Every push, comment, resolve and draft toggle with its SHA or timestamp. Then end your turn.
