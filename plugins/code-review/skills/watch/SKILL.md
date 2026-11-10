@@ -57,7 +57,7 @@ The top-level session is the **orchestrator**. It never sleeps, never polls, and
 
 **Five things re-invoke you, and nothing else:** a watcher message, the watcher's background task ending, the watchdog cron every 30 minutes, the review agents returning during a round, and the user. Between them you are idle.
 
-**The one-shot state read in 0.2 and 7.1** goes through a subagent on `sonnet` whose prompt opens with `First, invoke the glab:glab-watch skill and read its references/glab-mr-status.md before running any commands.` It runs `glab-mr-status` once, reports the scorecard and the fields 0.2 names, and ends its turn. Read its result back before acting on it; a subagent that timed out read nothing.
+**The one-shot state read in 0.2 and 7.1** goes through a subagent on `sonnet` whose prompt opens with `First, run glab-mr-status --help to learn its output before running any other command.` It runs `glab-mr-status` once, reports the scorecard and the fields 0.2 names, and ends its turn. Read its result back before acting on it; a subagent that timed out read nothing.
 
 **The review round is the one wide fan-out.** `/code-review:full` runs its review agents in parallel, past the usual ceiling of three subagents at a time. That is deliberate here; leave it as it is.
 
@@ -69,7 +69,7 @@ The top-level session is the **orchestrator**. It never sleeps, never polls, and
 
 Invoke the `glab:glab` skill and the `glab:glab-discussion` skill before making any GitLab calls. `glab` and glab-cli-extras are required: glab-cli-extras provides `glab-mr-status`, `glab-watch`, `glab-discussion` and `glab-pipeline`. When a command is missing, tell the user which, give the install command `uv tool install glab-cli-extras`, and ask before installing.
 
-This command also uses skills from other plugins: `glab:glab-watch` for the watcher (Phase 6), for reading `glab-mr-status` and, through its `skills/glab-watch/references/judging-review-state.md`, for judging what either reports, and `teamwork:workflow-identify` and `teamwork:review-handshake` for the tracker, its state names and the handshake (0.4). The glab and teamwork plugins are declared dependencies. If the teamwork skills are unavailable, say so in one line and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
+This command also uses skills from other plugins: `glab:glab-watch` for the watcher (Phase 6), `teamwork:mr-state-judge` for judging what the watcher and `glab-mr-status` report, and `teamwork:workflow-identify` and `teamwork:review-handshake` for the tracker, its state names and the handshake (0.4). The glab and teamwork plugins are declared dependencies. If the teamwork skills are unavailable, say so in one line and resolve the workflow states by listing the tracker's actual state names rather than guessing them.
 
 ### 0.2 Identify the MR and its refs
 
@@ -205,7 +205,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/full/SKILL.md` and execute it, with these sub
 
 Add any Phase 1 rebase failure to the report's **Blocking** section.
 
-**A head pipeline that is not green is itself a Blocking finding.** Read `head_pipeline.status` on `REVIEW_HEAD`. The accepted-green set is `success` alone, as the `glab:glab-watch` skill's `skills/glab-watch/references/judging-review-state.md` states — `canceled` ran nothing to completion, `manual` is an unfinished blocking gate, and `skipped` means no pipeline ran for this head. Any other value gets a Blocking finding titled "head pipeline is not green", naming the status, the SHA, and the pipeline URL. Do not diagnose the failure and do not propose the fix — that is the author's side.
+**A head pipeline that is not green is itself a Blocking finding.** Read `head_pipeline.status` on `REVIEW_HEAD`. The accepted-green set is `success` alone, as `teamwork:mr-state-judge` states — `canceled` ran nothing to completion, `manual` is an unfinished blocking gate, and `skipped` means no pipeline ran for this head. Any other value gets a Blocking finding titled "head pipeline is not green", naming the status, the SHA, and the pipeline URL. Do not diagnose the failure and do not propose the fix — that is the author's side.
 
 **`running` and `pending` are not a verdict, and a head in flight is not reviewable.** Read the pipeline status before the review agents start. If it is still running, do not wait for it: treat the gate as closed for this round, record the pipeline and the head as `Deferred` in the ledger, note the pipeline in flight in the one-line report, and let the watcher's `pipeline_finished` event start the round — a review of a head that then goes red is a review the author has to redo. On the initial run, skip ahead: write the ledger (Phase 5) with `Last reviewed SHA` empty and start the watcher (Phase 6); its `pipeline_finished` event opens the gate on the same handshake and runs the round then.
 
@@ -278,7 +278,7 @@ glab-watch mr <web_url> --idle-after=4h
 
 Never pass `--events-stream`. Record the background task id in the ledger; if you cannot name it, nothing is watching. Read the startup header in the task output before anything else. A `stream fallback:` line means no event will reach this session: stop the task, tell the user the reason that line gives, and end the watch as under [Termination](#termination).
 
-The events arrive as `<glab-cli-extras-watcher>` messages. Classify each per the `glab:glab-watch` skill and its `skills/glab-watch/references/judging-review-state.md`, reading only the thread files in its `artifacts`. On top of that:
+The events arrive as `<glab-cli-extras-watcher>` messages. Classify each per the `glab:glab-watch` and `teamwork:mr-state-judge` skills, reading only the thread files in its `artifacts`. On top of that:
 
 - **The handshake reading is yours.** glab-watch does not read the tracker. Evaluate the handshake per `teamwork:review-handshake` on `draft_changed` and `reviewers_changed`, on every watchdog firing, which reads the ticket state, on any event while the last reading is `half-set`, and on every `thread_created` or `thread_updated` that is not your own while the last reading is `back-to-work`, reading the ticket again each time: a hand-over flips the draft flag, when it is not ready already, and moves the ticket one after the other, and a note signed `<!-- sdlc:mr-babysit -->` usually comes with it. The note alone never starts a round. Evaluate it once when Phase 6 starts too, so the ledger has a reading to gate on. Under the push gate the reading is the draft flag and the head SHA. Record the reading and its UTC time as `Last handshake reading`; a reading that did not change is not news.
 - **Your own moves come back as events**: the publish's system note, `reviewers_changed` when the publish added the user as a reviewer, `approvals_changed` when it revoked the user's approval, and `thread_resolved` or `thread_unresolved` for the threads the round resolved or re-opened. Recognize a comment as yours by its last line, `<!-- code-review:watch -->` or `<!-- code-review:post -->`, and the rest by the round you just ran. None of them updates `Last movement`.
