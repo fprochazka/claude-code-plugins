@@ -53,7 +53,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | Plugin | Description |
 |--------|-------------|
 | [sdlc](plugins/sdlc/) | Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps |
-| [teamwork](plugins/teamwork/) | Team-process conventions shared by the sdlc and code-review plugins — the workflow-identify skill that resolves the tracker, team and state names at run time, and the review-handshake skill that says whose court the ball is in |
+| [teamwork](plugins/teamwork/) | Team-process conventions shared by the sdlc and code-review plugins — the workflow-identify skill that resolves the tracker, team and state names at run time, the review-handshake skill that says whose court the ball is in, and the mr-state-judge skill that says what an MR's pipeline, verdicts and threads mean for the merge |
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel |
 | [git](plugins/git/) | Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history |
 | [prose](plugins/prose/) | How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command |
