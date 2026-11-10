@@ -12,9 +12,8 @@
 # role file must read correctly on its own and must never refer to anything outside itself.
 set -euo pipefail
 
-# Agent types that stay alive for a run and report by message. Add more through the
+# Agent types that stay alive for a run and report by message come only from the
 # `resident_agent_types` plugin option, which reaches a shell hook only as this environment variable.
-DEFAULT_RESIDENT_AGENT_TYPES="glab:mr-watch"
 RESIDENT_OPTION="${CLAUDE_PLUGIN_OPTION_RESIDENT_AGENT_TYPES:-}"
 
 PAYLOAD=$(cat)
@@ -30,7 +29,7 @@ if [ "$ROLE" = task-worker ] && command -v jq >/dev/null 2>&1; then
   if [ -n "$AGENT_TYPE" ]; then
     # The option may be a JSON array (multiple: true) or a comma-separated string; accept both.
     OPTION_TYPES=$(printf '%s' "$RESIDENT_OPTION" | jq -r 'if type == "array" then .[] else . end' 2>/dev/null || printf '%s' "$RESIDENT_OPTION")
-    for candidate in $DEFAULT_RESIDENT_AGENT_TYPES $(printf '%s' "$OPTION_TYPES" | tr ',' ' '); do
+    for candidate in $(printf '%s' "$OPTION_TYPES" | tr ',' ' '); do
       [ "$candidate" = "$AGENT_TYPE" ] && ROLE=resident-worker && break
     done
   fi

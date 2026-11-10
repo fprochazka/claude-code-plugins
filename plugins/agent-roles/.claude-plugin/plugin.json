@@ -17,7 +17,7 @@
       "type": "string",
       "multiple": true,
       "title": "Resident agent types",
-      "description": "Agent types that stay alive for a whole run and report through SendMessage; they get the resident worker role instead of the task worker role. glab:mr-watch is always included."
+      "description": "Agent types that stay alive for a whole run and report through SendMessage; they get the resident worker role instead of the task worker role. Empty by default."
     }
   }
 }

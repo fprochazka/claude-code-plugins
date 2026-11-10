@@ -4,9 +4,9 @@ Three role files, one injected into every agent before it takes its first action
 
 - `roles/orchestrator.md` — the top-level session. It talks to the user, decides, delegates, and synthesizes. It does not grep, build, or explore.
 - `roles/task-worker.md` — every subagent, at any nesting depth. It runs everything in the foreground, waits for nothing it was not asked to wait for, and ends its turn with findings.
-- `roles/resident-worker.md` — the few agent types that stay alive for a whole run and report through `SendMessage`, such as `glab:mr-watch`. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
+- `roles/resident-worker.md` — the few agent types that stay alive for a whole run and report through `SendMessage`, listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
 
-A `SessionStart` hook delivers the first. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for the types in the hook's default list or in the `resident_agent_types` plugin option, the task role for everything else.
+A `SessionStart` hook delivers the first. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for the types in the `resident_agent_types` plugin option, the task role for everything else. With the option unset, every subagent gets the task role.
 
 ## Installation
 
@@ -42,7 +42,7 @@ The flag gates a built-in `fork` agent type. A fork inherits the parent's whole 
 
 ## How the injection works
 
-`hooks/inject-role.sh` receives the event name as an argument, reads the matching file from `roles/`, and prints it as `hookSpecificOutput.additionalContext`. On `SubagentStart` it reads `agent_type` from the payload with `jq` and picks the resident role when the type is `glab:mr-watch` or one of the types in the `resident_agent_types` plugin option; without `jq`, or without the field, it picks the task role. Add your own resident types the way the noisy-tools plugin takes its exempt list:
+`hooks/inject-role.sh` receives the event name as an argument, reads the matching file from `roles/`, and prints it as `hookSpecificOutput.additionalContext`. On `SubagentStart` it reads `agent_type` from the payload with `jq` and picks the resident role when the type is one of the types in the `resident_agent_types` plugin option; without `jq`, or without the field, it picks the task role. Add your own resident types the way the noisy-tools plugin takes its exempt list:
 
 ```bash
 claude plugin install agent-roles@fprochazka-claude-code-plugins --scope user --config resident_agent_types=my-team:sentinel
