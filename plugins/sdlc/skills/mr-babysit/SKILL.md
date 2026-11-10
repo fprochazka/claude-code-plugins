@@ -156,28 +156,24 @@ Report one line per row, `<row id> fixed <sha>` / `could-not-fix <why>` / `poste
 
 ### On a watcher message
 
-The `glab:glab-watch` skill says what each event means and holds the rules every watcher needs: restarting one that ended early, `watch_degraded`, background-only `watch_command`, and re-reading a thread after a push. Classify each event per that skill and `teamwork:mr-state-judge`, reading only the thread files the events name and never fetching the MR. Then dispatch, rewrite the ledger, and write a progress note of at most three lines.
+Follow `glab:glab-watch` and `teamwork:mr-state-judge` for what each event means and how to handle the watchers, and act on it as the run's goal needs. Read only the thread files the events name, never fetch the MR. Then dispatch, rewrite the ledger, and write a progress note of at most three lines. The table below holds only the reactions that are not obvious.
 
 **First, sort out the run's own moves.** A `pushed` to the SHA the actor last reported, a note ending in a self marker, and a `draft_changed`, `thread_resolved` or ticket move the actor or you reported are the run's own. The watcher reports a push before the actor returns, so while an implementation batch, or a triage batch with a rebase, is out on an MR, hold that MR's `pushed`, `draft_changed` and `thread_resolved` events until the actor's report names its SHAs and ids. The run's own moves, and the pipeline and merge-status events after its own push, need nothing and leave `Last movement` alone; everything else updates it.
 
 | Event | Babysit action |
 |---|---|
-| `state_changed` to merged or closed, `watch_ended` with that reason | Drop the MR from the set and stop a branch watcher no MR left in the set targets; an empty set goes to [Stopping](#stopping-instead-of-handing-over) |
+| merged or closed | Also stop a branch watcher no MR left in the set targets; an empty set goes to [Stopping](#stopping-instead-of-handing-over) |
 | `draft_changed`, `reviewers_changed` | Read the ticket once, evaluate the `Handshake:` line and record the reading; an unchanged reading is not news. `back-to-work` in `needs-human (ready-for-review)`: set `Mode: working` and send the `Held threads` to triage as in-scope threads |
 | `thread_created`, `thread_updated`, `approvals_changed` not the run's own, in `needs-human (ready-for-review)` | Read the ticket again until the reading flips: a reviewer publishes the review first and moves the ticket after |
-| `pipeline_finished` `failed` | Triage `pipeline <id> on !<iid>` with the event's `web_url`; a pipeline on a superseded base is judged after the rebase |
 | `pipeline_finished` `canceled`, `manual`, `skipped` | One line to the user and an `ask` row `pipeline <id> on !<iid>`; a `manual` gate is the user's to start |
 | `thread_created`, `thread_updated` by anyone else | Triage `threads <ids> on !<iid>` with the files from `artifacts`; threads under your own markers need nothing, another automation's marker is triaged like a reviewer's, pending drafts are nobody's activity |
-| A verdict by an AI reviewer in a thread file | Rewrite its `Review state` row: verdict, reading (`positive`, `nothing-actionable`, `actionable-open`, `unknown`), head, time. `actionable-open` on the current head sends its threads to triage; anything else re-checks the [entry condition](#the-entry-condition) |
+| A verdict by an AI reviewer in a thread file | Rewrite its `Review state` row: verdict, reading, head, time. `actionable-open` on the current head sends its threads to triage; anything else re-checks the [entry condition](#the-entry-condition) |
 | `pushed`, `force_pushed` on a target branch | Working: `rebase !<iid>` for every MR that targets it. `needs-human`: a `measure !<iid>` row (behind by how much, overlap or not, no rebase); only an overlap brings the set back to work |
-| `deleted` on a target branch | To the user |
 | `pushed` on an MR another MR in the set is stacked on, the run's own included | `rebase !<stacked iid>`; when both need one, the base goes first |
-| `approvals_changed` | Rewrite the approvals line, human and AI apart; an AI approval is not the human review, and nothing is merged on any approval |
+| `approvals_changed` | Rewrite the approvals line, human and AI apart; nothing is merged on any approval |
 | `quiet` | Record it on `Quiet`. `2m` with no unfinished row on any MR: check the [entry condition](#the-entry-condition). `15m` closes the [AI reviewer gate](#the-ai-reviewer-gate) window: check it again |
-| `pipeline_stuck` | One line to the user naming the pipeline and, from one `glab-pipeline inspect`, the job it sits in. Dispatch nothing: a wedged build is not a failure signature, so it is neither retried nor fixed |
-| `watch_ended` `idle` | The [idle cap](#waiting-for-the-human) |
-| `watch_ended`, any other reason | Restart as `glab:glab-watch` says and record the new task id in `Watchers:`; a repeat it says not to restart is a [halt](#stopping-instead-of-handing-over) |
-| `watch_degraded` | React as `glab:glab-watch` says and name it in the progress note |
+| `pipeline_stuck` | One line to the user naming the pipeline and, from one `glab-pipeline inspect`, the job it sits in. Dispatch nothing |
+| `watch_ended`, any other reason | Record the restarted watcher's task id in `Watchers:`; a repeat that is not restarted is a [halt](#stopping-instead-of-handing-over) |
 
 **In a working cycle, a set already handed over while there is anything to rebase, triage or fix is taken back first**, per `teamwork:review-handshake`: your ticket move, then the batch opens with `reclaim !<iid>` for the actor's one-line comment. A batch about to be implemented is work in progress too.
 
