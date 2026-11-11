@@ -75,6 +75,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 - The reading guide for the reviewer, the release procedure and the measured results go into separate MR comments, so that each one can be discussed in its own thread. The description links the release comment as must-read.
 - A diagram is the model's call, never forced, and it goes in a comment, not the description.
 - Every comment ends with `<!-- sdlc:mr-open -->`.
+- On GitLab the MR always deletes its source branch on merge, and it squashes on merge only when the branch history cannot be read commit by commit. Both are set explicitly, never left to the project defaults.
 
 ### mr-babysit
 
@@ -157,6 +158,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 | 2026-11-09 | `glab-watch` background tasks replace the `glab:mr-watch` agent: one per MR with `--quiet-after=2m --quiet-after=15m --stuck-after=30m --idle-after=3h`, and one per target branch for the pushes that put the set behind. The command classifies the events, recognizes its own moves by the pushed SHA and the signature line, reads the ticket on its cron and evaluates the handshake. Acks, the heartbeat, the watcher ledger and the liveness check go | The glab plugin moved to glab-cli-extras, whose `glab-watch` sends MR events to the session as messages. A background task ends with a `watch_ended` event and never dies silently, so nothing has to prove it alive. The tracker is outside GitLab, so the cron stays for the ticket and the progress line |
 | 2026-11-10 | The rules for judging an MR's state, from the pipeline to whose turn it is, live in `teamwork:mr-state-judge` | They sat in a reference of the `glab:glab-watch` skill, which watches and does not judge. `code-review:watch` needs them too, and sdlc depends on code-review, so they go into the plugin both share |
 | 2026-11-10 | `mr-babysit` reacts to watcher events from one event → action table. What an event means, and the rules every watcher needs (restart one that ended early, `watch_degraded`, `watch_command` in the background, re-read a thread after a push), live in `glab:glab-watch` | The section restated what each event means, which the glab-watch skill already says. `code-review:watch` needs the same restart rule, so it went into the skill both load |
+| 2026-11-11 | `mr-open` sets delete-source-branch and squash-on-merge itself, with squash decided by the history's shape, and takes the title convention from the agent instructions or the base branch commits | The maintainer's own MR script set the first two and derived the title, and the generic skill must not depend on a personal script |
 
 ## How changes are checked
 
