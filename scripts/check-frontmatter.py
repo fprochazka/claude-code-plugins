@@ -157,11 +157,13 @@ def check_skill_name(records: list[dict]) -> None:
         items += 1
         name = rec["meta"].get("name")
         if rec["kind"] == "skill":
-            expected = rec["path"].parent.name
+            # Claude Code turns a name without a colon into a bare alias: `name: mr-open` would also answer to
+            # `/mr-open` and show `/sdlc:mr-open (mr-open)` in the slash menu. `<plugin>:<dir>` creates no alias.
+            expected = f"{rec['plugin'].name}:{rec['path'].parent.name}"
             if name is None:
                 fail("skill-name", rec["path"], f"no name, expected \"{expected}\"")
             elif name != expected:
-                fail("skill-name", rec["path"], f"name is \"{name}\", directory is \"{expected}\"")
+                fail("skill-name", rec["path"], f"name is \"{name}\", expected \"{expected}\"")
         elif rec["kind"] == "agent":
             if name is None:
                 fail("skill-name", rec["path"], "agent has no name")

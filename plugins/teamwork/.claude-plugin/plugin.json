@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "teamwork",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Team-process conventions shared by the sdlc and code-review plugins — the workflow-identify skill that resolves the tracker, team and state names at run time, the review-handshake skill that says whose court the ball is in, and the mr-state-judge skill that says what an MR's pipeline, verdicts and threads mean for the merge",
   "author": {
     "name": "Filip Procházka",

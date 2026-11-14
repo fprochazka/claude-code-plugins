@@ -1,5 +1,5 @@
 ---
-name: brief-next-steps
+name: sdlc:brief-next-steps
 description: Write a short briefing of the proposed next steps into ./.claude/plans/ so the conclusion can be read instead of the argument
 argument-hint: [optional scope hint or slug]
 allowed-tools: Read, Glob, Bash, Write

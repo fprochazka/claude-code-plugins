@@ -1,5 +1,5 @@
 ---
-name: mermaid
+name: diagrams:mermaid
 description: Write Mermaid diagrams that render on GitLab, GitHub, Linear and in IDE previews — whether a diagram is worth drawing at all, which type to pick, the syntax that survives both renderers, the size budget, and a render-and-look validation loop through a `diagrams:mermaid-validate` subagent. Use when a plan, MR description, review comment, ticket or doc would be clearer with a picture, or when an existing mermaid block has to be repaired.
 trigger-keywords: mermaid, diagram, flowchart, sequence diagram, state diagram, er diagram, draw this, visualize, visualise
 ---

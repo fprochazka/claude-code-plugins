@@ -23,7 +23,7 @@ Add the following to `~/.claude/settings.json` to allow the skill to load and au
 {
   "permissions": {
     "allow": [
-      "Skill(searxngcli)"
+      "Skill(searxngcli:searxngcli)"
     ]
   }
 }

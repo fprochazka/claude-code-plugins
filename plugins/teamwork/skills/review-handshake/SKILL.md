@@ -1,5 +1,5 @@
 ---
-name: review-handshake
+name: teamwork:review-handshake
 description: The protocol between the author side and the reviewer side of a merge request — how the ticket state and the draft flag say whose court the ball is in, what each side may do to the other's threads, how posted comments are signed, and where the run's ledgers live. Use when a command hands work over for review or takes it back, replies to or resolves a review thread, or asks "is this MR ready for review", "who has the ball", "may I resolve this thread". The sdlc and code-review commands invoke this skill by name.
 trigger-keywords: ready for review, back to work, hand over, handshake, resolve the thread, review thread
 ---

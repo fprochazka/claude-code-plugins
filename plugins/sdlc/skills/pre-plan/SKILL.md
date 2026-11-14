@@ -1,5 +1,5 @@
 ---
-name: pre-plan
+name: sdlc:pre-plan
 description: Gather context for a problem (ticket + code exploration) before discussing a solution and writing a plan
 argument-hint: [ticket ref or freeform problem description]
 allowed-tools: AskUserQuestion, Read, Bash, Agent, Skill

@@ -1,5 +1,5 @@
 ---
-name: commit-staged
+name: git:commit-staged
 allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git commit:*)
 description: Commit only the currently staged changes with an accurate message
 disable-model-invocation: true
@@ -29,7 +29,7 @@ disable-model-invocation: true
 
 ## Your task
 
-Load the `git-workflow` skill and create a single commit from the files that are **already staged**.
+Load the `git:git-workflow` skill and create a single commit from the files that are **already staged**.
 
 Strict rules:
 - Do **NOT** run `git add` — stage nothing, unstage nothing.

@@ -26,7 +26,7 @@
     {
       "name": "gemini-cli",
       "description": "Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -50,7 +50,7 @@
     {
       "name": "web-researcher",
       "description": "Iterative web research agent that searches, discovers new directions, and synthesizes findings",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -62,7 +62,7 @@
     {
       "name": "migrate-to-uv",
       "description": "Skill for migrating Python projects from Poetry, pipx, or pip to uv",
-      "version": "1.2.0",
+      "version": "1.2.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -74,7 +74,7 @@
     {
       "name": "rabbitmqadmin",
       "description": "Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng)",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -86,7 +86,7 @@
     {
       "name": "searxngcli",
       "description": "Skill for searching the web using a SearXNG instance via the searxngcli CLI",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -98,7 +98,7 @@
     {
       "name": "git",
       "description": "Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -110,7 +110,7 @@
     {
       "name": "code-review",
       "description": "Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel",
-      "version": "1.17.4",
+      "version": "1.17.5",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -122,7 +122,7 @@
     {
       "name": "teamwork",
       "description": "Team-process conventions shared by the sdlc and code-review plugins — the workflow-identify skill that resolves the tracker, team and state names at run time, the review-handshake skill that says whose court the ball is in, and the mr-state-judge skill that says what an MR's pipeline, verdicts and threads mean for the merge",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -134,7 +134,7 @@
     {
       "name": "sdlc",
       "description": "Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps",
-      "version": "0.23.0",
+      "version": "0.23.1",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -158,7 +158,7 @@
     {
       "name": "prose",
       "description": "How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"
@@ -182,7 +182,7 @@
     {
       "name": "diagrams",
       "description": "Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

@@ -1,5 +1,5 @@
 ---
-name: technical-writing
+name: prose:technical-writing
 description: Rule set for text people read — docs, READMEs, doc comments (Javadoc, docstrings), inline comments, commit bodies, MR/PR descriptions, error messages, release notes, and comments posted to chat or a tracker. Use when writing or rewriting any of these, when asked to make text clear, plain, human, or not sound like AI, or when documenting a decision. Never for code, identifiers, or chat replies to the user (reply-style).
 trigger-keywords: docs, documentation, README, javadoc, docstring, doc comment, code comment, MR description, PR description, commit message, release notes, changelog, error message, Slack message, ticket comment, plain english, STE, slop, unslop
 ---

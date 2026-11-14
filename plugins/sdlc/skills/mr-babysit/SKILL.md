@@ -1,5 +1,5 @@
 ---
-name: mr-babysit
+name: sdlc:mr-babysit
 description: Babysit MR(s) — a watcher reports every change, an actor triages, fixes and posts, and you decide, until every MR is rebased, green, quiet and handed over
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: mr-open
+name: sdlc:mr-open
 description: Open a draft MR for the current branch — the Why in the ticket, the reviewer's guide in comments, a one-screen description
 argument-hint: [ticket-id]
 allowed-tools: Bash, Read, Edit, Write, Skill, Agent

@@ -1,5 +1,5 @@
 ---
-name: post
+name: code-review:post
 description: Publish the existing code-review report to the current GitLab MR as one review — inline diff comments written as drafts, published together with a summary and a verdict
 disable-model-invocation: true
 ---

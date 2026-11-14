@@ -1,5 +1,5 @@
 ---
-name: workflow-identify
+name: teamwork:workflow-identify
 description: Identify the project's issue tracker, team, ticket conventions and workflow state names before any command touches a ticket. Use when asked "which status should this move to", "move the ticket", "mark it ready for review", "what is the team workflow", "which issue tracker states exist", or when a ticket has to change state. The sdlc and code-review commands invoke this skill by name and consume its output block.
 trigger-keywords: ticket status, workflow states, issue tracker, move the ticket, ready for review, team workflow
 ---

@@ -1,5 +1,5 @@
 ---
-name: watch
+name: code-review:watch
 description: Review the current branch's MR, post the findings, then watch it with a background glab-watch task until every blocker and suggestion is addressed or refuted
 argument-hint: [focus area or specific concerns]
 disable-model-invocation: true

@@ -30,7 +30,7 @@ You are responsible for fetching git data yourself:
 
 ## Your Scope
 
-Your standard is the project's **git-workflow** discipline (this repo's `git-workflow` skill encodes it): a reviewer should be able to read the branch commit-by-commit and never be confused about what each commit does or why. Check the branch against:
+Your standard is the project's **git-workflow** discipline (the `git:git-workflow` skill encodes it): a reviewer should be able to read the branch commit-by-commit and never be confused about what each commit does or why. Check the branch against:
 
 - **Atomicity — flag BOTH directions.** Each commit is exactly one logical change. Too *much*: mixed concerns, a feature without its tests, a rename bundled with a behavior change. Too *little*: arbitrary slices that don't build or aren't independently meaningful. **Commit count must be proportional to the change** — a branch fragmented into many incoherent micro-commits is as wrong as one giant mixed commit; flag it just as loudly. A feature commit includes its tests; exception: a test committed *before* a bugfix (capturing the broken behavior) is superior — same for snapshots.
 - **Ordering — refactor first, behavior last.** Prerequisite refactorings, renames, and formatting come BEFORE the bugfix/feature that needs them (a pure-refactor diff skims fast; a behavior diff gets scrutiny; mixing hides the behavior change in noise). The bar is this simple sequence — prereq refactors → typo/format → test-capturing-the-bug → the fix/feature with its tests — NOT an elaborate many-step "narrative".

@@ -1,5 +1,5 @@
 ---
-name: mermaid-validate
+name: diagrams:mermaid-validate
 description: Render one `.mmd` file with `mmdc`, look at the PNG, and report whether the diagram is correct and clear. Loaded by the validator subagent that `diagrams:mermaid` spawns, when its prompt names this skill. The author of the diagram fixes the source; this skill never edits it.
 ---
 

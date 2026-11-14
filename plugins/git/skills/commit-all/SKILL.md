@@ -1,5 +1,5 @@
 ---
-name: commit-all
+name: git:commit-all
 allowed-tools: Bash(git status:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git add:*), Bash(git commit:*)
 description: Commit all pending changes following the git-workflow skill rules
 disable-model-invocation: true
@@ -43,7 +43,7 @@ Pushed or not, these stay rewritable until the branch merges.
 
 ## Your task
 
-Load the `git-workflow` skill and commit all pending changes (both staged and unstaged) according to its rules. Read file diffs as needed via `git diff HEAD -- <path>` before staging.
+Load the `git:git-workflow` skill and commit all pending changes (both staged and unstaged) according to its rules. Read file diffs as needed via `git diff HEAD -- <path>` before staging.
 
 Work in this order:
 

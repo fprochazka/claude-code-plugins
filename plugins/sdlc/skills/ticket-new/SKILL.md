@@ -1,5 +1,5 @@
 ---
-name: ticket-new
+name: sdlc:ticket-new
 description: Draft and create a ticket from the current conversation context
 argument-hint: [additional context]
 allowed-tools: AskUserQuestion, Read, Glob, Grep, Bash, Write, Edit, Agent, Skill

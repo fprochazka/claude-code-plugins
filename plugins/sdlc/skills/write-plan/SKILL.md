@@ -1,5 +1,5 @@
 ---
-name: write-plan
+name: sdlc:write-plan
 description: Enter plan mode and write an implementation plan structured for git-workflow and subagent-driven execution
 argument-hint: [what to plan — topic, ticket ref, or path to a pre-plan briefing]
 allowed-tools: AskUserQuestion, Read, Glob, Grep, Bash, Agent, Skill, EnterPlanMode

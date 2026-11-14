@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "gemini-cli",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions",
   "author": {
     "name": "Filip Procházka",

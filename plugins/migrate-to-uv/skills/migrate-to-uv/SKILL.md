@@ -1,5 +1,5 @@
 ---
-name: migrate-to-uv
+name: migrate-to-uv:migrate-to-uv
 description: |
   Migrate Python projects from Poetry, pipx, or pip/requirements.txt to uv.
   Converts pyproject.toml from Poetry format to PEP 621 standard, handles dependency groups,

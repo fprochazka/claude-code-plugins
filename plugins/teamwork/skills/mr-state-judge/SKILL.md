@@ -1,5 +1,5 @@
 ---
-name: mr-state-judge
+name: teamwork:mr-state-judge
 description: Judge a merge request's state from what a status read or a watcher event reports — whether the pipeline counts as green, whether a pipeline or verdict is stale because it ran on an older head or a superseded base, what each AI reviewer's latest verdict means, which threads and approvals are human review rather than the author's or a bot's, what blocks the merge right now and whose turn it is. Use when asked "is this MR ready", "is this MR green", "what blocks the merge", "who still has to review this", "whose turn is it", "did the bot approve", or when a command has to decide from an MR's pipeline, threads, verdicts or approvals whether to act, wait or hand over. The sdlc and code-review commands invoke this skill by name.
 trigger-keywords: is the MR green, what blocks the merge, mr ready, whose turn, AI reviewer verdict, review state, merge blockers
 ---

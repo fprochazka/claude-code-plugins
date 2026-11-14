@@ -1,5 +1,5 @@
 ---
-name: rabbitmqadmin
+name: rabbitmqadmin:rabbitmqadmin
 description: CLI for querying RabbitMQ instances (vhosts, queues, exchanges, bindings). Use when inspecting RabbitMQ, listing queues, checking exchange bindings, viewing queue details, or exploring RabbitMQ topology. Triggered by requests involving RabbitMQ data, queue inspection, exchange listing, or message broker exploration.
 trigger-keywords: rabbitmq, rabbit
 allowed-tools: Bash(rabbitmqadmin --help), Bash(rabbitmqadmin config_file:*)

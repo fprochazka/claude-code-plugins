@@ -1,5 +1,5 @@
 ---
-name: reply-style
+name: prose:reply-style
 description: How to talk to the user in chat — the opening line, the progress note between task phases, the final reply when the work is done, the final reply when a decision is needed, what never gets shortened, and the sentence rules that keep it readable. Applies to every reply; the prose plugin's hook reminds you each turn. Not for text addressed to other people or stored in files — that is technical-writing.
 ---
 

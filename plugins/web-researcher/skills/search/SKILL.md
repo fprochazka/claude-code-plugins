@@ -1,5 +1,5 @@
 ---
-name: search
+name: web-researcher:search
 description: Search the web and summarize findings
 argument-hint: <query>
 ---

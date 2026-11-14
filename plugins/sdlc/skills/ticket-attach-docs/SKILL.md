@@ -1,5 +1,5 @@
 ---
-name: ticket-attach-docs
+name: sdlc:ticket-attach-docs
 description: Attach the session's plan and research documents to the ticket, as tracker documents where they exist and as attachments or comments otherwise
 argument-hint: [ticket ref or extra context]
 allowed-tools: AskUserQuestion, Read, Glob, Bash, Agent, Skill

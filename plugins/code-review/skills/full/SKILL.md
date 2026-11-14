@@ -1,5 +1,5 @@
 ---
-name: full
+name: code-review:full
 description: Full multi-agent code review of current branch — context, exploration, parallel review, validation
 argument-hint: [focus area or specific concerns]
 disable-model-invocation: true

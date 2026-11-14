@@ -1,5 +1,5 @@
 ---
-name: gemini-cli
+name: gemini-cli:gemini-cli
 description: Use Gemini CLI in non-interactive mode for tasks requiring massive context windows (1M tokens). Best delegated to subagents for iterative analysis and summarization. Invoke when analyzing large codebases, requesting deep analysis, getting second opinions on complex problems, or when Claude's context limits are insufficient. Triggers include phrases like "use gemini", "analyze with gemini", "get second opinion", "deep analysis of codebase", or when processing files exceeding Claude's context capacity. IMPORTANT - Always delegate to a subagent using the Task tool for better iteration and result summarization.
 trigger-keywords: gemini cli, gemini-cli
 ---
@@ -81,7 +81,7 @@ gemini --allowed-tools ShellTool "Run the test suite and report results"
 Task(
   subagent_type: "general-purpose",
   description: "Analyze codebase with Gemini",
-  prompt: "Use the gemini-cli skill to analyze /path/to/project.
+  prompt: "Use the `gemini-cli:gemini-cli` skill to analyze /path/to/project.
   Focus on security vulnerabilities and performance issues.
   See references/prompt_patterns.md for effective prompts.
   Ask Gemini to provide evidence for findings.

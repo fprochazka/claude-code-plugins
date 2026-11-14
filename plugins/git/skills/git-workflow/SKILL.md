@@ -1,5 +1,5 @@
 ---
-name: git-workflow
+name: git:git-workflow
 description: Judgment rules for how to shape commits, plan branches, and respond to review — not git mechanics. Use when staging changes, writing commit messages, splitting/reordering commits, planning a branch's structure, addressing review feedback, or deciding how to merge.
 trigger-keywords: commit, git, rebase, git history, branch history
 ---

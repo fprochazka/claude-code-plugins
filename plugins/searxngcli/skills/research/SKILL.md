@@ -1,5 +1,5 @@
 ---
-name: research
+name: searxngcli:research
 description: Research a topic using SearXNG web search
 argument-hint: <query>
 ---

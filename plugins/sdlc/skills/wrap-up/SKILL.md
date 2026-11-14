@@ -1,5 +1,5 @@
 ---
-name: wrap-up
+name: sdlc:wrap-up
 description: Attach the session's documents to the ticket, post a condensed wrap-up comment — outcome, verification numbers, findings, follow-ups — and mark it completed
 argument-hint: [ticket ref or extra context]
 allowed-tools: AskUserQuestion, Read, Glob, Bash, Write, Edit, Skill
