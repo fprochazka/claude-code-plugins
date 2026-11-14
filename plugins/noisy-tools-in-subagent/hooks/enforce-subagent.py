@@ -2,10 +2,11 @@
 """
 PreToolUse hook for the `noisy-tools-in-subagent` plugin.
 
-Rejects Bash tool calls in the main agent context when they invoke noisy
-commands (builds, tests, linters, static analysis) that would pollute the
-main context with large volumes of output. The main agent is instructed to
-delegate such commands to the `noisy-runner` subagent, which interprets the
+Rejects Bash tool calls that invoke noisy commands (builds, tests, linters,
+static analysis) that would pollute the calling agent's context with large
+volumes of output. It applies to the main agent and to every subagent at any
+nesting depth, except the exempt agent types below. The caller is instructed
+to delegate such commands to the `noisy-runner` subagent, which interprets the
 output in its own context and reports back a concise summary.
 
 Behavior:

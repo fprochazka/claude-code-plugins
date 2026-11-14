@@ -1,5 +1,5 @@
 {
-  "description": "Blocks noisy build/test/lint commands in the main context, forcing delegation to the noisy-runner subagent",
+  "description": "Blocks noisy build/test/lint commands in every agent that can delegate, at any nesting depth, forcing delegation to the noisy-runner subagent",
   "hooks": {
     "PreToolUse": [
       {

@@ -58,7 +58,7 @@ The roles are injected markdown, not skills. A skill has to be loaded, and a sub
 
 ## What it isn't
 
-Not a set of agent definitions — the plugin ships no `agents/`, and it constrains how existing agents work rather than adding new ones. Not enforcement either: nothing blocks a tool call, so a command that runs against the rules still runs. For an enforced version of the delegation rule, see [`noisy-tools-in-subagent`](../noisy-tools-in-subagent/), which denies noisy commands in the main context outright.
+Not a set of agent definitions — the plugin ships no `agents/`, and it constrains how existing agents work rather than adding new ones. Not enforcement either: nothing blocks a tool call, so a command that runs against the rules still runs. For an enforced version of the delegation rule, see [`noisy-tools-in-subagent`](../noisy-tools-in-subagent/), which denies noisy commands outright, in the main agent and in every subagent that can delegate.
 
 The rules are calibrated, not neutral. The parallelism cap, the stance against monitors, and the workers' ban on backgrounding come from one person's experience with this harness. Installing the plugin is an opt-in to working that way.
 
