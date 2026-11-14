@@ -1,6 +1,6 @@
 # noisy-tools-in-subagent
 
-Forces noisy commands — builds, tests, linters, static analysis, anything that produces a wall of output — to run inside a Sonnet subagent instead of the calling agent's context window. Those tokens are for work that needs them, not for 2,000 lines of Maven output. This holds at every nesting depth: a nested orchestrator protects its own context the same way the top-level one does.
+Forces noisy commands — builds, tests, linters, static analysis, anything that produces a wall of output — to run inside a Haiku subagent instead of the calling agent's context window. Those tokens are for work that needs them, not for 2,000 lines of Maven output. This holds at every nesting depth: a nested orchestrator protects its own context the same way the top-level one does.
 
 ![Example: main agent's `uv run ruff format --check . && uv run ruff check . && uv run pytest` is blocked by the hook, delegated to the `noisy-runner` subagent, which runs the three commands and reports a 4-line summary back (3 tool uses, 10.9k tokens, 41s) instead of dumping 598 pytest lines into the main context.](example.png)
 
@@ -27,7 +27,7 @@ Two pieces:
 
 1. **A `PreToolUse` hook** on `Bash` that parses each command with `bash-classify` (walking pipes, chains, and subshells) and matches every parsed command against a regex whitelist of noisy build/test/lint tools. A match is denied with a short message telling the agent to delegate. The main thread and every subagent are treated alike, except for the agents listed under [Which agents are exempt](#which-agents-are-exempt).
 
-2. **A `noisy-runner` subagent** (Sonnet, strictly scoped to `Bash` and `Read`) that runs the commands it is given, wraps them in `tee` to capture full logs to `/tmp`, reads any files the output references to interpret errors, and reports back a concise summary plus log paths. It does not explore, fix, or modify anything — its only job is *run, read, interpret, report*.
+2. **A `noisy-runner` subagent** (Haiku, strictly scoped to `Bash` and `Read`) that runs the commands it is given, wraps them in `tee` to capture full logs to `/tmp`, reads any files the output references to interpret errors, and reports back a concise summary plus log paths. It does not explore, fix, or modify anything — its only job is *run, read, interpret, report*.
 
 Net effect: when the main agent wants `./mvnw test`, it gets redirected into a "3 tests failed at X:42, Y:87, Z:12 because …, full logs at /tmp/…" summary instead of a flood of output.
 

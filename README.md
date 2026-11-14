@@ -58,7 +58,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [git](plugins/git/) | Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history |
 | [prose](plugins/prose/) | How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command |
 | [diagrams](plugins/diagrams/) | Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket |
-| [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Sonnet subagent instead of the main context, preserving main-agent tokens |
+| [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Haiku subagent instead of the main context, preserving main-agent tokens |
 | [agent-roles](plugins/agent-roles/) | Three roles injected at the start of every agent — the top-level session orchestrates and delegates, a task worker ends its turn with findings, a resident worker stays alive and reports by message |
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [searxngcli](plugins/searxngcli/) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |
