@@ -64,12 +64,13 @@ The dispatcher role asks the dispatcher to type into its workers' panes: briefs,
 
 On `SessionStart` the session's role comes from the environment that [cc-auth-switch](https://github.com/fprochazka/claude-code-auth-switch) sets for a role, checked in this order:
 
-1. `FP_CC_AUTH_SWITCH_ROLE_PROMPT_MODE` is `append` or `replace`: the hook prints nothing. The launcher already put the role into the system prompt, where it survives compaction and has no size limit.
-2. `FP_CC_AUTH_SWITCH_ROLE_PROMPT` is set: the hook injects that file, so the launcher config stays the one place that says which file a role uses.
-3. Only `FP_CC_AUTH_SWITCH_ROLE` is set, for example by hand without a launcher: the hook injects `roles/<name>.md`.
-4. None of them is set: the hook injects the role named by the `default_role` plugin option, `worker` unless you change it. `none` injects nothing.
+1. `FP_CC_AUTH_SWITCH_ROLE` is `none`: the hook prints nothing, whatever else is set. This is how cc-auth-switch asks for a session without a role (`--agent-role none`), so that the `default_role` option does not apply.
+2. `FP_CC_AUTH_SWITCH_ROLE_PROMPT_MODE` is `append` or `replace`: the hook prints nothing. The launcher already put the role into the system prompt, where it survives compaction and has no size limit.
+3. `FP_CC_AUTH_SWITCH_ROLE_PROMPT` is set: the hook injects that file, so the launcher config stays the one place that says which file a role uses.
+4. Only `FP_CC_AUTH_SWITCH_ROLE` is set, for example by hand without a launcher: the hook injects `roles/<name>.md`.
+5. None of them is set: the hook injects the role named by the `default_role` plugin option, `worker` unless you change it. `none` injects nothing, the same as in step 1.
 
-A file that cannot be read, or a role name the plugin has no file for, injects nothing and prints a warning to stderr. Subagents never read these variables; a launcher cannot reach them.
+A file that cannot be read, or a role name the plugin has no file for, injects nothing and prints a warning to stderr. The role `none` never warns. Subagents never read these variables; a launcher cannot reach them.
 
 On `SubagentStart` it reads `agent_type` from the payload with `jq` and picks the resident role when the type is `agent-roles:resident` or one of the types in the `resident_agent_types` plugin option; without `jq`, or without the field, it picks the task role. Set a different default role, or add your own resident types, the way the noisy-tools plugin takes its exempt list:
 

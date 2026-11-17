@@ -2,12 +2,15 @@
 # Prints one role file as additionalContext.
 #
 # SessionStart (the top-level session only, never a subagent) follows the launcher's environment:
-#   1. FP_CC_AUTH_SWITCH_ROLE_PROMPT_MODE is append or replace -> nothing; the launcher already put the
+#   1. FP_CC_AUTH_SWITCH_ROLE is none -> nothing, silently; the launcher asked for a session without a role,
+#      which must not fall back to default_role.
+#   2. FP_CC_AUTH_SWITCH_ROLE_PROMPT_MODE is append or replace -> nothing; the launcher already put the
 #      role into the system prompt, which compaction does not touch.
-#   2. FP_CC_AUTH_SWITCH_ROLE_PROMPT is set -> that file, so the launcher config stays the one place that
+#   3. FP_CC_AUTH_SWITCH_ROLE_PROMPT is set -> that file, so the launcher config stays the one place that
 #      says which file a role uses.
-#   3. Only FP_CC_AUTH_SWITCH_ROLE is set (by hand, without a launcher) -> roles/<that name>.md.
-#   4. Nothing is set -> roles/<default_role plugin option>.md, worker when the option is unset.
+#   4. Only FP_CC_AUTH_SWITCH_ROLE is set (by hand, without a launcher) -> roles/<that name>.md.
+#   5. Nothing is set -> roles/<default_role plugin option>.md, worker when the option is unset; none
+#      injects nothing, the same as in step 1.
 # A file that does not exist and a role name this plugin does not ship inject nothing and print a
 # warning to stderr.
 #
@@ -43,6 +46,7 @@ role_file_for() {
 
 case "${1:-}" in
   SessionStart)
+    [ "${FP_CC_AUTH_SWITCH_ROLE:-}" = none ] && exit 0
     case "${FP_CC_AUTH_SWITCH_ROLE_PROMPT_MODE:-}" in
       append | replace) exit 0 ;;
     esac

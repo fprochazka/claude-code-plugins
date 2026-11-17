@@ -53,6 +53,7 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 | 2026-11-17 | GitHub PRs have no babysit skill; the dispatcher has the worker watch CI with `gh run watch` until one exists | `sdlc:mr-babysit` is built on `glab-watch` and only works for GitLab |
 | 2026-11-17 | The dispatcher answers only the dialogs and permission prompts it recognises and the human's authorization covers, by menu keys, and reads the screen again after. A denial a worker reports goes to the human; the dispatcher never runs it, answers it, or rewords it. It types the human's quoted words only when they cover the exact action and the worker refused the dispatcher's message, not the action | The role is the human's request to drive worker panes, which the session-watch skill otherwise forbids. Without these limits a dispatcher would launder a classifier's denial through a pane |
 | 2026-11-17 | A dispatcher is launched through cc-auth-switch | `list-active` reads a session's role from the cc-auth-switch start log; a session given only `FP_CC_AUTH_SWITCH_ROLE` shows no role, so a second dispatcher would be taken for a worker |
+| 2026-11-17 | `FP_CC_AUTH_SWITCH_ROLE=none` injects no role on `SessionStart`, silently and before every other variable; the `default_role` option `none` means the same | `--agent-role none` set no variable, so the hook fell back to `default_role` and injected the worker role. A role name the plugin has no file for still warns, since that is a typo, while `none` is a request |
 
 ## How changes are checked
 
