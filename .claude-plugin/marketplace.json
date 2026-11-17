@@ -48,6 +48,18 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/ai-tool-use-validator"
     },
     {
+      "name": "research",
+      "description": "Skill for researching a question on the web — search, read the best sources, follow the leads they reveal, and answer with the sources cited",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/research",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/research"
+    },
+    {
       "name": "web-researcher",
       "description": "Iterative web research agent that searches, discovers new directions, and synthesizes findings",
       "version": "1.1.2",
