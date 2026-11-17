@@ -1,7 +1,7 @@
 ---
 name: sdlc:mr-open
-description: Open a draft MR for the current branch — the Why in the ticket, the reviewer's guide in comments, a one-screen description
-argument-hint: [ticket-id]
+description: Open a draft MR for the current branch — the Why in the ticket, the reviewer's guide in comments, a one-screen description, then babysit it
+argument-hint: '[ticket-id] [don''t babysit]'
 allowed-tools: Bash, Read, Edit, Write, Skill, Agent
 ---
 
@@ -39,10 +39,11 @@ $ARGUMENTS
    Nothing else belongs here. No Why (it is in the ticket), no commit list, no per-commit bullets, no tables, no analysis, no "where to focus" (that is the reviewer comment), no "already done in branch X" meta-commentary. The comments are posted before this step so their links are known.
 7. **Set the title and description** — the title is short, imperative and specific. It follows the repository's title convention: the one its agent instructions (`AGENTS.md`, `CLAUDE.md`) state, otherwise the one that recent commits on the base branch follow, a `<ticket-id>:` prefix included. Write the description to `<scratchpad>/<ticket-or-branch>-mr-description.md` and set it through the host's CLI with `"$(cat …)"` rather than inlining the text.
 8. **Report** — print the MR URL, one line per comment you posted, what you wrote to the ticket, the title you set, and the squash verdict with its reason. On GitHub, say that the merge options were left to the repository settings.
+9. **Babysit it** — invoke the `sdlc:mr-babysit` skill on the MR or PR you just opened, on GitLab and GitHub alike. Skip this step only when the user's request or the arguments say not to babysit it, for example "just open it" or "don't babysit", and then say in one line that nothing watches the MR.
 
 ## Notes
 
-- Keep the MR in **draft** state — do not mark it ready.
+- Keep the MR in **draft** state — do not mark it ready. `mr-babysit` marks it ready at the handover.
 - **Promise nothing** in anything you post — invoke `teamwork:review-handshake` for the rule. The ticket update, the MR comments and the description state facts: what the change does, what was measured, what the release needs.
 - Do not push `--no-verify` or skip hooks if the push fails on a hook; fix the underlying issue.
 - Take the ticket ID from the `<ticket-id>` arg, then from the session context, then from the branch name, matched against the ticket pattern that `teamwork:workflow-identify` returns. If the title convention needs a ticket ID and none of these gives one, ask the user for it before opening the MR.

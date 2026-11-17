@@ -23,7 +23,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 - **No specific tracker or chat tool.** Skills name no tracker CLI. The tracker comes from `teamwork:workflow-identify`, and the agent then loads the skill for it. `mr-babysit` is the exception: its loop is built on `glab` and the glab-cli-extras commands, and on GitHub the agent does the equivalent with `gh`.
 - **Not the reviewer side.** `code-review:watch` reviews and never changes code. `mr-babysit` is its mirror. The handover protocol, the state names and the rules for judging an MR's state live in `teamwork`. Watching an MR lives in `glab-watch` and its `glab:glab-watch` skill. sdlc points at them and does not restate them.
 - **No human alerting.** `mr-babysit` emits one fixed `NEEDS HUMAN (<variant>): <reason>` line. How the human is notified is left to a hook or another skill. A separate attention skill was postponed on 2026-10-01, not rejected.
-- **No discovery.** `mr-babysit` works on the MRs that the user named or that the session created. `wrap-up` reports what the session knows and never looks a status up.
+- **No discovery.** `mr-babysit` works on the MRs that the user named or that the session created, such as the one `mr-open` just opened. `wrap-up` reports what the session knows and never looks a status up.
 
 ## Principles
 
@@ -60,7 +60,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 - The subagent stages its work and does not commit. The orchestrator checks every step, either directly or through a cold validation subagent, as the plan decided per step. The orchestrator then commits. Staged work costs nothing to reject, and `git diff --cached` shows it in one call. The check is guided by the subagent's report on what is tricky, not by a read of the whole diff, which can include large snapshot files.
 - Plan mode is entered only for the final writing. Plan mode restricts permissions and blocked the explorations needed to settle the open decisions.
 - The plan opens with a Sources line that points at the pre-plan files and carries only the delta since then.
-- After the final validation the plan continues into `mr-open` and `mr-babysit` without asking, unless the user said they will handle the MR. Its own cron is deleted before `mr-babysit` starts, so that only one cron runs.
+- After the final validation the plan continues into `mr-open` and `mr-babysit` without asking, unless the user said they will handle the MR. Its own cron is deleted before `mr-babysit` starts, so that only one cron runs. `mr-open` starts `mr-babysit` itself, so the plan never starts a second one.
 
 ### ticket-new
 
@@ -76,6 +76,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 - A diagram is the model's call, never forced, and it goes in a comment, not the description.
 - Every comment ends with `<!-- sdlc:mr-open -->`.
 - On GitLab the MR always deletes its source branch on merge, and it squashes on merge only when the branch history cannot be read commit by commit. Both are set explicitly, never left to the project defaults.
+- It ends by starting `mr-babysit` on the MR it opened, unless the user's request or the arguments say not to.
 
 ### mr-babysit
 
@@ -160,6 +161,7 @@ The plugin gives each stage of that one task its own skill: `pre-plan` and `brie
 | 2026-11-10 | `mr-babysit` reacts to watcher events from one event → action table. What an event means, and the rules every watcher needs (restart one that ended early, `watch_degraded`, `watch_command` in the background, re-read a thread after a push), live in `glab:glab-watch` | The section restated what each event means, which the glab-watch skill already says. `code-review:watch` needs the same restart rule, so it went into the skill both load |
 | 2026-11-11 | `mr-open` sets delete-source-branch and squash-on-merge itself, with squash decided by the history's shape, and takes the title convention from the agent instructions or the base branch commits | The maintainer's own MR script set the first two and derived the title, and the generic skill must not depend on a personal script |
 | 2026-11-17 | `mr-babysit` and `mr-open` apply on GitHub too: the agent does the equivalent operation with `gh` and applies every rule the same way. `gh pr checks --watch` and `gh run watch` take the watchers' place, and the cron covers review comments and a moved base branch | The maintainer: the skills apply to GitHub, with `gh` in place of `glab`. Their rules are about the review loop, not about GitLab |
+| 2026-11-17 | `mr-open` ends by starting `mr-babysit` on the MR it opened, unless the user's request or the arguments say not to. `write-plan` leaves starting it to `mr-open` | The maintainer: "opened MR is by default babysitted, unless stated otherwise". Opening an MR without driving it to green is the exception, so the opt-out is the one that has to be said |
 
 ## How changes are checked
 

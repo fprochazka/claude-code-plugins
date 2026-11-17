@@ -65,9 +65,9 @@ A **phase boundary always gets the subagent tier**, whatever the size of the ste
 
 Always end the implementation steps with a **final validation checkpoint** as its own numbered step: a fresh validation subagent reviews the finished branch as a whole against the plan's intent. This is not a repeat of the per-step checks — it looks at the sum. Name its model by the same `opus`/`fable` rule.
 
-### End with the MR steps
+### End with the MR step
 
-After the final checkpoint, the plan's last numbered steps are: open the MR (`/sdlc:mr-open`), then drive it to mergeable (`/sdlc:mr-babysit`). They are part of the plan, not an epilogue the orchestrator asks permission for.
+After the final checkpoint, the plan's last numbered step opens the MR with `/sdlc:mr-open`, which then drives it to mergeable through `/sdlc:mr-babysit`. It is part of the plan, not an epilogue the orchestrator asks permission for.
 
 ## Step 4 — Append the implementation protocol to the plan
 
@@ -84,7 +84,7 @@ One step at a time, never in parallel. The user may not be watching — the defa
 4. **Check every step at the tier this plan assigns it.** `check: direct` → the orchestrator inspects the staged diff itself. `check: validation subagent` → a fresh subagent with the model the plan names, given *only* this plan file's path, the steps it covers, what to review, and the risks the plan flags — nothing else. Validators read, run the real verification, and report; they never change code.
 5. **Findings go back to the implementation subagent** — the orchestrator never fixes code itself. Re-check after the correction; repeat until clean or the rest is consciously accepted. Then the orchestrator commits with the step's intended message and moves to the next step.
 6. **Mid-flight decisions**: derivable from code, data, or convention → decide, record the decision in this file, continue. A product decision only the user can make → ask, park the dependent steps, continue everything not blocked. Stop and wait only when proceeding would be damaging or hard to reverse.
-7. **Finish without asking**: run the final validation checkpoint, then `/sdlc:mr-open`, then delete this cron, then `/sdlc:mr-babysit`, which arms its own. Skip the MR steps only if the user explicitly said they will handle the MR themselves.
+7. **Finish without asking**: run the final validation checkpoint, then `/sdlc:mr-open`. Its last step starts `/sdlc:mr-babysit`, which arms its own cron, so delete this cron right before that step and never start babysit a second time. Skip the MR step only if the user explicitly said they will handle the MR themselves.
 ```
 
 ### Orchestrator craft — follow this yourself, do not copy it into the plan
