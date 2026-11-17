@@ -39,6 +39,7 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 | 2026-11-10 | The resident role comes back, with no resident type by default; the option alone lists them | The removal took the role away from other resident subagents together with its only default user, `glab:mr-watch` |
 | 2026-11-17 | A subagent's model is picked by three questions (is the path known, does something catch a wrong result, what builds on the result) over four tiers, haiku to fable | "Subtask complexity" was vague. Haiku is proven only for `noisy-runner` (`plugins/noisy-tools-in-subagent/DESIGN.md`). The claim that a weak model fails silently on exploration is adopted without measurement |
 | 2026-11-17 | Between two tiers, work whose error nobody would notice takes the stronger model; work with a check behind it keeps opus over fable. Open-ended research is fable | An exploration error nobody notices costs more than the model. Open-ended investigation moves from opus to fable, which costs more |
+| 2026-11-17 | The roles are `worker`, `task-subagent` and `resident-subagent`; the top-level session is a worker on one task | A dispatcher role that runs worker sessions is coming, and "orchestrator" does not tell the two session levels apart. Subagent roles say "subagent" so a session role and a subagent role cannot be confused |
 
 ## How changes are checked
 

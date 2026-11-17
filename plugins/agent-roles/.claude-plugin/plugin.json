@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "agent-roles",
   "version": "0.6.1",
-  "description": "Three roles injected at the start of every agent — the top-level session orchestrates and delegates, a task worker ends its turn with findings, a resident worker stays alive and reports by message",
+  "description": "Three roles injected at the start of every agent — a worker session delegates to subagents, a task subagent ends its turn with findings, a resident subagent stays alive and reports by message",
   "author": {
     "name": "Filip Procházka",
     "url": "https://github.com/fprochazka"
@@ -17,7 +17,7 @@
       "type": "string",
       "multiple": true,
       "title": "Resident agent types",
-      "description": "Agent types that stay alive for a whole run and report through SendMessage; they get the resident worker role instead of the task worker role. Empty by default."
+      "description": "Agent types that stay alive for a whole run and report through SendMessage; they get the resident subagent role instead of the task subagent role. Empty by default."
     }
   }
 }

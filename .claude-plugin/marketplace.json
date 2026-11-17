@@ -145,7 +145,7 @@
     },
     {
       "name": "agent-roles",
-      "description": "Three roles injected at the start of every agent — the top-level session orchestrates and delegates, a task worker ends its turn with findings, a resident worker stays alive and reports by message",
+      "description": "Three roles injected at the start of every agent — a worker session delegates to subagents, a task subagent ends its turn with findings, a resident subagent stays alive and reports by message",
       "version": "0.6.1",
       "author": {
         "name": "Filip Procházka",

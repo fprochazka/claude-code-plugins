@@ -5,8 +5,8 @@
 #                    resident, which get roles/resident-subagent.md
 #
 # The event name arrives as an argument. On SubagentStart the payload's `agent_type` decides between
-# the two worker roles; no payload carries a nesting depth, so depth never enters into it. Without jq,
-# or without the field, every subagent gets the task worker role.
+# the two subagent roles; no payload carries a nesting depth, so depth never enters into it. Without jq,
+# or without the field, every subagent gets the task subagent role.
 #
 # Other hooks write their own additionalContext on the same events and the order is unspecified, so a
 # role file must read correctly on its own and must never refer to anything outside itself.
