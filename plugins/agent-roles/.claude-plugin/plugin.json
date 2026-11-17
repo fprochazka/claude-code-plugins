@@ -23,7 +23,7 @@
       "type": "string",
       "multiple": true,
       "title": "Resident agent types",
-      "description": "Agent types that stay alive for a whole run and report through SendMessage; they get the resident subagent role instead of the task subagent role. Empty by default."
+      "description": "Third-party agent types that stay alive for a whole run and report through SendMessage; they get the resident subagent role instead of the task subagent role, like the plugin's own agent-roles:resident. Empty by default."
     }
   }
 }

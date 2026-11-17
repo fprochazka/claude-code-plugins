@@ -4,9 +4,11 @@ Three role files, one injected into every agent before it takes its first action
 
 - `roles/worker.md` — the top-level session, on one task. It talks to the user, decides, delegates, and synthesizes. It does not grep, build, or explore.
 - `roles/task-subagent.md` — every subagent, at any nesting depth. It runs everything in the foreground, waits for nothing it was not asked to wait for, and ends its turn with findings.
-- `roles/resident-subagent.md` — the few agent types that stay alive for a whole run and report through `SendMessage`, listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
+- `roles/resident-subagent.md` — subagents that stay alive for a whole run and report through `SendMessage`: the plugin's `agent-roles:resident` agent type and the types listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
 
-A `SessionStart` hook delivers the first, unless a launcher gave the session another role. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for the types in the `resident_agent_types` plugin option, the task role for everything else. With the option unset, every subagent gets the task role.
+A `SessionStart` hook delivers the first, unless a launcher gave the session another role. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for `agent-roles:resident` and the types in the `resident_agent_types` plugin option, the task role for everything else.
+
+To start a resident subagent, spawn it with `subagent_type: "agent-roles:resident"`, a general-purpose agent with every tool. The agent type is the only value the caller sets that reaches the `SubagentStart` hook: the payload carries no prompt, description or `run_in_background`.
 
 ## Installation
 
@@ -53,7 +55,7 @@ On `SessionStart` the session's role comes from the environment that [cc-auth-sw
 
 A file that cannot be read, or a role name the plugin has no file for, injects nothing and prints a warning to stderr. Subagents never read these variables; a launcher cannot reach them.
 
-On `SubagentStart` it reads `agent_type` from the payload with `jq` and picks the resident role when the type is one of the types in the `resident_agent_types` plugin option; without `jq`, or without the field, it picks the task role. Set a different default role, or add your own resident types, the way the noisy-tools plugin takes its exempt list:
+On `SubagentStart` it reads `agent_type` from the payload with `jq` and picks the resident role when the type is `agent-roles:resident` or one of the types in the `resident_agent_types` plugin option; without `jq`, or without the field, it picks the task role. Set a different default role, or add your own resident types, the way the noisy-tools plugin takes its exempt list:
 
 ```bash
 claude plugin install agent-roles@fprochazka-claude-code-plugins --scope user --config resident_agent_types=my-team:sentinel
@@ -70,7 +72,7 @@ The roles are injected markdown, not skills. A skill has to be loaded, and a sub
 
 ## What it isn't
 
-Not a set of agent definitions — the plugin ships no `agents/`, and it constrains how existing agents work rather than adding new ones. Not enforcement either: nothing blocks a tool call, so a command that runs against the rules still runs. For an enforced version of the delegation rule, see [`noisy-tools-in-subagent`](../noisy-tools-in-subagent/), which denies noisy commands outright, in the main agent and in every subagent that can delegate.
+Not a set of agent definitions — the plugin ships one agent type, `agent-roles:resident`, only so a caller can pick the resident role, and otherwise constrains how existing agents work. Not enforcement either: nothing blocks a tool call, so a command that runs against the rules still runs. For an enforced version of the delegation rule, see [`noisy-tools-in-subagent`](../noisy-tools-in-subagent/), which denies noisy commands outright, in the main agent and in every subagent that can delegate.
 
 The rules are calibrated, not neutral. The parallelism cap, the stance against monitors, and the subagents' ban on backgrounding come from one person's experience with this harness. Installing the plugin is an opt-in to working that way.
 
