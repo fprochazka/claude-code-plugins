@@ -2,9 +2,9 @@
 
 Three role files, one injected into every agent before it takes its first action:
 
-- `roles/orchestrator.md` — the top-level session. It talks to the user, decides, delegates, and synthesizes. It does not grep, build, or explore.
-- `roles/task-worker.md` — every subagent, at any nesting depth. It runs everything in the foreground, waits for nothing it was not asked to wait for, and ends its turn with findings.
-- `roles/resident-worker.md` — the few agent types that stay alive for a whole run and report through `SendMessage`, listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
+- `roles/worker.md` — the top-level session. It talks to the user, decides, delegates, and synthesizes. It does not grep, build, or explore.
+- `roles/task-subagent.md` — every subagent, at any nesting depth. It runs everything in the foreground, waits for nothing it was not asked to wait for, and ends its turn with findings.
+- `roles/resident-subagent.md` — the few agent types that stay alive for a whole run and report through `SendMessage`, listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
 
 A `SessionStart` hook delivers the first. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for the types in the `resident_agent_types` plugin option, the task role for everything else. With the option unset, every subagent gets the task role.
 

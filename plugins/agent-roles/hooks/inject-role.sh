@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Prints one role file as additionalContext:
-#   SessionStart  -> roles/orchestrator.md (the top-level session only, never a subagent)
-#   SubagentStart -> roles/task-worker.md for every subagent, except the agent types listed as
-#                    resident, which get roles/resident-worker.md
+#   SessionStart  -> roles/worker.md (the top-level session only, never a subagent)
+#   SubagentStart -> roles/task-subagent.md for every subagent, except the agent types listed as
+#                    resident, which get roles/resident-subagent.md
 #
 # The event name arrives as an argument. On SubagentStart the payload's `agent_type` decides between
 # the two worker roles; no payload carries a nesting depth, so depth never enters into it. Without jq,
@@ -19,18 +19,18 @@ RESIDENT_OPTION="${CLAUDE_PLUGIN_OPTION_RESIDENT_AGENT_TYPES:-}"
 PAYLOAD=$(cat)
 
 case "${1:-}" in
-  SessionStart)  ROLE=orchestrator ;;
-  SubagentStart) ROLE=task-worker ;;
+  SessionStart)  ROLE=worker ;;
+  SubagentStart) ROLE=task-subagent ;;
   *) exit 0 ;;
 esac
 
-if [ "$ROLE" = task-worker ] && command -v jq >/dev/null 2>&1; then
+if [ "$ROLE" = task-subagent ] && command -v jq >/dev/null 2>&1; then
   AGENT_TYPE=$(printf '%s' "$PAYLOAD" | jq -r '.agent_type // empty' 2>/dev/null || true)
   if [ -n "$AGENT_TYPE" ]; then
     # The option may be a JSON array (multiple: true) or a comma-separated string; accept both.
     OPTION_TYPES=$(printf '%s' "$RESIDENT_OPTION" | jq -r 'if type == "array" then .[] else . end' 2>/dev/null || printf '%s' "$RESIDENT_OPTION")
     for candidate in $(printf '%s' "$OPTION_TYPES" | tr ',' ' '); do
-      [ "$candidate" = "$AGENT_TYPE" ] && ROLE=resident-worker && break
+      [ "$candidate" = "$AGENT_TYPE" ] && ROLE=resident-subagent && break
     done
   fi
 fi
