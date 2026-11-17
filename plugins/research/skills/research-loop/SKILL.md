@@ -1,6 +1,6 @@
 ---
 name: research:research-loop
-description: Answers a question from what web sources say, with every claim cited. Use when the user runs /research:research with a question, or asks to research something on the web, look something up online, find current or up-to-date information, or check what public sources say about a topic. Run the research in a subagent and tell that subagent to load the `research:research` skill.
+description: Answers a question from what web sources say, with every claim cited. Use when the user runs /research:research-loop with a question, or asks to research something on the web, look something up online, find current or up-to-date information, or check what public sources say about a topic. Run the research in a subagent and tell that subagent to load the `research:research-loop` skill.
 argument-hint: <question>
 ---
 

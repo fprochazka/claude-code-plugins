@@ -11,7 +11,7 @@ The method comes from two earlier agents in this marketplace: `web-researcher:ag
 ## Goals
 
 - One skill that works with any web search and page fetching the session has.
-- Usable as a command (`/research:research <question>`) and loaded by Claude when the user asks to research something on the web.
+- Usable as a command (`/research:research-loop <question>`) and loaded by Claude when the user asks to research something on the web.
 - Answers that name the source of each claim, prefer primary sources, and say what stayed unconfirmed.
 
 ## Non-goals and scope
@@ -33,7 +33,8 @@ The method comes from two earlier agents in this marketplace: `web-researcher:ag
 | 2026-11-17 | One tool-agnostic skill replaces `web-researcher:agent` and the `searxngcli:agent` loop; the web-researcher plugin is removed | The maintainer no longer uses the built-in WebSearch, and the same method was kept twice, once per search tool |
 | 2026-11-17 | No agent, hooks, `model:` pin or subagent instructions | Isolation in a research subagent is the agent-roles plugin's job; tool permissions belong to the tools' own plugins |
 | 2026-11-17 | The skill description says when to use the skill and, in one clause, to run it in a subagent that loads `research:research`; it does not summarize the method or name a tool | The description sits in every session's context, so it helps Claude pick the skill and delegate it; the method belongs in the body. The maintainer asked for it, which narrows the earlier "no subagent instructions" decision to the skill body |
+| 2026-11-17 | The skill is `research:research-loop`, not `research:research` | `research:research` repeated the plugin name and said nothing about the skill; `research-loop` names what it does, a loop of searches and reads |
 
 ## How changes are checked
 
-The plugin has no eval suite. Check a change by hand: run `/research:research` on a question with a known answer, once with each search backend you use, and confirm that the answer cites pages that were read and that the loop stops on its own. A change to the method needs the maintainer's explicit approval.
+The plugin has no eval suite. Check a change by hand: run `/research:research-loop` on a question with a known answer, once with each search backend you use, and confirm that the answer cites pages that were read and that the loop stops on its own. A change to the method needs the maintainer's explicit approval.

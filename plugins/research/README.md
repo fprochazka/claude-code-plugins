@@ -16,7 +16,7 @@ claude plugin install research@fprochazka-claude-code-plugins --scope user
 Run it as a command:
 
 ```
-/research:research how do I implement the OAuth2 PKCE flow in a CLI application
+/research:research-loop how do I implement the OAuth2 PKCE flow in a CLI application
 ```
 
 Claude also loads the skill on its own when you ask it to research something on the web or look something up online.
@@ -31,7 +31,7 @@ To load the skill without a permission prompt, add it to `~/.claude/settings.jso
 {
   "permissions": {
     "allow": [
-      "Skill(research:research)"
+      "Skill(research:research-loop)"
     ]
   }
 }
