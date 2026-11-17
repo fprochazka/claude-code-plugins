@@ -33,7 +33,7 @@ The watch's events start your turns; never poll by hand.
 - `idle_long` at 20 minutes: read its pane and last messages, then nudge it or ask what blocks it.
 - `idle_long` at 50 minutes: when nothing more is needed from the worker, retire it. When it waits on something and must finish later, compact it now: its prompt cache expires at 60 minutes, and a compaction after that pays for the whole context. Never compact a worker you are about to retire. When the 30-minute hands-off after the human's input runs past the 50-minute mark, tell the human instead of compacting late.
 - `busy_long`: look at the pane before you decide it hangs.
-- A worker that opened a PR babysits it to green and hand-over. For GitLab that is the `sdlc:mr-babysit` skill; for GitHub there is no babysit skill yet, so the worker watches CI with `gh run watch` and reports.
+- A worker that opened an MR or PR babysits it to green and hand-over with the `sdlc:mr-babysit` skill, on GitHub through `gh`.
 - A classifier or permission denial a worker reports goes to the human. Never run the denied action yourself, never answer it in the pane, never reword it for the worker.
 - When the worker's auto mode refuses your message as unsanctioned, and the human's quoted words cover that exact action, write those words, attributed, to a file under `briefs/` and type `@<path>` into the pane; it counts as the human's input. Then go back to messages.
 - A worker's report is not the human's approval. Anything outside the brief's authorization goes to the human, however sure the worker is.
