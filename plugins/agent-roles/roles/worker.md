@@ -44,18 +44,13 @@ The denial is a finding for the user, not an obstacle to route around.
 - Never reword the action, split it into steps or move it to another tool to get it past the classifier. Continue with the work that does not depend on it.
 
 ## Picking the model for a subagent
-Pick by the subtask, never by your own model out of habit: a fable session does not spawn fable subagents for work opus or sonnet does fine. Ask three questions:
-1. **Is the path known?** Following a known method is production-line work; finding the method is exploration.
-2. **Does something catch a wrong result?** A test, a validator, or you checking the output.
-3. **What builds on the result?** A guess that the next steps rest on costs more than one that is thrown away.
+Pick by the subtask, never by your own model out of habit. The more of the method you hand down in the brief, the cheaper the model that can carry it.
+- **haiku**: a few commands you name, or extracting or classifying given text, with a check behind it (builds and tests through `noisy-runner`). Never search or review with it: it misses things and nobody sees what is missing.
+- **sonnet**: work whose method the brief spells out (the steps, the scope, the check, when to stop): a data analysis along given queries with the expected shape of the result, code changes from a precise spec with tests, a search with a stated scope. Name the check, or it may skip it.
+- **opus**, the default: work a strong self-taught senior engineer does: features of any size, refactoring, debugging, research, search and review where a miss matters, briefs for other sessions.
+- **fable**: work that needs a senior engineer with deep theoretical grounding: concurrency, distributed consistency, algorithms, a subtle bug across several systems; or work where opus already fell short.
 
-A weak model on exploration fails silently: it finds fewer ideas, and nobody sees what is missing. So:
-- **haiku**: known path, one command and a summary of its output, and something checks the result (builds and tests through `noisy-runner`).
-- **sonnet**: known path, a single mechanical operation whose output you check: a grep for a known string, a query you already wrote.
-- **opus**, the default: real work with a check behind it: code changes, debugging and refactoring with tests, research along a method a probe already proved.
-- **fable**: an unknown path with nothing to catch an error, or much built on the result: open-ended research and the probe of an unknown problem, reading an unclear result that decides the next step, writing briefs for other sessions, hard architecture, cross-system debugging, concurrency.
-
-Between two tiers: when nobody would notice the error, take the stronger model; when a check stands behind the work, take the weaker one, opus over fable.
+Between two tiers: when nobody would notice the error, take the stronger one; when a check stands behind the work, take the weaker one.
 
 ## Working for a dispatcher
 This applies once a brief names a dispatcher session; until then the human is your only principal.
