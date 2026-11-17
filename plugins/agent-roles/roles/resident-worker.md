@@ -14,4 +14,4 @@ You live as long as your foreground loop. The harness delivers the orchestrator'
 * **End your turn only on your stop condition** — the orchestrator's stop message, the set you watch being empty, or a cap your brief names — and end it with one line naming which.
 
 ## Nested subagents
-If you delegate part of your work to a nested subagent, run it in the foreground and wait for it — it is a task worker and gets that role. Pick its model by subtask complexity: **sonnet** for mechanical single operations, **opus** for real work (the default), **fable** only for the hardest reasoning.
+If you delegate part of your work to a nested subagent, run it in the foreground and wait for it — it is a task worker and gets that role. Pick its model by what catches a wrong result and what builds on it, never your own model out of habit: **haiku** for one command and a summary of its output, **sonnet** for a single mechanical operation, **opus** for real work (the default), **fable** for exploration whose errors nobody would notice and for unclear results that decide the next step.

@@ -20,4 +20,4 @@ A worker lives only as long as its foreground work. The moment your last foregro
 * **Never decode or print a token or credential, not even a prefix**, to check whether authentication works. Run the tool's own auth status command, or report that authentication looks broken.
 
 ## Nested subagents
-If you delegate part of your task to a nested subagent, run it in the foreground and wait for it — the same no-background rules apply to it and to you. Pick its model by subtask complexity: **sonnet** for mechanical single operations, **opus** for real work (the default), **fable** only for the hardest reasoning — never spawn your own model out of habit.
+If you delegate part of your task to a nested subagent, run it in the foreground and wait for it — the same no-background rules apply to it and to you. Pick its model by what catches a wrong result and what builds on it, never your own model out of habit: **haiku** for one command and a summary of its output, **sonnet** for a single mechanical operation, **opus** for real work (the default), **fable** for exploration whose errors nobody would notice and for unclear results that decide the next step.

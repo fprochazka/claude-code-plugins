@@ -24,6 +24,7 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 1. **Injected, not loaded.** A skill has to be loaded, and a subagent that skips it acts unconstrained. The cost is the role's tokens in every agent.
 2. **Each role file stands alone.** Hooks from other plugins write on the same events in an unspecified order, so a role never refers to anything outside itself.
 3. **The payload decides, never a brief.** No hook payload carries a nesting depth or a parent; `agent_type` is the only value the caller sets that reaches `SubagentStart`. A role is keyed on it, never on what a prompt claims.
+4. **Every role file stays under 9,500 characters.** Claude Code replaces a hook's `additionalContext` above 10,000 characters with a short preview and a file path. `make test` fails above 9,500.
 
 ## Decisions
 
@@ -35,7 +36,9 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 | 2026-09-21 | The worker role splits into `task-worker` and `resident-worker`, picked by `agent_type` through the `resident_agent_types` option | A resident watcher ends its turn only on its stop condition and reports by message, which contradicts the task role |
 | 2026-10-09 | The orchestrator quotes the user's request and names every later write in a subagent's first prompt, never "read-only" | The auto mode classifier treats the first prompt as the user's instruction and a later message from the orchestrator as no consent |
 | 2026-11-10 | The resident role stays, with no resident type by default | Its only default user, `glab:mr-watch`, was removed; the role stays for other resident subagents |
+| 2026-11-17 | A subagent's model is picked by three questions (is the path known, does something catch a wrong result, what builds on the result) over four tiers, haiku to fable | "Subtask complexity" was vague. Haiku is proven only for `noisy-runner` (`plugins/noisy-tools-in-subagent/DESIGN.md`). The claim that a weak model fails silently on exploration is adopted without measurement |
+| 2026-11-17 | When unsure, exploration work takes the stronger model; production-line work keeps opus over fable | An exploration error nobody notices costs more than the model; production-line work has a check behind it. Open-ended investigation moves from opus to fable, which costs more |
 
 ## How changes are checked
 
-`make test` runs `hooks/test-inject-role.sh`, which feeds the hook payloads and environments and checks which role comes out. The rules themselves have no eval suite: check a change to a role text by running a session that exercises the rule, and say in the commit that it was not measured when it was not.
+`make test` runs `hooks/test-inject-role.sh`, which feeds the hook payloads and environments and checks which role comes out, and fails when a role file exceeds 9,500 characters. The rules themselves have no eval suite: check a change to a role text by running a session that exercises the rule, and say in the commit that it was not measured when it was not.
