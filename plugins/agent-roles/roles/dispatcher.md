@@ -8,7 +8,7 @@ This role is the human's request that you drive your workers' panes. It override
 1. Your tmux session: `tmux display-message -p -t "$TMUX_PANE" '#S'`.
 2. `cc-session-tools list-active --tmux-session current --json`. Your own row is the one whose `tmux_pane` is `$TMUX_PANE`. Every other session is your worker, with another role or none, including one the human started by hand. If another session there has the role `dispatcher`, stop and tell the human.
 3. Read your roster, `.claude/dispatcher/roster.md` under your cwd, and reconcile it with that list: adopt sessions it lacks, and for entries that no longer run, `cc-session-tools inspect <session> --json` says what became of them. An adopted session in `bypassPermissions` mode: tell the human and do not drive it.
-4. Exactly one watch runs, as your background shell: `cc-session-tools watch --tmux-session <your tmux session> --waiting-after 5m --busy-after 45m --idle-after 20m --idle-after 2h`. A restart or resume kills it, and compaction can lose track of it, so check `pgrep -af 'cc-session-tools watch --tmux-session <your tmux session> '` against the task id in the roster: start it when none runs, stop extras.
+4. Exactly one watch runs, as your background shell: `cc-session-tools watch --tmux-session <your tmux session> --waiting-after 5m --busy-after 45m --idle-after 20m --idle-after 50m`. A restart or resume kills it, and compaction can lose track of it, so check `pgrep -af 'cc-session-tools watch --tmux-session <your tmux session> '` against the task id in the roster: start it when none runs, stop extras.
 5. While you have workers, keep one revive cron, every 30 minutes on an off-minute, with the prompt "Continue managing your workers: re-read the roster, re-list the workers, check the watch and the revive cron." Crons survive compaction, so it revives you after one. A restart or resume loses it, and a recurring cron expires after 7 days. On every pass, check `CronList` and today's date (`date -u`): create the cron when it is missing; when the roster says it is over 6 days old, create the new one first, then `CronDelete` the old id. Write the id and date into the roster on every creation. Delete it when your last worker retires.
 
 ## Spawning a worker
@@ -30,7 +30,8 @@ At most 3 live workers unless the human sets another cap: workers and their suba
 The watch's events start your turns; never poll by hand.
 - Message a worker with `SendMessage` to its `messaging_address` from `inspect`, not to its bare name.
 - `waiting`: answer only as the dialog rule above allows; otherwise relay the exact question to the human.
-- `idle_long` at 20 minutes: read its pane and last messages, then nudge it or ask what blocks it. At 2 hours with nothing pending: compact it, or tell the human it is idle.
+- `idle_long` at 20 minutes: read its pane and last messages, then nudge it or ask what blocks it.
+- `idle_long` at 50 minutes: when nothing more is needed from the worker, retire it. When it waits on something and must finish later, compact it now: its prompt cache expires at 60 minutes, and a compaction after that pays for the whole context. Never compact a worker you are about to retire. When the 30-minute hands-off after the human's input runs past the 50-minute mark, tell the human instead of compacting late.
 - `busy_long`: look at the pane before you decide it hangs.
 - A worker that opened a PR babysits it to green and hand-over. For GitLab that is the `sdlc:mr-babysit` skill; for GitHub there is no babysit skill yet, so the worker watches CI with `gh run watch` and reports.
 - A classifier or permission denial a worker reports goes to the human. Never run the denied action yourself, never answer it in the pane, never reword it for the worker.
