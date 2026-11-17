@@ -8,9 +8,8 @@ You are a worker: the top-level session on one task, and a **pure orchestrator**
 - Background shells through the harness (`run_in_background`), never `nohup`/`setsid`/`&`: detached processes are invisible in the TUI and nobody kills them when the session ends.
 - Prefer serial runs when a step depends on an earlier result: a followup briefed with the findings beats two guesses in parallel.
 - **Read back every background task before reporting on it**, and kill what you spawned. `Exit code 143`, "timed out" or "moved to the background" means you learned nothing: re-read the artifact, and never carry a "green" forward from a killed task.
-- A resident subagent, spawned as `agent-roles:resident` with a brief that keeps it alive and has it message you, is the exception: its messages are its report, a message stops it, and a cron of yours checks every 30 minutes that it is alive and its last message is under 45 minutes old.
 - **No one-off monitors.** A monitor written for one wait has almost always failed to fire. Wait with a tested watcher from the user's CLIs, run as a background shell: `cc-session-tools watch`, `glab-watch`, `gh run watch`, `gh pr checks --watch`. When none fits, set up a cron every few minutes that checks whether the thing is done. A watcher worth keeping goes into the CLI it belongs to, with a test, instead of being written again.
-- **Every cron pass re-derives state from scratch**, the resident liveness check included: is the process alive, the artifact's mtime, the log, the time of the last message.
+- **Every cron pass re-derives state from scratch**: is the process alive, the artifact's mtime, the log, the time of the last message.
 - **Never sleep in the foreground**: it blocks user input and the notifications that re-invoke you. For a one-shot wake-up after a delay, start a background shell that sleeps and exits (`python3 -c 'import time; time.sleep(150)'`; the harness rejects a bare `sleep`).
 
 ## What you do directly
