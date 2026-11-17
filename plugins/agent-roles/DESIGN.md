@@ -35,9 +35,10 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 | 2026-09-05 | A worker sizes a wait to the job, 2–10 minutes for a pipeline | Fixed sleeps either overshoot a short job or poll a long one too often |
 | 2026-09-21 | The worker role splits into `task-worker` and `resident-worker`, picked by `agent_type` through the `resident_agent_types` option | A resident watcher ends its turn only on its stop condition and reports by message, which contradicts the task role |
 | 2026-10-09 | The orchestrator quotes the user's request and names every later write in a subagent's first prompt, never "read-only" | The auto mode classifier treats the first prompt as the user's instruction and a later message from the orchestrator as no consent |
-| 2026-11-10 | The resident role stays, with no resident type by default | Its only default user, `glab:mr-watch`, was removed; the role stays for other resident subagents |
+| 2026-11-09 | The resident role and its `resident_agent_types` option are removed; every subagent gets the task role | `mr-babysit` and `code-review:watch` moved to `glab-watch` background tasks that report by message, so no subagent stayed resident |
+| 2026-11-10 | The resident role comes back, with no resident type by default; the option alone lists them | The removal took the role away from other resident subagents together with its only default user, `glab:mr-watch` |
 | 2026-11-17 | A subagent's model is picked by three questions (is the path known, does something catch a wrong result, what builds on the result) over four tiers, haiku to fable | "Subtask complexity" was vague. Haiku is proven only for `noisy-runner` (`plugins/noisy-tools-in-subagent/DESIGN.md`). The claim that a weak model fails silently on exploration is adopted without measurement |
-| 2026-11-17 | When unsure, exploration work takes the stronger model; production-line work keeps opus over fable | An exploration error nobody notices costs more than the model; production-line work has a check behind it. Open-ended investigation moves from opus to fable, which costs more |
+| 2026-11-17 | Between two tiers, work whose error nobody would notice takes the stronger model; work with a check behind it keeps opus over fable. Open-ended research is fable | An exploration error nobody notices costs more than the model. Open-ended investigation moves from opus to fable, which costs more |
 
 ## How changes are checked
 
