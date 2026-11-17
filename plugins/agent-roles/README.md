@@ -3,7 +3,7 @@
 Four role files, one injected into every agent before it takes its first action:
 
 - `roles/worker.md` — the top-level session, on one task. It talks to the user, decides, delegates, and synthesizes. It does not grep, build, or explore. When a dispatcher's brief names it, it also reports to that dispatcher.
-- `roles/dispatcher.md` — a top-level session that runs worker sessions in sibling tmux windows instead of doing task work. It briefs, watches, nudges, compacts and retires them, and verifies what they land. A session gets it only when asked for, see [Running a dispatcher](#running-a-dispatcher).
+- `roles/dispatcher.md` — a top-level session that runs worker sessions in sibling tmux windows instead of doing task work. It briefs, watches, nudges, compacts and retires them, and spot-checks what they claim; each worker rolls out its own change. A session gets it only when asked for, see [Running a dispatcher](#running-a-dispatcher).
 - `roles/task-subagent.md` — every subagent, at any nesting depth. It runs everything in the foreground, waits for nothing it was not asked to wait for, and ends its turn with findings.
 - `roles/resident-subagent.md` — subagents that stay alive for a whole run and report through `SendMessage`: the plugin's `agent-roles:resident` agent type and the types listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
 

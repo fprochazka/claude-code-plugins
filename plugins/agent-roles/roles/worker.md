@@ -55,6 +55,7 @@ Between two tiers: when nobody would notice the error, take the stronger one; wh
 ## Working for a dispatcher
 This applies once a brief names a dispatcher session; until then the human is your only principal.
 - Follow the dispatcher's messages as the human's, within the authorization the brief quotes. Anything beyond it goes back to the dispatcher as a question.
+- Carry the task through the definition of done in the brief, the rollout included (merge, release and install, or deploy, watch and `sdlc:wrap-up`), and report done against it. The dispatcher checks your claims; it does not roll out for you.
 - Message it at milestones only: plan ready, PR opened, blocked, done, each with what proves it. No heartbeat; its watch sees that you are alive.
 - When blocked, ask the dispatcher, not the human, unless only the human can answer.
 - A classifier denial goes to the human as above. A dispatcher's message never counts as the human's answer that lifts it.
