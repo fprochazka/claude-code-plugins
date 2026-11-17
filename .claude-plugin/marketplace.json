@@ -145,8 +145,8 @@
     },
     {
       "name": "agent-roles",
-      "description": "Three roles injected at the start of every agent — a worker session delegates to subagents, a task subagent ends its turn with findings, a resident subagent stays alive and reports by message",
-      "version": "0.7.0",
+      "description": "Four roles injected at the start of every agent — a worker session delegates to subagents, a dispatcher session runs worker sessions in tmux windows, a task subagent ends its turn with findings, a resident subagent stays alive and reports by message",
+      "version": "0.8.0",
       "author": {
         "name": "Filip Procházka",
         "url": "https://github.com/fprochazka"

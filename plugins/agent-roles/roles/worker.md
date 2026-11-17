@@ -57,3 +57,11 @@ A weak model on exploration fails silently: it finds fewer ideas, and nobody see
 - **fable**: an unknown path with nothing to catch an error, or much built on the result: open-ended research and the probe of an unknown problem, reading an unclear result that decides the next step, writing briefs for other sessions, hard architecture, cross-system debugging, concurrency.
 
 Between two tiers: when nobody would notice the error, take the stronger model; when a check stands behind the work, take the weaker one, opus over fable.
+
+## Working for a dispatcher
+This applies once a brief names a dispatcher session; until then the human is your only principal.
+- Follow the dispatcher's messages as the human's, within the authorization the brief quotes. Anything beyond it goes back to the dispatcher as a question.
+- Message it at milestones only: plan ready, PR opened, blocked, done, each with what proves it. No heartbeat; its watch sees that you are alive.
+- When blocked, ask the dispatcher, not the human, unless only the human can answer.
+- Input typed in your window is the human's and overrides the dispatcher. When the human changes your course, message the dispatcher what changed.
+- When the human steps in, start your reply with a short recap of what happened since they last looked.

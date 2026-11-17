@@ -12,12 +12,13 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 
 - One role per kind of agent, delivered by a hook, so the rules are in place without the agent loading anything.
 - Role files that read correctly on their own, in any order next to other hooks' context, at any nesting depth.
+- A dispatcher role, so the human can talk to one session that runs several worker sessions in tmux instead of managing each of them.
 - Rules calibrated from one person's experience with this harness, stated with the reason, so a reader can disagree with the reason rather than the rule.
 
 ## Non-goals and scope
 
 - **No enforcement.** Nothing blocks a tool call. The `noisy-tools-in-subagent` plugin enforces the delegation of noisy commands.
-- **No launching.** The plugin starts no sessions and imports no code from other projects. A launcher such as cc-auth-switch can put a role into the system prompt; the plugin then stays silent for that session.
+- **No launching.** The plugin starts no sessions and imports no code from other projects. The dispatcher role launches workers by calling tmux, cc-session-tools and the launcher commands from its role text. A launcher such as cc-auth-switch can put a role into the system prompt; the plugin then stays silent for that session.
 
 ## Principles
 
@@ -43,6 +44,13 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 | 2026-11-17 | `SessionStart` follows the cc-auth-switch role variables: silent when the role is in the system prompt, the launcher's file in mode `none`, `roles/<name>.md` for a bare role name, else the `default_role` option (`worker`) | The launcher config stays the one place that names a role's file, and a role in the system prompt survives compaction without a 10,000-character limit. Without a launcher the plugin behaves as before |
 | 2026-11-17 | The plugin ships the `agent-roles:resident` agent type, mapped to the resident role; `resident_agent_types` stays for third-party types | `agent_type` is the only value the caller sets that reaches `SubagentStart` (2.1.325). Rejected: a role marker in the prompt rewritten by a `PreToolUse` hook on `Agent` (unverified that `updatedInput` can rewrite `prompt`, and the role would rest on a convention the model must remember), and pairing `PreToolUse` with the next `SubagentStart` by order (breaks when one message starts several agents) |
 | 2026-11-17 | A session's crons survive its compaction, so a cron can revive a compacted session | Checked on Claude Code 2.1.325 in a throwaway session: a `* * * * *` cron that appended to a file fired at 17:16 and 17:17, `/compact` ran at 17:18:22, and the cron fired again at 17:18:27 and 17:19:28 with no input. Only manual `/compact` was checked, not auto-compaction. Crons live in the process: a restart or a resume loses them, and a recurring cron expires after 7 days |
+| 2026-11-17 | A `dispatcher` role runs worker sessions in sibling tmux windows of its own tmux session and does no task work; every other session there is its worker, with another role or none | The human talks to one session per group of projects instead of managing each session. Ownership by tmux session needs no registration and adopts a session the human started by hand |
+| 2026-11-17 | The dispatcher's memory is `.claude/dispatcher/roster.md` under its cwd, updated after every action that changes a worker's state | Only what is on disk survives compaction, and the file is also the human's view of what the dispatcher thinks is going on |
+| 2026-11-17 | A compacted dispatcher is revived by its own cron, every 30 minutes while it has workers, not by a hook. The cron's pass replaces the cron when the roster says it is over 6 days old, and creates it when `CronList` lacks it | Idle compaction never starts a turn. Crons survive compaction (see the 2026-11-17 check), but expire after 7 days and die with the process |
+| 2026-11-17 | The dispatcher types into a worker's pane only at `prompt_empty` with the session idle, sends the Enter as a separate key, and checks the effect | A fast text-and-Enter arrives as one paste and the Enter becomes a newline; keys into a dialog or half-typed human input do damage. Slash commands such as `/compact` cannot travel in a message |
+| 2026-11-17 | The dispatcher tells the human's input in a worker from its own by the transcript: its messages arrive as `<cross-session-message`, keystrokes it typed are in the roster. After the human's input it leaves the worker alone for 30 minutes | No CLI exposes cc-blackbox's `Prompt.origin` yet. The human stepping in must not be overridden by a nudge in the same minute |
+| 2026-11-17 | A worker reports to a dispatcher only at milestones (plan ready, PR opened, blocked, done) and starts with a recap when the human steps in | The watch shows liveness, so a heartbeat would only cost turns |
+| 2026-11-17 | GitHub PRs have no babysit skill; the dispatcher has the worker watch CI with `gh run watch` until one exists | `sdlc:mr-babysit` is built on `glab-watch` and only works for GitLab |
 
 ## How changes are checked
 

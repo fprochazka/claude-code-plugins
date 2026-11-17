@@ -1,5 +1,5 @@
 {
-  "description": "Injects the worker role into the top-level session, the task subagent role into every subagent, and the resident subagent role into the agent types that stay alive and report by message",
+  "description": "Injects the worker role, or the role a launcher names such as the dispatcher, into the top-level session, the task subagent role into every subagent, and the resident subagent role into the agent types that stay alive and report by message",
   "hooks": {
     "SessionStart": [
       {

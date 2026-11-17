@@ -1,12 +1,13 @@
 # agent-roles
 
-Three role files, one injected into every agent before it takes its first action:
+Four role files, one injected into every agent before it takes its first action:
 
-- `roles/worker.md` — the top-level session, on one task. It talks to the user, decides, delegates, and synthesizes. It does not grep, build, or explore.
+- `roles/worker.md` — the top-level session, on one task. It talks to the user, decides, delegates, and synthesizes. It does not grep, build, or explore. When a dispatcher's brief names it, it also reports to that dispatcher.
+- `roles/dispatcher.md` — a top-level session that runs worker sessions in sibling tmux windows instead of doing task work. It briefs, watches, nudges, compacts and retires them, and verifies what they land. A session gets it only when asked for, see [Running a dispatcher](#running-a-dispatcher).
 - `roles/task-subagent.md` — every subagent, at any nesting depth. It runs everything in the foreground, waits for nothing it was not asked to wait for, and ends its turn with findings.
 - `roles/resident-subagent.md` — subagents that stay alive for a whole run and report through `SendMessage`: the plugin's `agent-roles:resident` agent type and the types listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
 
-A `SessionStart` hook delivers the first, unless a launcher gave the session another role. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for `agent-roles:resident` and the types in the `resident_agent_types` plugin option, the task role for everything else.
+A `SessionStart` hook delivers the worker role, unless a launcher gave the session another role. A `SubagentStart` hook delivers one of the two subagent roles, picked by the payload's `agent_type`: the resident role for `agent-roles:resident` and the types in the `resident_agent_types` plugin option, the task role for everything else.
 
 To start a resident subagent, spawn it with `subagent_type: "agent-roles:resident"`, a general-purpose agent with every tool. The agent type is the only value the caller sets that reaches the `SubagentStart` hook: the payload carries no prompt, description or `run_in_background`.
 
@@ -41,6 +42,20 @@ The flag gates a built-in `fork` agent type. A fork inherits the parent's whole 
 - **A resident subagent reports by message, never by ending its turn** — a message is a finding delivered, a heartbeat at a fixed interval says it is alive, and only its stop condition ends the turn. Only the agent types named as resident get this role; nothing a brief says turns a task worker into one
 - **Model by what catches a wrong result, not by habit** — three questions pick the tier: is the path known, does something check the result, what builds on it. haiku for one command and its summary that something checks, sonnet for a single mechanical operation on a known path, opus for real work with a check behind it, fable for open-ended research nobody would check, unclear results that decide the next step, hard architecture, cross-system debugging and concurrency. A worker does not spawn its own model out of reflex
 - **Every delegation names a skill** — when a skill covers the tool the subagent will use, the prompt says to load it first, so the subagent does not spend turns on `--help`
+
+## Running a dispatcher
+
+The dispatcher needs tmux, [cc-session-tools](https://github.com/fprochazka/claude-code-session-tools) 0.7 or newer on the `PATH`, and a launcher command per Claude Code profile (`claude-<profile>`, from [cc-auth-switch](https://github.com/fprochazka/claude-code-auth-switch)). Start it in its own tmux session, in the directory where it should keep its roster:
+
+```bash
+tmux new-session -s oss -c ~/devel/oss
+claude-personal --agent-role dispatcher     # with a dispatcher role in auth-switch.yaml
+FP_CC_AUTH_SWITCH_ROLE=dispatcher claude    # without a launcher
+```
+
+With cc-auth-switch, define the role with `prompt.file` pointing at `roles/dispatcher.md` and `mode: append`, so the role sits in the system prompt and survives compaction. Every other session in that tmux session is its worker. It keeps its roster in `.claude/dispatcher/roster.md` and the briefs it writes in `.claude/dispatcher/briefs/` under its working directory. While it has workers it keeps a cron that wakes it every 30 minutes, which also revives it after a compaction; Claude Code expires a recurring cron after 7 days, so the dispatcher replaces its cron before then.
+
+Workers are plain sessions with the worker role. They must not run in `bypassPermissions` mode, which holds messages from other sessions for the human's approval.
 
 ## How the injection works
 
