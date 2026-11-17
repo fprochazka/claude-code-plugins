@@ -72,18 +72,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/rabbitmqadmin"
     },
     {
-      "name": "searxngcli",
-      "description": "Skill for searching the web using a SearXNG instance via the searxngcli CLI",
-      "version": "0.3.3",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/searxngcli",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/searxngcli"
-    },
-    {
       "name": "git",
       "description": "Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history",
       "version": "0.3.3",

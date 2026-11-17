@@ -61,7 +61,6 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [noisy-tools-in-subagent](plugins/noisy-tools-in-subagent/) | Forces noisy commands (builds, tests, linters, static analysis) to run inside a Haiku subagent instead of the main context, preserving main-agent tokens |
 | [agent-roles](plugins/agent-roles/) | Three roles injected at the start of every agent — the top-level session orchestrates and delegates, a task worker ends its turn with findings, a resident worker stays alive and reports by message |
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
-| [searxngcli](plugins/searxngcli/) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |
 | [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
 | [rabbitmqadmin](plugins/rabbitmqadmin/) | Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng) |
 | [gemini-cli](plugins/gemini-cli/) | Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
@@ -75,6 +74,7 @@ Each of these is a CLI with its own Claude Code plugin in the same repository. T
 | [glab-cli-extras](https://github.com/fprochazka/glab-cli-extras) | The `glab` plugin: GitLab through the glab CLI and glab-cli-extras — watch MRs and pipelines, read MR status, inspect pipelines, read and write discussions |
 | [bash-classify](https://github.com/fprochazka/bash-classify) | Auto-allows low-risk bash commands in Claude Code using bash-classify |
 | [slackcli](https://github.com/fprochazka/slackcli) | Skill for interacting with Slack workspaces using the slackcli CLI |
+| [searxngcli](https://github.com/fprochazka/searxngcli) | Skill for searching the web using a SearXNG instance via the searxngcli CLI |
 | [metabasecli](https://github.com/fprochazka/metabasecli) | Skill for interacting with Metabase using the metabase CLI |
 | [devin-mcp-cli](https://github.com/fprochazka/devin-mcp-cli) | Skill for interacting with the Devin MCP server using the devin-mcp CLI |
 | [gemini-deep-research](https://github.com/fprochazka/gemini-deep-research) | Skill for conducting autonomous deep research using Google's Gemini Deep Research Agent |
