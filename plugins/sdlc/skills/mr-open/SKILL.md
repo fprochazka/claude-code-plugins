@@ -7,7 +7,7 @@ allowed-tools: Bash, Read, Edit, Write, Skill, Agent
 
 # Open MR
 
-Open a draft merge/pull request for the current branch, then write what the reviewer needs — each piece in the place it belongs. The Why goes to the ticket. The reading guide, the release procedure and the verification numbers go to MR comments, one thread each. The description stays a one-screen summary and nothing more.
+Open a draft merge/pull request for the current branch, then write what the reviewer needs — each piece in the place it belongs. The steps apply on GitLab and GitHub alike: where they name a GitLab flag or API field, that is GitLab's way, and on GitHub you do the equivalent with `gh`. The Why goes to the ticket. The reading guide, the release procedure and the verification numbers go to MR comments, one thread each. The description stays a one-screen summary and nothing more.
 
 $ARGUMENTS
 

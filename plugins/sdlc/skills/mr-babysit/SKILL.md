@@ -1,6 +1,6 @@
 ---
 name: sdlc:mr-babysit
-description: Babysit MR(s) — a watcher reports every change, an actor triages, fixes and posts, and you decide, until every MR is rebased, green, quiet and handed over
+description: Babysit MR(s) or PR(s) — a watcher reports every change, an actor triages, fixes and posts, and you decide, until every MR is rebased, green, quiet and handed over
 ---
 
 # Babysit the MR(s)
@@ -8,6 +8,8 @@ description: Babysit MR(s) — a watcher reports every change, an actor triages,
 Drive one or more merge requests toward mergeable: keep each rebased, fix failing CI, answer review comments that don't need product decisions, and wait for automated reviewers — passing back to the user only for genuine product/design calls or when everything solvable is solved.
 
 This command is the **author** side of an MR. It is the mirror image of `/code-review:watch`, which is the **reviewer** side and never changes code.
+
+**On GitHub, do the equivalent with `gh`.** The pull request is the MR. `gh pr checks --watch` and `gh run watch`, run as background shells, take the place of the `glab-watch` watchers, and the 30-minute cron covers what they cannot see, such as new review comments and a moved base branch. Every rule below applies the same way; only the commands differ.
 
 **This is not a rubber stamp.** Review feedback — especially from AI review bots — is sometimes correct, sometimes wrong, sometimes pedantic, and sometimes proposes a fix that creates a new problem. Every finding is critically evaluated before any change lands, and this command is where that evaluation happens.
 
