@@ -62,7 +62,6 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [agent-roles](plugins/agent-roles/) | Three roles injected at the start of every agent — the top-level session orchestrates and delegates, a task worker ends its turn with findings, a resident worker stays alive and reports by message |
 | [skill-keyword-reminder](plugins/skill-keyword-reminder/) | Automatically reminds Claude to load relevant skills when keyword triggers appear in user prompts |
 | [research](plugins/research/) | Skill for researching a question on the web — search, read the best sources, follow the leads they reveal, and answer with the sources cited |
-| [web-researcher](plugins/web-researcher/) | Iterative web research agent that searches, discovers new directions, and synthesizes findings |
 | [rabbitmqadmin](plugins/rabbitmqadmin/) | Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng) |
 | [gemini-cli](plugins/gemini-cli/) | Skill and review agent for using Gemini CLI with massive context windows (1M tokens) for codebase analysis and second opinions |
 

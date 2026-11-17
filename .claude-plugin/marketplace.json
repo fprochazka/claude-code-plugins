@@ -60,18 +60,6 @@
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/research"
     },
     {
-      "name": "web-researcher",
-      "description": "Iterative web research agent that searches, discovers new directions, and synthesizes findings",
-      "version": "1.1.2",
-      "author": {
-        "name": "Filip Procházka",
-        "url": "https://github.com/fprochazka"
-      },
-      "source": "./plugins/web-researcher",
-      "category": "productivity",
-      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/web-researcher"
-    },
-    {
       "name": "rabbitmqadmin",
       "description": "Skill for inspecting RabbitMQ instances using the rabbitmqadmin CLI (rabbitmqadmin-ng)",
       "version": "0.2.1",
