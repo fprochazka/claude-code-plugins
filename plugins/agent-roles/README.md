@@ -49,13 +49,14 @@ The dispatcher needs tmux, [cc-session-tools](https://github.com/fprochazka/clau
 
 ```bash
 tmux new-session -s oss -c ~/devel/oss
-claude-personal --agent-role dispatcher     # with a dispatcher role in auth-switch.yaml
-FP_CC_AUTH_SWITCH_ROLE=dispatcher claude    # without a launcher
+claude-personal --agent-role dispatcher
 ```
 
-With cc-auth-switch, define the role with `prompt.file` pointing at `roles/dispatcher.md` and `mode: append`, so the role sits in the system prompt and survives compaction. Every other session in that tmux session is its worker. It keeps its roster in `.claude/dispatcher/roster.md` and the briefs it writes in `.claude/dispatcher/briefs/` under its working directory. While it has workers it keeps a cron that wakes it every 30 minutes, which also revives it after a compaction; Claude Code expires a recurring cron after 7 days, so the dispatcher replaces its cron before then.
+Launch the dispatcher through cc-auth-switch, not with `FP_CC_AUTH_SWITCH_ROLE=dispatcher claude`. The variable alone gives the session the role text, but only the cc-auth-switch start log records the role that `cc-session-tools list-active` shows, and the dispatcher uses that role to tell itself and other dispatchers from its workers. Define the role with `prompt.file` pointing at `roles/dispatcher.md` and `mode: append`, so the role sits in the system prompt and survives compaction. Every other session in that tmux session is its worker. It keeps its roster in `.claude/dispatcher/roster.md` and the briefs it writes in `.claude/dispatcher/briefs/` under its working directory. While it has workers it keeps a cron that wakes it every 30 minutes, which also revives it after a compaction; Claude Code expires a recurring cron after 7 days, so the dispatcher replaces its cron before then.
 
-Workers are plain sessions with the worker role. They must not run in `bypassPermissions` mode, which holds messages from other sessions for the human's approval.
+Workers are plain sessions with the worker role. They must not run in `bypassPermissions` mode, which holds messages from other sessions for the human's approval; the dispatcher tells the human about such a session instead of driving it.
+
+The dispatcher role asks the dispatcher to type into its workers' panes: briefs, `/compact`, `/exit`, and answers to the startup dialogs and permission prompts that the human's authorization covers. Every other dialog goes to the human.
 
 ## How the injection works
 
