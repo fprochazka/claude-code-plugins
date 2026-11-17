@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "research",
-  "version": "0.1.0",
-  "description": "Skill for researching a question on the web — search, read the best sources, follow the leads they reveal, and answer with the sources cited",
+  "version": "0.1.1",
+  "description": "Skill for researching a question on the web and answering with the sources cited",
   "author": {
     "name": "Filip Procházka",
     "url": "https://github.com/fprochazka"

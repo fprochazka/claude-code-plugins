@@ -17,7 +17,7 @@ The method comes from two earlier agents in this marketplace: `web-researcher:ag
 ## Non-goals and scope
 
 - **No tool choice.** The skill never names a search tool, a fetch tool, or their flags. Which backend runs the search is the user's setup: an installed CLI plugin, the built-in tools, or a permission rule.
-- **No isolation.** The skill runs in the context of whoever loads it. Running research in a subagent, so the dead ends stay out of the main session, is the job of the agent-roles plugin and the caller.
+- **No isolation in the skill.** The skill body runs in the context of whoever loads it. Its description tells the caller to run the research in a subagent that loads the skill, so the dead ends stay out of the main session; how that subagent is isolated is the job of the agent-roles plugin and the caller.
 - **No agent, no hooks, no model pin.** Each of these ties the plugin to a tool set or a runtime decision that belongs to the user.
 
 ## Principles
@@ -32,6 +32,7 @@ The method comes from two earlier agents in this marketplace: `web-researcher:ag
 |---|---|---|
 | 2026-11-17 | One tool-agnostic skill replaces `web-researcher:agent` and the `searxngcli:agent` loop; the web-researcher plugin is removed | The maintainer no longer uses the built-in WebSearch, and the same method was kept twice, once per search tool |
 | 2026-11-17 | No agent, hooks, `model:` pin or subagent instructions | Isolation in a research subagent is the agent-roles plugin's job; tool permissions belong to the tools' own plugins |
+| 2026-11-17 | The skill description says when to use the skill and, in one clause, to run it in a subagent that loads `research:research`; it does not summarize the method or name a tool | The description sits in every session's context, so it helps Claude pick the skill and delegate it; the method belongs in the body. The maintainer asked for it, which narrows the earlier "no subagent instructions" decision to the skill body |
 
 ## How changes are checked
 

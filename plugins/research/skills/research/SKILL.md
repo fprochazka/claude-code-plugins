@@ -1,6 +1,6 @@
 ---
 name: research:research
-description: Research a question on the web in rounds — search, read the best sources, follow the new terms and leads they reveal, search again until the question is answered — then answer with every claim tied to a cited source. Use when the user runs /research:research with a question, or asks to research something on the web, look something up online, find current or up-to-date information, or check what public sources say about a topic.
+description: Answers a question from what web sources say, with every claim cited. Use when the user runs /research:research with a question, or asks to research something on the web, look something up online, find current or up-to-date information, or check what public sources say about a topic. Run the research in a subagent and tell that subagent to load the `research:research` skill.
 argument-hint: <question>
 ---
 
