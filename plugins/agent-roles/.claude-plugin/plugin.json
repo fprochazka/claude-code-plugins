@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "agent-roles",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Three roles injected at the start of every agent — a worker session delegates to subagents, a task subagent ends its turn with findings, a resident subagent stays alive and reports by message",
   "author": {
     "name": "Filip Procházka",
@@ -13,6 +13,12 @@
     "noisy-tools-in-subagent"
   ],
   "userConfig": {
+    "default_role": {
+      "type": "string",
+      "title": "Default role",
+      "description": "Role injected into a session that a launcher did not give a role: the name of a file under roles/ without .md, or none for no role. A role set through FP_CC_AUTH_SWITCH_ROLE or FP_CC_AUTH_SWITCH_ROLE_PROMPT wins over this option.",
+      "default": "worker"
+    },
     "resident_agent_types": {
       "type": "string",
       "multiple": true,

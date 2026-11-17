@@ -6,7 +6,7 @@ Three role files, one injected into every agent before it takes its first action
 - `roles/task-subagent.md` — every subagent, at any nesting depth. It runs everything in the foreground, waits for nothing it was not asked to wait for, and ends its turn with findings.
 - `roles/resident-subagent.md` — the few agent types that stay alive for a whole run and report through `SendMessage`, listed in the `resident_agent_types` plugin option. It waits only the way its brief says, sends a heartbeat so silence means death, and ends its turn only on its stop condition.
 
-A `SessionStart` hook delivers the first. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for the types in the `resident_agent_types` plugin option, the task role for everything else. With the option unset, every subagent gets the task role.
+A `SessionStart` hook delivers the first, unless a launcher gave the session another role. A `SubagentStart` hook delivers one of the other two, picked by the payload's `agent_type`: the resident role for the types in the `resident_agent_types` plugin option, the task role for everything else. With the option unset, every subagent gets the task role.
 
 ## Installation
 
@@ -42,10 +42,22 @@ The flag gates a built-in `fork` agent type. A fork inherits the parent's whole 
 
 ## How the injection works
 
-`hooks/inject-role.sh` receives the event name as an argument, reads the matching file from `roles/`, and prints it as `hookSpecificOutput.additionalContext`. On `SubagentStart` it reads `agent_type` from the payload with `jq` and picks the resident role when the type is one of the types in the `resident_agent_types` plugin option; without `jq`, or without the field, it picks the task role. Add your own resident types the way the noisy-tools plugin takes its exempt list:
+`hooks/inject-role.sh` receives the event name as an argument, reads the matching file, and prints it as `hookSpecificOutput.additionalContext`.
+
+On `SessionStart` the session's role comes from the environment that [cc-auth-switch](https://github.com/fprochazka/claude-code-auth-switch) sets for a role, checked in this order:
+
+1. `FP_CC_AUTH_SWITCH_ROLE_PROMPT_MODE` is `append` or `replace`: the hook prints nothing. The launcher already put the role into the system prompt, where it survives compaction and has no size limit.
+2. `FP_CC_AUTH_SWITCH_ROLE_PROMPT` is set: the hook injects that file, so the launcher config stays the one place that says which file a role uses.
+3. Only `FP_CC_AUTH_SWITCH_ROLE` is set, for example by hand without a launcher: the hook injects `roles/<name>.md`.
+4. None of them is set: the hook injects the role named by the `default_role` plugin option, `worker` unless you change it. `none` injects nothing.
+
+A file that cannot be read, or a role name the plugin has no file for, injects nothing and prints a warning to stderr. Subagents never read these variables; a launcher cannot reach them.
+
+On `SubagentStart` it reads `agent_type` from the payload with `jq` and picks the resident role when the type is one of the types in the `resident_agent_types` plugin option; without `jq`, or without the field, it picks the task role. Set a different default role, or add your own resident types, the way the noisy-tools plugin takes its exempt list:
 
 ```bash
 claude plugin install agent-roles@fprochazka-claude-code-plugins --scope user --config resident_agent_types=my-team:sentinel
+claude plugin install agent-roles@fprochazka-claude-code-plugins --scope user --config default_role=none
 ```
 
 `hooks/test-inject-role.sh` feeds the hook a payload per case and checks which role comes out; `make test` runs it.

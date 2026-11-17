@@ -17,7 +17,7 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 ## Non-goals and scope
 
 - **No enforcement.** Nothing blocks a tool call. The `noisy-tools-in-subagent` plugin enforces the delegation of noisy commands.
-- **No launching.** The plugin starts no sessions and imports no code from other projects.
+- **No launching.** The plugin starts no sessions and imports no code from other projects. A launcher such as cc-auth-switch can put a role into the system prompt; the plugin then stays silent for that session.
 
 ## Principles
 
@@ -40,6 +40,7 @@ The role texts lived in `~/.claude/` behind a hand-wired hook, which the profile
 | 2026-11-17 | A subagent's model is picked by three questions (is the path known, does something catch a wrong result, what builds on the result) over four tiers, haiku to fable | "Subtask complexity" was vague. Haiku is proven only for `noisy-runner` (`plugins/noisy-tools-in-subagent/DESIGN.md`). The claim that a weak model fails silently on exploration is adopted without measurement |
 | 2026-11-17 | Between two tiers, work whose error nobody would notice takes the stronger model; work with a check behind it keeps opus over fable. Open-ended research is fable | An exploration error nobody notices costs more than the model. Open-ended investigation moves from opus to fable, which costs more |
 | 2026-11-17 | The roles are `worker`, `task-subagent` and `resident-subagent`; the top-level session is a worker on one task | A dispatcher role that runs worker sessions is coming, and "orchestrator" does not tell the two session levels apart. Subagent roles say "subagent" so a session role and a subagent role cannot be confused |
+| 2026-11-17 | `SessionStart` follows the cc-auth-switch role variables: silent when the role is in the system prompt, the launcher's file in mode `none`, `roles/<name>.md` for a bare role name, else the `default_role` option (`worker`) | The launcher config stays the one place that names a role's file, and a role in the system prompt survives compaction without a 10,000-character limit. Without a launcher the plugin behaves as before |
 
 ## How changes are checked
 
