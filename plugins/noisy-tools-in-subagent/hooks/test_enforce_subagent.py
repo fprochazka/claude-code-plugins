@@ -71,7 +71,7 @@ class CheckArgvTest(unittest.TestCase):
         ["yarn", "tscheck"],
         ["yarn", "nx", "tscheck", "om-template-api"],
         ["npx", "prettier", "--check", "src/"],
-        ["kubectl", "logs", "commercial-orders-hook-rp99d"],
+        ["kubectl", "logs", "orders-api-hook-rp99d"],
         ["cargo", "test"],
         ["go", "build", "./..."],
         ["make"],
