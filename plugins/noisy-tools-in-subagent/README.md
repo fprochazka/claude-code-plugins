@@ -52,8 +52,6 @@ noisy-tools-in-subagent:noisy-runner
 Explore
 Plan
 code-review:review-.*
-searxngcli:agent
-web-researcher:agent
 ```
 
 ## Configuration

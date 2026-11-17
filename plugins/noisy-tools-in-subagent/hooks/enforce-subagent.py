@@ -177,8 +177,6 @@ DEFAULT_EXEMPT_AGENT_TYPES = (
     "Explore",
     "Plan",
     "code-review:review-.*",
-    "searxngcli:agent",
-    "web-researcher:agent",
 )
 
 # `userConfig.exempt_agent_types` in plugin.json reaches a shell-form hook only

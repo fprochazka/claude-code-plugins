@@ -62,6 +62,7 @@ It has two parts. A `PreToolUse` hook on Bash parses the command with `bash-clas
 | 2026-08-24 | Widen the whitelist from a replay of 222,607 Bash calls: `compile\w*`, JVM analysis tasks, absolute-path wrappers, named suffixed tasks, Node `prettier`/`tscheck`/`npx`, `kubectl logs` | +1,401 commands and +2.9 MB caught, nothing previously blocked lost. Blanket `test\w*` and `war\w*` matched a project path and `--warning-mode`. Reading tools, `searxng search`, schema dumps and dev servers stay out |
 | 2026-08-25 | Depend on `bash-classify-hook@fprochazka-bash-classify` | The hook denies every Bash call without the classifier. The dependency does not install the `bash-classify` binary, which stays a manual `uv tool install` |
 | 2026-11-14 | `noisy-runner` runs on Haiku instead of Sonnet | On the eval suite Haiku at default effort scored no worse (pass^3 5 of 6 against 4 of 6, mean 0.97 against 0.93, noise ±0.24) at about 1/20 of the subagent cost. `effort: high` gave no measurable gain. Keeping Sonnet was rejected for the cost |
+| 2026-11-17 | `searxngcli:agent` and `web-researcher:agent` are no longer exempt; this reverses the 2026-08-24 exemption, with the maintainer's approval | Both agents were removed from the marketplace, so their exemptions are gone. The research skill replaced them |
 
 ## How changes are checked
 
