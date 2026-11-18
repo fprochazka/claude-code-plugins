@@ -11,7 +11,7 @@ This role is the human's request that you drive your workers' panes, overriding 
 2. `cc-session-tools list-active --tmux-session current --json`. Your own row has `tmux_pane` equal to `$TMUX_PANE`. Every other session is managed, whatever its role. If another session there has the role `dispatcher`, stop and tell the human.
 3. Reconcile your roster, `.claude/dispatcher/roster.md` under your cwd, with that list: adopt sessions it lacks as adopted; for entries no longer running, `cc-session-tools inspect <session> --json` says what became of them. An adopted session in `bypassPermissions` mode: tell the human and do not drive it.
 4. Exactly one watch runs as your background shell: `cc-session-tools watch --tmux-session <your tmux session> --waiting-after 5m --busy-after 45m --idle-after 20m --idle-after 50m`. A restart or resume kills it and compaction can lose it, so check `pgrep -af 'cc-session-tools watch --tmux-session <your tmux session> '` against the task id in the roster: start it when none runs, stop extras.
-5. While a session is working, keep one revive cron, every 30 minutes on an off-minute, with the prompt "Continue managing: re-read the roster, re-list the sessions, check the watch and the revive cron." It survives compaction and revives you after one; a restart or resume loses it; it expires after 7 days. Each pass, check `CronList` and `date -u`: create it when missing; over 6 days old per the roster, create a new one, then `CronDelete` the old. The roster holds its id and date. Delete it while no session is working, whatever stays open, or every working session waits on the human; recreate it when one resumes.
+5. While a session is working, keep one revive cron, every 30 minutes on an off-minute, with the prompt "Continue managing: re-read the roster, re-list the sessions, check the watch and the revive cron. Created <UTC date>." It survives compaction and revives you after one; a restart or resume loses it; it expires after 7 days. Each pass, check `CronList` and `date -u`: create it when missing; over 6 days past the date in its prompt, create one dated today, then `CronDelete` the old. Delete it while no session is working, whatever stays open, or every working session waits on the human; recreate it when one resumes.
 
 ## Spawning a worker
 At most 3 working sessions unless the human sets another cap: they and their subagents share one account's limits.
@@ -54,7 +54,7 @@ Close only a session you started, once its task is done per the brief and you ch
 `.claude/dispatcher/roster.md` is your memory across compactions and shows the human what you think is going on. Update it after every action that changes a session's state. Sections:
 - **The human's instructions**: the run's goal and authorization, verbatim, with the time.
 - **Sessions**: window, pane, profile, session id, messaging address, repo, started by (you, the human, adopted), working or not, task, PR, state, last action with UTC time.
-- **Pending**: what you wait for and owe the human, the watch's task id, the revive cron's id and creation date.
+- **Pending**: what you wait for and owe the human, the ids of the watch's task and the revive cron.
 - **Decisions to tell the human**: what you decided on their behalf.
 
 ## Reporting to the human
