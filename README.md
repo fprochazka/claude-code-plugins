@@ -33,6 +33,7 @@ The `glab` plugin that `sdlc` and `code-review` depend on is `glab@fprochazka-gl
 |--------|-----------|
 | `sdlc` | `teamwork`, `prose`, `git`, `code-review`, `diagrams`, `glab` (glab-cli-extras) |
 | `code-review` | `teamwork`, `prose`, `diagrams`, `glab` (glab-cli-extras) |
+| `explain` | `prose`, `diagrams` |
 | `noisy-tools-in-subagent` | `bash-classify-hook` |
 | `agent-roles` | `noisy-tools-in-subagent` |
 | `prose` | `skill-keyword-reminder` |
@@ -55,6 +56,7 @@ claude plugin update skill-keyword-reminder@fprochazka-claude-code-plugins
 | [sdlc](plugins/sdlc/) | Software delivery workflow commands — gather context, write plans, file tickets, open MRs, babysit them to green, wrap them up, and brief next steps |
 | [teamwork](plugins/teamwork/) | Team-process conventions shared by the sdlc and code-review plugins — the workflow-identify skill that resolves the tracker, team and state names at run time, the review-handshake skill that says whose court the ball is in, and the mr-state-judge skill that says what an MR's pipeline, verdicts and threads mean for the merge |
 | [code-review](plugins/code-review/) | Multi-agent branch code review — conventions, architecture, design craft, bugs, performance, security, release readiness, git history, and documentation reviewed in parallel |
+| [explain](plugins/explain/) | Explains a change to a software service as one HTML page — from a merge request, pull request, ticket, document or chat thread: the database, messaging, HTTP and other contracts it changes or would change, shown as diffs with what each costs to change later and to roll out, then the modules it touches and where new parts sit in the service |
 | [git](plugins/git/) | Git workflow skill and commit commands — vertical-slice atomic commits, the sibling/ancestor boundary test, fixups over correction commits, and dependency-ordered branch history |
 | [prose](plugins/prose/) | How Claude talks and writes — a reply style for chat with a per-prompt reminder hook, a rule set for docs, doc comments, commits, MR text and error messages, and a plain-language restate command |
 | [diagrams](plugins/diagrams/) | Diagram authoring skills — Mermaid diagrams written to standalone files, rendered with mermaid-cli, and visually checked by a validator subagent before they go into a plan, an MR, or a ticket |
@@ -91,7 +93,7 @@ Plugins that explore an idea. They work, but the shape can change without notice
 
 ### Checks
 
-Run `make all` before you push. It runs three things: `make check` (the repository checks in `scripts/check.sh` — manifests, marketplace and README consistency, frontmatter, references, plugin design, hooks, shellcheck), `make validate` (`claude plugin validate --strict` over the marketplace and every plugin), and `make test` (the hook test suites). The same target runs in CI on every push and pull request. To debug one check, pass its id: `scripts/check.sh references`. A plugin's `plugin.json` is the source of its description: the marketplace entry and the README row below are copies of it, and `make check` fails when they drift apart.
+Run `make all` before you push. It runs three things: `make check` (the repository checks in `scripts/check.sh` — manifests, marketplace and README consistency, frontmatter, references, plugin design, hooks, shellcheck), `make validate` (`claude plugin validate --strict` over the marketplace and every plugin), and `make test` (the hook and build-script test suites). The same target runs in CI on every push and pull request. To debug one check, pass its id: `scripts/check.sh references`. A plugin's `plugin.json` is the source of its description: the marketplace entry and the README row below are copies of it, and `make check` fails when they drift apart.
 
 Run `make hooks` once per clone. It points `core.hooksPath` at `scripts/hooks`, where a pre-commit and a commit-msg hook refuse anything whose staged lines or commit message contain a private identifier — a customer, host, bot or ticket prefix that has no business in a public repository. The hooks read the identifiers from a file outside the repository, named by `git config hooks.forbiddenPatternsFile`, because listing them here would publish the very strings they exist to keep out. Until that config key points at a real file, both hooks refuse the commit and print how to create it.
 

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="explain:changes-high-level">
+<title>{{TITLE}}</title>
+<style>
+/* Design tokens. The page follows the browser's light or dark mode; diagrams always sit on a light panel,
+   because they are rendered once, in Mermaid's light theme. */
+:root {
+  color-scheme: light dark;
+  --content: {{CONTENT_WIDTH}}px;
+  --bg: #ffffff;
+  --bg-soft: #f6f8fa;
+  --fg: #1f2328;
+  --fg-muted: #59636e;
+  --border: #d1d9e0;
+  --accent: #0969da;
+  --add-bg: #dafbe1; --add-fg: #116329; --add-line: #4ac26b;
+  --del-bg: #ffebe9; --del-fg: #a40e26; --del-line: #ff8182;
+  --chg-bg: #fff8c5; --chg-fg: #7d4e00; --chg-line: #d4a72c;
+  --ctx-bg: transparent; --ctx-fg: #59636e;
+  --acc-bg: #ddf4ff; --acc-fg: #0550ae;
+  --panel: #ffffff;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #151b23;
+    --fg: #e6edf3;
+    --fg-muted: #9198a1;
+    --border: #3d444d;
+    --accent: #4493f8;
+    --add-bg: rgba(46, 160, 67, 0.18); --add-fg: #7ee787; --add-line: #2ea043;
+    --del-bg: rgba(248, 81, 73, 0.18); --del-fg: #ffa198; --del-line: #f85149;
+    --chg-bg: rgba(187, 128, 9, 0.22); --chg-fg: #e3b341; --chg-line: #bb8009;
+    --ctx-fg: #9198a1;
+    --acc-bg: rgba(56, 139, 253, 0.18); --acc-fg: #79c0ff;
+    --panel: #f6f8fa;
+  }
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: auto; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 var(--sans); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre, .mono { font-family: var(--mono); font-size: 0.88em; }
+:not(pre) > code { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 4px; padding: 0 0.3em; }
+
+.layout { display: grid; grid-template-columns: 210px minmax(0, var(--content)); gap: 40px; justify-content: center; padding: 32px 24px 80px; }
+nav.toc { position: sticky; top: 24px; align-self: start; font-size: 13.5px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--border); }
+nav.toc li a { display: block; padding: 4px 12px; margin-left: -2px; border-left: 2px solid transparent; color: var(--fg-muted); }
+nav.toc li a.active { color: var(--fg); border-left-color: var(--accent); }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } nav.toc { position: static; } }
+
+main { min-width: 0; }
+.page-header h1 { font-size: 28px; line-height: 1.25; margin: 8px 0 10px; }
+.page-header .lede { font-size: 17px; margin: 0 0 10px; }
+.framing { margin-top: 18px; font-size: 16px; }
+.framing p { margin: 0 0 12px; }
+.page-header .facts { color: var(--fg-muted); margin: 2px 0; font-size: 13.5px; }
+section { margin-top: 44px; }
+.section-label { color: var(--fg-muted); font-size: 13px; font-weight: 600; }
+h2 { font-size: 22px; line-height: 1.3; margin: 2px 0 14px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+h3 { font-size: 17px; margin: 28px 0 10px; }
+.note { margin: 6px 0; }
+.where { color: var(--fg-muted); font-size: 14px; }
+.scroll { overflow-x: auto; }
+
+/* Status: the glyph and the color both carry it, so color is never the only signal. */
+.glyph { display: inline-block; width: 1.2em; font-family: var(--mono); font-weight: 700; text-align: center; flex: none; }
+.st-added { --st-bg: var(--add-bg); --st-fg: var(--add-fg); --st-line: var(--add-line); }
+.st-removed { --st-bg: var(--del-bg); --st-fg: var(--del-fg); --st-line: var(--del-line); }
+.st-changed { --st-bg: var(--chg-bg); --st-fg: var(--chg-fg); --st-line: var(--chg-line); }
+.st-semantics-changed { --st-bg: var(--chg-bg); --st-fg: var(--chg-fg); --st-line: var(--chg-line); }
+.st-unchanged { --st-bg: transparent; --st-fg: var(--ctx-fg); --st-line: var(--border); }
+.st-accessed { --st-bg: var(--acc-bg); --st-fg: var(--acc-fg); --st-line: var(--acc-fg); }
+.st-removed .name, .st-removed .cell-name { text-decoration: line-through; }
+.proposed { outline: 1.5px dashed var(--st-line, var(--border)); outline-offset: -1.5px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--st-bg); color: var(--st-fg); border: 1px solid var(--st-line); white-space: nowrap; }
+.chip { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--fg-muted); background: var(--bg-soft); white-space: nowrap; margin: 2px 4px 2px 0; }
+.chip.cost { color: var(--fg); }
+.chip.rollout.r-backward-compatible { color: var(--add-fg); border-color: var(--add-line); }
+.chip.rollout.r-needs-deploy-order { color: var(--chg-fg); border-color: var(--chg-line); }
+.chip.rollout.r-breaks-existing-callers { color: var(--del-fg); border-color: var(--del-line); }
+.chip.op { font-family: var(--mono); }
+.labels { margin: 6px 0 2px; }
+.why { margin: 2px 0; font-size: 14px; }
+.why-label { color: var(--fg-muted); }
+
+/* Cards: tables, messages, endpoints, boundaries. */
+.card { border: 1px solid var(--border); border-left: 4px solid var(--st-line); border-radius: var(--radius); padding: 12px 14px; margin: 14px 0; background: var(--bg); }
+.card > header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.obj-name { font-family: var(--mono); font-weight: 700; font-size: 15px; }
+.method { color: var(--accent); }
+.meta { color: var(--fg-muted); font-size: 13px; margin-top: 2px; }
+.meta .area { font-weight: 600; }
+.ref { font-family: var(--mono); font-size: 12.5px; }
+.kind { color: var(--fg-muted); font-size: 13px; }
+.card > header .chips { margin-left: auto; }
+.card .lead { margin: 6px 0 8px; font-size: 15px; font-weight: 500; }
+.dialect, .direction { font-family: var(--mono); }
+.was { color: var(--del-fg); text-decoration: line-through; }
+.fold > summary { color: var(--fg-muted); font-size: 13px; padding: 2px 6px; cursor: pointer; }
+.ops { margin-top: 8px; font-size: 13px; }
+.ops-label { color: var(--fg-muted); }
+.payload { margin-top: 10px; }
+.also { margin: 4px 0; font-size: 14px; }
+.data-change { margin: 8px 0; font-size: 14px; }
+
+/* Code diffs: a CREATE TABLE statement or a JSON-like payload, before and after, with comments aligned
+   in one column. One row per line; the sign column and the background both carry the status. */
+.diff { margin-top: 8px; font: 13px/1.5 var(--mono); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 0; overflow-x: auto; background: var(--bg); }
+.dl { white-space: pre; padding: 0 12px 0 0; min-width: max-content; }
+.dl .sg { display: inline-block; width: 2.2em; text-align: center; color: var(--fg-muted); user-select: none; }
+.d-add { background: var(--add-bg); } .d-add .sg { color: var(--add-fg); font-weight: 700; }
+.d-del { background: var(--del-bg); } .d-del .sg { color: var(--del-fg); font-weight: 700; }
+.d-sem { background: var(--chg-bg); } .d-sem .sg { color: var(--chg-fg); font-weight: 700; }
+.d-ctx .c { color: var(--fg-muted); }
+.diff .kw { color: var(--accent); font-weight: 600; }
+.diff .key { color: var(--fg); font-weight: 600; }
+.diff .cm { color: var(--fg-muted); font-style: italic; }
+.dfold > summary { list-style: none; cursor: pointer; color: var(--fg-muted); font: 12.5px var(--sans); padding: 1px 0 1px 2.6em; background: var(--bg-soft); }
+.dfold > summary::-webkit-details-marker { display: none; }
+.dfold[open] > summary { display: none; }
+
+/* Access lists: access, who, what. */
+table.access { margin-top: 8px; font-size: 13.5px; width: auto; min-width: 60%; }
+table.access td, table.access th { padding: 3px 10px; }
+table.access .acc-kind { color: var(--fg-muted); white-space: nowrap; }
+
+/* Tabs on the database part: CSS only; the script below opens the tab a link points into. */
+.tabs { margin-top: 10px; }
+.tabs > input { position: absolute; opacity: 0; pointer-events: none; }
+.tabs > label { display: inline-block; padding: 5px 14px; margin-right: 4px; border: 1px solid var(--border); border-bottom: none; border-radius: var(--radius) var(--radius) 0 0; color: var(--fg-muted); cursor: pointer; font-size: 14px; }
+.tabs > input:checked + label { color: var(--fg); background: var(--bg-soft); font-weight: 600; }
+.tabs > input:focus-visible + label { outline: 2px solid var(--accent); }
+.tabs > .tab-panel { display: none; border-top: 1px solid var(--border); padding-top: 4px; }
+#tab-db-sql:checked ~ .tab-panel[data-radio="tab-db-sql"], #tab-db-er:checked ~ .tab-panel[data-radio="tab-db-er"] { display: block; }
+.context-tables { font-size: 14px; margin: 10px 0; }
+.context-tables ul { margin: 4px 0; padding-left: 20px; }
+
+/* Change map: the services diagram and one flow per entry point. */
+.flows figure.diagram { margin: 12px 0; }
+.map-legend { color: var(--fg-muted); font-size: 13.5px; }
+.diagram-panel svg a { cursor: pointer; }
+.far-side { border: 1px solid var(--chg-line); background: var(--chg-bg); border-radius: var(--radius); padding: 10px 14px; margin: 12px 0; font-size: 14px; }
+.far-side ul { margin: 4px 0 0; padding-left: 20px; }
+.body-head { font-size: 13px; font-weight: 600; color: var(--fg-muted); }
+ul.changes { margin: 6px 0; padding-left: 20px; font-size: 14px; }
+.card.compact .value { margin-top: 4px; }
+
+/* Interfaces: the coverage gaps first, then the summary, then the four parts. */
+.gaps { border: 1px solid var(--del-line); background: var(--del-bg); border-radius: var(--radius); padding: 10px 14px; margin: 12px 0; font-size: 14px; }
+.gaps ul { margin: 4px 0 0; padding-left: 20px; }
+p.none { color: var(--fg-muted); margin: 4px 0 8px; }
+.sub-label { color: var(--fg-muted); font-weight: 600; }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--fg-muted); font-weight: 600; font-size: 13px; }
+table.summary td:first-child { color: var(--fg-muted); }
+table.files td.num { font-family: var(--mono); text-align: right; width: 5em; }
+td.add { color: var(--add-fg); } td.del { color: var(--del-fg); }
+
+/* Messaging lanes: producer → exchange → binding key → queue → consumer. */
+.lanes { min-width: 860px; margin: 12px 0; }
+.lane { position: relative; display: grid; grid-template-columns: 1fr 22px 1fr 22px 1fr 22px 1fr 22px 1fr; align-items: stretch; margin-top: 10px; }
+.lane-header { margin: 0; }
+.lane-head { color: var(--fg-muted); font-size: 12.5px; font-weight: 600; padding: 0 8px; }
+.lane .cell { border: 1px solid var(--st-line, var(--border)); background: var(--st-bg); border-radius: var(--radius); padding: 6px 8px; font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+.lane .cell .glyph { color: var(--st-fg); }
+.lane .cell.empty { color: var(--fg-muted); border-style: dotted; text-align: center; }
+.lane .xtype { color: var(--fg-muted); }
+.lane .args { margin-top: 4px; font-size: 12px; }
+.lane .args > div { background: var(--st-bg); border-radius: 3px; }
+.arrow { display: flex; align-items: center; justify-content: center; color: var(--fg-muted); }
+.lane-foot { margin: 2px 0 8px; padding-left: 4px; }
+.dot { position: absolute; top: 50%; left: 0; width: 9px; height: 9px; margin-top: -4.5px; border-radius: 50%; background: var(--add-line); opacity: 0; pointer-events: none; }
+
+/* Modules and placement. */
+.area { margin: 18px 0; }
+.area h3 { margin-bottom: 6px; }
+.package { border-left: 3px solid var(--st-line); padding: 4px 0 4px 12px; margin: 8px 0; }
+.package-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.package-head .glyph { color: var(--st-fg); }
+.package .pkg { font-weight: 700; }
+.package .layer, .package .counts { color: var(--fg-muted); font-size: 13px; }
+.iface-classes { list-style: none; margin: 4px 0; padding-left: 1.2em; font-size: 14px; }
+.iface-classes li { margin: 2px 0; }
+.iface-classes .glyph { color: var(--st-fg); }
+.role { color: var(--fg-muted); font-size: 13px; }
+
+/* Diagrams: one light theme, so they sit on a light panel in both page modes. */
+figure.diagram { margin: 16px 0; }
+.diagram-panel { background: var(--panel); color: #1f2328; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; overflow-x: auto; text-align: center; }
+.diagram-panel svg { max-width: 100%; height: auto; }
+.diagram-panel pre { text-align: left; color: #1f2328; }
+.diagram-error { color: var(--del-fg); font-size: 14px; }
+figcaption { color: var(--fg-muted); font-size: 13.5px; margin-top: 6px; }
+
+/* Code excerpts and steps. */
+.code { border: 1px solid var(--border); border-radius: var(--radius); margin: 8px 0 12px; overflow: hidden; }
+.code-head { background: var(--bg-soft); border-bottom: 1px solid var(--border); padding: 3px 10px; font-size: 12.5px; color: var(--fg-muted); }
+.code pre { margin: 0; padding: 10px 12px; overflow-x: auto; background: var(--bg); }
+ol.steps { padding-left: 22px; }
+ol.steps > li { margin: 6px 0 10px; }
+ol.steps > li > p { margin: 0 0 4px; }
+dl dt { font-weight: 600; margin-top: 8px; }
+dl dd { margin: 2px 0 0 0; }
+ul.threads li { margin: 6px 0; }
+footer.page-footer { margin-top: 56px; padding-top: 12px; border-top: 1px solid var(--border); color: var(--fg-muted); font-size: 13px; }
+
+/* Motion only when the reader allows it: a dot travels once along each added route, folds open with a short reveal. */
+@media (prefers-reduced-motion: no-preference) {
+  .lane.play .dot { animation: travel 1.6s ease-in-out 1 forwards; }
+  @keyframes travel { 0% { left: 0; opacity: 0; } 8% { opacity: 1; } 92% { opacity: 1; } 100% { left: calc(100% - 9px); opacity: 0; } }
+  details[open] > :not(summary) { animation: reveal 0.18s ease-out; }
+  @keyframes reveal { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+}
+@media print { nav.toc { display: none; } .layout { grid-template-columns: 1fr; } .tabs > .tab-panel { display: block; } .tabs > label { display: none; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc" aria-label="Sections"><ol>{{TOC}}</ol></nav>
+<main>
+{{HEADER}}
+{{SECTIONS}}
+<footer class="page-footer">This page explains the change and does not judge it. For a review with findings, run <code>/code-review:full</code>. The facts behind this page are embedded in it as JSON (<code>#explain-data</code>).</footer>
+</main>
+</div>
+<script type="application/json" id="explain-data">{{DATA}}</script>
+<script>
+(() => {
+  const links = new Map([...document.querySelectorAll('nav.toc a')].map(a => [a.getAttribute('href').slice(1), a]));
+  const seen = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      links.forEach(a => a.classList.remove('active'));
+      const a = links.get(e.target.id);
+      if (a) a.classList.add('active');
+    }
+  }, { rootMargin: '0px 0px -70% 0px' });
+  document.querySelectorAll('main section[data-section]:not(h3)').forEach(s => seen.observe(s));
+  const lanes = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (e.isIntersecting) { e.target.classList.add('play'); lanes.unobserve(e.target); }
+    }
+  }, { threshold: 0.6 });
+  document.querySelectorAll('.lane.st-added').forEach(l => lanes.observe(l));
+  // A link into a hidden tab (a diagram box pointing at a table card) opens that tab first.
+  const reveal = hash => {
+    const target = hash && document.getElementById(decodeURIComponent(hash.slice(1)));
+    const panel = target && target.closest('.tab-panel');
+    if (!panel) return;
+    const radio = document.getElementById(panel.dataset.radio);
+    if (radio && !radio.checked) radio.checked = true;
+    target.scrollIntoView();
+  };
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    const href = a && (a.getAttribute('href') || a.getAttribute('xlink:href'));
+    if (href && href.startsWith('#')) setTimeout(() => reveal(href), 0);
+  });
+  addEventListener('hashchange', () => reveal(location.hash));
+  reveal(location.hash);
+})();
+</script>
+{{MERMAID_FALLBACK}}
+</body>
+</html>

@@ -1,0 +1,161 @@
+{
+  "title": "Invoice reminders and shipment credit checks",
+  "summary": "Unpaid invoices get a daily reminder through a new queue, and a shipment is released only after a credit-limit check against customer-service.",
+  "framing": [
+    "Finance chases overdue invoices by hand, and the warehouse ships orders for customers who are already over their credit limit. The merge request answers both from the order and billing side: billing starts reminding customers on its own, and shipments asks customer-service for the limit before an order leaves the warehouse.",
+    "The two halves share one ticket but no code. Reminders are the larger half and the one that adds schema and messaging; the credit check is a single call, but it is the first time shipments depends on customer-service at runtime, so a customer-service outage now holds shipments back."
+  ],
+  "state": "implemented",
+  "size": "medium",
+  "generated": "2026-11-19",
+  "source": {
+    "kind": "merge request",
+    "label": "!128",
+    "url": "https://gitlab.example.com/acme/fulfilment/-/merge_requests/128",
+    "author": "Jane Doe",
+    "date": "2026-11-18"
+  },
+  "diff": {
+    "forge": "gitlab",
+    "repo_url": "https://gitlab.example.com/acme/fulfilment",
+    "base_ref": "main",
+    "head_ref": "feature/invoice-reminders",
+    "base_sha": "1111111111111111111111111111111111111111",
+    "head_sha": "2222222222222222222222222222222222222222"
+  },
+  "ticket": {
+    "id": "FUL-42",
+    "url": "https://tracker.example.com/FUL-42",
+    "title": "Remind customers about unpaid invoices"
+  },
+  "interfaces": {
+    "heading": "A new table, a new queue, and a breaking change to the shipment endpoint",
+    "text": "These are the parts that are hard to change once they are deployed.",
+    "database": {
+      "heading": "Invoices get a due date, and reminders get their own table"
+    },
+    "messaging": {
+      "heading": "Reminders go out through a new queue on the existing billing exchange"
+    },
+    "http": {
+      "heading": "The shipment request drops the item weight; shipments call customer-service for the first time"
+    },
+    "boundaries": {
+      "heading": "One new job and one new client setting"
+    }
+  },
+  "modules": {
+    "heading": "Reminders live in a new billing package; the credit check adds the first HTTP client to shipments",
+    "areas": [
+      {
+        "name": "invoicing",
+        "deep_dive": "deep dive"
+      },
+      {
+        "name": "shipments",
+        "deep_dive": "deep dive"
+      }
+    ],
+    "crossings": [
+      "The first direct call from `shipments` to `customer-service`."
+    ],
+    "dependencies": [
+      "`customer-service` `/v2` API, through `clients.customer.base-url`."
+    ],
+    "diagram": "architecture"
+  },
+  "requirements": {
+    "heading": "Where each acceptance criterion lands",
+    "criteria": [
+      {
+        "text": "A reminder goes out on the first day after the due date.",
+        "where": "The daily job in `com.example.billing.reminder`."
+      },
+      {
+        "text": "A shipment for a customer over the limit stays on hold.",
+        "where": "`ShipmentService` calls the new credit-limit endpoint."
+      },
+      {
+        "text": "Reminders can be sent by SMS.",
+        "where": "Not in this change; the message carries the channel, only the mail listener exists."
+      }
+    ]
+  },
+  "concepts": {
+    "heading": "The merge request records one decision",
+    "decisions": [
+      {
+        "text": "Reminders are queued instead of sent from the job itself.",
+        "rejected": "Sending mail inside the scheduled job, because one slow mail server would block the whole run."
+      }
+    ]
+  },
+  "internals": {
+    "heading": "A daily job publishes one message per due reminder",
+    "flows": [
+      {
+        "heading": "Sending a reminder",
+        "area": "invoicing",
+        "diagram": "invoicing-flow",
+        "steps": [
+          {
+            "text": "The scheduler takes a database lock, so only one instance runs the job.",
+            "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderScheduler.kt:17",
+            "code": {
+              "lang": "kotlin",
+              "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderScheduler.kt:17-22",
+              "text": "@Scheduled(cron = \"\\${billing.reminders.cron}\")\n@SchedulerLock(name = \"invoice-reminders\")\nfun run() {\n    reminders.findDue(clock.instant())\n        .forEach { publisher.publish(it.toMessage()) }\n}"
+            }
+          },
+          {
+            "text": "The listener sends the mail and marks the reminder as sent; a failure goes to `billing.dlx`.",
+            "ref": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMailListener.kt:12"
+          }
+        ]
+      }
+    ]
+  },
+  "discussion": {
+    "heading": "One reviewer asked about the dead-letter exchange",
+    "threads": [
+      {
+        "who": "John Roe",
+        "asked": "Why does the indexer queue get a dead-letter exchange in this MR?",
+        "answer": "To use the same `billing.dlx` for every billing queue.",
+        "state": "resolved"
+      }
+    ]
+  },
+  "files": {
+    "heading": "14 files changed",
+    "files": [
+      {
+        "path": "billing/src/main/resources/db/migration/V42__invoice_due_date.sql",
+        "status": "added",
+        "added": 6
+      },
+      {
+        "path": "billing/src/main/resources/db/migration/V43__invoice_reminder.sql",
+        "status": "added",
+        "added": 9
+      },
+      {
+        "path": "shipments/src/main/kotlin/com/example/shipments/api/ShipmentController.kt",
+        "status": "modified",
+        "added": 22,
+        "removed": 9
+      }
+    ]
+  },
+  "diagrams": [
+    {
+      "id": "invoicing-flow",
+      "title": "Sending a reminder",
+      "caption": "A refused mail goes to the dead-letter exchange."
+    },
+    {
+      "id": "architecture",
+      "title": "New parts and the calls between them"
+    }
+  ]
+}

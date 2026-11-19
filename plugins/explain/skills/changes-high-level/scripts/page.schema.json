@@ -1,0 +1,637 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "page.schema.json",
+  "title": "explain page.json",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+    },
+    "framing": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S",
+        "description": "One paragraph of prose, with the markdown subset: `code`, **bold** and [text](https://...). No bullets."
+      },
+      "description": "1 to 3 paragraphs at the top of the page: what the change is and why it is being made. It frames the sections below and does not repeat them."
+    },
+    "state": {
+      "enum": [
+        "implemented",
+        "proposed",
+        "implemented and proposed"
+      ]
+    },
+    "size": {
+      "enum": [
+        "tiny",
+        "small",
+        "medium",
+        "large"
+      ]
+    },
+    "generated": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "label"
+      ]
+    },
+    "diff": {
+      "type": "object",
+      "properties": {
+        "forge": {
+          "enum": [
+            "gitlab",
+            "github",
+            "local"
+          ]
+        },
+        "base_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head_sha": {
+          "type": "string",
+          "minLength": 1
+        },
+        "base_sha": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repo_url": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "forge",
+        "base_ref",
+        "head_ref",
+        "head_sha"
+      ]
+    },
+    "ticket": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ]
+    },
+    "interfaces": {
+      "type": "object",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "database": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+            },
+            "diagram": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "heading"
+          ]
+        },
+        "messaging": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+            },
+            "diagram": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "heading"
+          ]
+        },
+        "http": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "heading"
+          ]
+        },
+        "boundaries": {
+          "type": "object",
+          "properties": {
+            "heading": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "heading"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "heading"
+      ]
+    },
+    "modules": {
+      "type": "object",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "deep_dive": {
+                "enum": [
+                  "deep dive",
+                  "surface only",
+                  "grouped"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "deep_dive"
+            ]
+          }
+        },
+        "crossings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        },
+        "diagram": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "heading"
+      ]
+    },
+    "concepts": {
+      "type": "object",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "terms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "term": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "term",
+              "text"
+            ]
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              },
+              "rejected": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              },
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "text"
+            ]
+          }
+        },
+        "open_points": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "heading"
+      ]
+    },
+    "internals": {
+      "type": "object",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "flows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "heading": {
+                "type": "string",
+                "minLength": 1
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/step"
+                }
+              },
+              "area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "diagram": {
+                "type": "string",
+                "minLength": 1
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "heading",
+              "steps"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "heading"
+      ]
+    },
+    "discussion": {
+      "type": "object",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "threads": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "who": {
+                "type": "string",
+                "minLength": 1
+              },
+              "asked": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              },
+              "answer": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              },
+              "state": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "who",
+              "asked"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "heading"
+      ]
+    },
+    "files": {
+      "type": "object",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "added": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "removed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "status": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "path"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "heading"
+      ]
+    },
+    "diagrams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "caption": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          },
+          "failed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title"
+        ]
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              },
+              "where": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "text"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "heading",
+        "criteria"
+      ],
+      "description": "The acceptance criteria of the ticket, each with where the change meets it. Only when the source has criteria."
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "title",
+    "summary",
+    "state",
+    "size",
+    "generated",
+    "source",
+    "interfaces",
+    "modules",
+    "framing"
+  ],
+  "$defs": {
+    "step": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code": {
+          "$ref": "#/$defs/code"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ]
+    },
+    "code": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lang": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ]
+    }
+  }
+}
