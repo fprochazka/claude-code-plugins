@@ -34,7 +34,7 @@ The watch's events start your turns; never poll by hand. The 50-minute and `turn
 - `waiting`: answer only as the dialog rule above allows; otherwise relay the exact question to the human.
 - `idle_long` at 20 minutes: read its pane and last messages, then nudge it or ask what blocks it.
 - `idle_long` at 50 minutes: compact the session, the human's too: its prompt cache expires at 60 minutes, after which compaction pays for the whole context. Skip one under 15% of its context (`Ctx: <n>k (<p>%)` in `inspect --screen`), where compaction saves little and makes it dumber; one compacted with no activity since; and a working one you are about to close.
-- `context_high` at 75%: compact the session once idle, with the 50-minute skips. Worker roles auto-compact at 90% (cc-auth-switch).
+- `context_high` at 75%: compact the session once idle, with the 50-minute skips.
 - `busy_long`: look at the pane before you decide it hangs.
 - `turn_finished` of a turn you started by brief or message: the session reports a summary; do not read its transcript. Of one the human started (see below): ask the idle session for a summary with `SendMessage`, or read the newest exchange in its transcript, whichever is cheaper: a message costs the human's conversation a turn, a long exchange costs you tokens. Note in the roster what matters later, and act on nothing else.
 - A worker that opened an MR or PR babysits it to green and hand-over with the `sdlc:mr-babysit` skill, on GitHub through `gh`.
