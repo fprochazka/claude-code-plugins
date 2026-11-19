@@ -1,0 +1,538 @@
+{
+  "area": "invoicing",
+  "checklist": [
+    {
+      "path": "billing/src/main/resources/db/migration/V42__invoice_due_date.sql",
+      "result": "covered"
+    },
+    {
+      "path": "billing/src/main/resources/db/migration/V43__invoice_reminder.sql",
+      "result": "covered"
+    },
+    {
+      "path": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminder.kt",
+      "result": "covered"
+    },
+    {
+      "path": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMessagingConfig.kt",
+      "result": "covered"
+    },
+    {
+      "path": "billing/src/main/kotlin/com/example/billing/indexing/IndexerMessagingConfig.kt",
+      "result": "covered"
+    },
+    {
+      "path": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMailListener.kt",
+      "result": "unknown",
+      "note": "the retry count comes from a shared base class outside this area"
+    }
+  ],
+  "contracts": {
+    "tables": [
+      {
+        "name": "invoice",
+        "area": "invoicing",
+        "status": "changed",
+        "source": "migration",
+        "ref": "billing/src/main/resources/db/migration/V42__invoice_due_date.sql:1",
+        "columns": [
+          {
+            "name": "id",
+            "status": "unchanged",
+            "type": "bigint",
+            "nullable": false,
+            "key": "primary key"
+          },
+          {
+            "name": "number",
+            "status": "unchanged",
+            "type": "varchar(32)",
+            "nullable": false
+          },
+          {
+            "name": "customer_id",
+            "status": "unchanged",
+            "type": "bigint",
+            "nullable": false,
+            "references": "customer.id",
+            "foreign_key": false,
+            "note": "customers live in customer-service, so there is no foreign key on purpose"
+          },
+          {
+            "name": "due_date",
+            "status": "added",
+            "type": "date",
+            "nullable": false,
+            "default": "current_date",
+            "ref": "billing/src/main/resources/db/migration/V42__invoice_due_date.sql:2",
+            "note": "backfilled from `issued_at` plus the customer’s payment terms"
+          },
+          {
+            "name": "status",
+            "status": "changed",
+            "type": "varchar(32)",
+            "nullable": false,
+            "was": {
+              "type": "varchar(16)"
+            },
+            "note": "room for `REMINDER_SENT`"
+          },
+          {
+            "name": "legacy_ref",
+            "status": "removed",
+            "type": "varchar(64)",
+            "nullable": true
+          }
+        ],
+        "indexes": [
+          {
+            "name": "invoice_due_date_idx",
+            "status": "added",
+            "definition": "(due_date)",
+            "note": "backs the daily reminder query"
+          },
+          {
+            "name": "invoice_number_key",
+            "status": "unchanged",
+            "definition": "(number)",
+            "unique": true
+          }
+        ],
+        "operations": [
+          "index build",
+          "adds a NOT NULL column with a default",
+          "drops data (legacy_ref)"
+        ],
+        "cost": {
+          "labels": [
+            "data migration",
+            "drops data"
+          ],
+          "text": "Putting `legacy_ref` back needs a restore from a backup; the column type change rewrites the table."
+        },
+        "rollout": {
+          "label": "needs deploy order",
+          "text": "The old version still writes `legacy_ref`, so the migration must run after every old instance stopped. It runs once per tenant database, before the new code starts.",
+          "rollback": "Rolling the code back is safe; rolling the migration back cannot restore `legacy_ref`."
+        },
+        "dialect": "postgresql",
+        "lead": "Every invoice gets a required due date, `status` grows to 32 characters, and `legacy_ref` is dropped with its data.",
+        "data_changes": [
+          {
+            "sql": "UPDATE invoice SET due_date = issued_on + payment_terms_days;",
+            "summary": "Fills the due date of every existing invoice once, in the same transaction as the column.",
+            "ref": "billing/src/main/resources/db/migration/V42__invoice_due_date.sql:4"
+          }
+        ]
+      },
+      {
+        "name": "invoice_reminder",
+        "area": "invoicing",
+        "status": "added",
+        "source": "migration",
+        "ref": "billing/src/main/resources/db/migration/V43__invoice_reminder.sql:1",
+        "columns": [
+          {
+            "name": "id",
+            "status": "added",
+            "type": "bigint",
+            "nullable": false,
+            "key": "primary key"
+          },
+          {
+            "name": "invoice_id",
+            "status": "added",
+            "type": "bigint",
+            "nullable": false,
+            "references": "invoice.id"
+          },
+          {
+            "name": "send_at",
+            "status": "added",
+            "type": "timestamptz",
+            "nullable": false
+          },
+          {
+            "name": "sent",
+            "status": "added",
+            "type": "boolean",
+            "nullable": false,
+            "default": "false",
+            "note": "set by the mail listener after the mail is accepted"
+          }
+        ],
+        "indexes": [
+          {
+            "name": "invoice_reminder_send_at_idx",
+            "status": "added",
+            "definition": "(send_at) where not sent"
+          }
+        ],
+        "constraints": [
+          {
+            "text": "unique (invoice_id, send_at)",
+            "status": "added",
+            "note": "one reminder per invoice and send time"
+          }
+        ],
+        "cost": {
+          "labels": [
+            "data migration"
+          ],
+          "text": "A new table with no readers outside billing; later changes are ordinary migrations."
+        },
+        "rollout": {
+          "label": "backward compatible",
+          "rollback": "Harmless: the old version never reads the table."
+        },
+        "dialect": "postgresql",
+        "lead": "A new table holds one row per planned reminder; nothing outside billing reads it."
+      },
+      {
+        "name": "payment",
+        "area": "invoicing",
+        "status": "accessed",
+        "source": "code",
+        "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderService.kt:58",
+        "accesses": [
+          {
+            "by": "InvoiceReminderService.findUnpaid()",
+            "kind": "read",
+            "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderService.kt:58",
+            "what": "selects the unpaid invoices of one customer"
+          }
+        ]
+      },
+      {
+        "name": "customer_terms",
+        "area": "invoicing",
+        "status": "unchanged",
+        "source": "schema dump",
+        "ref": "billing/src/main/resources/db/schema.sql:120",
+        "note": "the due-date backfill reads `payment_terms_days` from here"
+      }
+    ],
+    "routes": [
+      {
+        "area": "invoicing",
+        "status": "added",
+        "source": "declaration",
+        "ref": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMessagingConfig.kt:21",
+        "producer": {
+          "name": "InvoiceReminderScheduler",
+          "status": "added"
+        },
+        "exchange": {
+          "name": "billing.events",
+          "type": "topic",
+          "status": "unchanged"
+        },
+        "key": "invoice.reminder.due",
+        "queue": {
+          "name": "billing.invoice-reminder",
+          "status": "added",
+          "type": "quorum",
+          "arguments": [
+            {
+              "name": "x-dead-letter-exchange",
+              "value": "billing.dlx",
+              "status": "added"
+            }
+          ]
+        },
+        "consumer": {
+          "name": "ReminderMailListener",
+          "status": "added"
+        },
+        "message": "InvoiceReminderDue",
+        "cost": {
+          "labels": [
+            "multi-step change"
+          ],
+          "text": "Renaming the queue later needs a second queue, a dual bind, and a drain of the old one."
+        },
+        "rollout": {
+          "label": "backward compatible",
+          "text": "A new queue on an existing exchange; no existing consumer sees the new key."
+        },
+        "lead": "Reminders travel on a new quorum queue bound to the existing `billing.events` exchange."
+      },
+      {
+        "area": "invoicing",
+        "status": "changed",
+        "source": "declaration",
+        "ref": "billing/src/main/kotlin/com/example/billing/indexing/IndexerMessagingConfig.kt:14",
+        "producer": {
+          "name": "OrderService",
+          "status": "unchanged"
+        },
+        "exchange": {
+          "name": "billing.events",
+          "type": "topic",
+          "status": "unchanged"
+        },
+        "key": "invoice.created",
+        "queue": {
+          "name": "billing.invoice-indexer",
+          "status": "changed",
+          "arguments": [
+            {
+              "name": "x-dead-letter-exchange",
+              "value": "billing.dlx",
+              "status": "added"
+            }
+          ]
+        },
+        "consumer": {
+          "name": "InvoiceIndexer",
+          "status": "unchanged"
+        },
+        "cost": {
+          "labels": [
+            "multi-step change",
+            "downtime or failover"
+          ],
+          "text": "The broker refuses to redeclare a queue with other arguments; the queue has to be deleted and declared again."
+        },
+        "rollout": {
+          "label": "needs deploy order",
+          "text": "The existing queue must be deleted before the new version declares it, or the declaration fails at startup."
+        },
+        "lead": "The indexer queue gains a dead-letter exchange, which the broker accepts only after the queue is deleted."
+      }
+    ],
+    "messages": [
+      {
+        "name": "InvoiceReminderDue",
+        "area": "invoicing",
+        "status": "added",
+        "source": "code",
+        "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderDue.kt:5",
+        "format": "JSON",
+        "fields": [
+          {
+            "name": "invoiceId",
+            "status": "added",
+            "type": "long",
+            "required": true
+          },
+          {
+            "name": "sendAt",
+            "status": "added",
+            "type": "string(date-time)",
+            "required": true
+          },
+          {
+            "name": "channel",
+            "status": "added",
+            "type": "enum [EMAIL, SMS]",
+            "required": true
+          }
+        ],
+        "cost": {
+          "labels": [
+            "other consumers must change"
+          ],
+          "text": "Every consumer of the message has to accept a new field before a producer may drop one."
+        },
+        "rollout": {
+          "label": "backward compatible"
+        },
+        "lead": "A new message type with three required fields; only the reminder listener consumes it."
+      }
+    ],
+    "boundaries": [
+      {
+        "kind": "scheduled job",
+        "name": "billing.reminders.cron",
+        "area": "invoicing",
+        "status": "added",
+        "source": "config",
+        "ref": "billing/src/main/resources/application.yml:48",
+        "value": "0 0 7 * * *",
+        "cost": {
+          "labels": [
+            "code change only"
+          ]
+        },
+        "rollout": {
+          "label": "backward compatible"
+        },
+        "lead": "A new daily job at 07:00 that runs on every instance behind a database lock."
+      }
+    ]
+  },
+  "packages": [
+    {
+      "name": "com.example.billing.reminder",
+      "area": "invoicing",
+      "status": "added",
+      "layer": "application",
+      "new_classes": 10,
+      "placement": "A new package next to `com.example.billing.dunning`, with the same split into service, scheduler and messaging config.",
+      "interface_classes": [
+        {
+          "name": "InvoiceReminder",
+          "role": "entity",
+          "status": "added",
+          "target": {
+            "kind": "table",
+            "name": "invoice_reminder"
+          },
+          "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminder.kt:9"
+        },
+        {
+          "name": "InvoiceReminderScheduler",
+          "role": "publisher",
+          "status": "added",
+          "target": {
+            "kind": "message",
+            "name": "InvoiceReminderDue"
+          },
+          "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderScheduler.kt:17"
+        },
+        {
+          "name": "ReminderMailListener",
+          "role": "listener",
+          "status": "added",
+          "target": {
+            "kind": "route",
+            "name": "billing.events | invoice.reminder.due | billing.invoice-reminder"
+          },
+          "ref": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMailListener.kt:12"
+        }
+      ]
+    },
+    {
+      "name": "db/migration",
+      "area": "invoicing",
+      "status": "changed",
+      "layer": "schema",
+      "new_classes": 2,
+      "interface_classes": [
+        {
+          "name": "V42__invoice_due_date.sql",
+          "role": "migration",
+          "status": "added",
+          "target": {
+            "kind": "table",
+            "name": "invoice"
+          }
+        },
+        {
+          "name": "V43__invoice_reminder.sql",
+          "role": "migration",
+          "status": "added",
+          "target": {
+            "kind": "table",
+            "name": "invoice_reminder"
+          }
+        }
+      ]
+    }
+  ],
+  "notes": {
+    "summary": "A daily job finds unpaid invoices past their due date and publishes one reminder message per invoice.",
+    "steps": [
+      {
+        "text": "The scheduler selects the reminders that are due and not sent.",
+        "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderScheduler.kt:24"
+      }
+    ],
+    "crossings": [
+      "The first listener in `billing` that sends mail itself instead of calling the notification service."
+    ],
+    "unknowns": [
+      "The retry count of the listener comes from a shared base class outside this area."
+    ]
+  },
+  "diagrams": [
+    "invoicing-flow"
+  ],
+  "services": [
+    {
+      "name": "billing",
+      "status": "changed"
+    },
+    {
+      "name": "mail relay",
+      "status": "unchanged"
+    }
+  ],
+  "service_links": [
+    {
+      "from": "billing",
+      "to": "mail relay",
+      "via": "SMTP, reminder mails",
+      "status": "added"
+    }
+  ],
+  "entry_points": [
+    {
+      "kind": "scheduled job",
+      "name": "InvoiceReminderScheduler",
+      "area": "invoicing",
+      "status": "added",
+      "ref": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminderScheduler.kt:17",
+      "target": {
+        "kind": "boundary",
+        "name": "scheduled job billing.reminders.cron"
+      },
+      "actions": [
+        {
+          "verb": "reads",
+          "target": {
+            "kind": "table",
+            "name": "payment"
+          },
+          "status": "added"
+        },
+        {
+          "verb": "reads and writes",
+          "target": {
+            "kind": "table",
+            "name": "invoice_reminder"
+          },
+          "status": "added"
+        },
+        {
+          "verb": "publishes",
+          "target": {
+            "kind": "message",
+            "name": "InvoiceReminderDue"
+          },
+          "status": "added"
+        }
+      ]
+    },
+    {
+      "kind": "consumer",
+      "name": "ReminderMailListener",
+      "area": "invoicing",
+      "status": "added",
+      "ref": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMailListener.kt:12",
+      "target": {
+        "kind": "route",
+        "name": "billing.events | invoice.reminder.due | billing.invoice-reminder"
+      },
+      "actions": [
+        {
+          "verb": "consumes",
+          "target": {
+            "kind": "message",
+            "name": "InvoiceReminderDue"
+          },
+          "status": "added"
+        },
+        {
+          "verb": "writes",
+          "target": {
+            "kind": "table",
+            "name": "invoice_reminder"
+          },
+          "status": "added"
+        }
+      ]
+    }
+  ]
+}

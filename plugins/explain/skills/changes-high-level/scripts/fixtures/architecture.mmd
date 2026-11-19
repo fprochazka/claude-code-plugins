@@ -1,0 +1,6 @@
+flowchart TB
+  Sched["reminder scheduler (new)"] -->|publishes| Ex{{"billing.events"}}
+  Ex -->|"invoice.reminder.due"| Q["billing.invoice-reminder (new)"]
+  Q -->|consumed by| L["ReminderMailListener (new)"]
+  Ship["shipments"] -->|"GET /v2/.../credit-limit (new)"| Cust["customer-service"]
+  L -->|writes| DB[("billing database")]

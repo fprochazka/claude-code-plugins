@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant Job as InvoiceReminderScheduler
+  participant DB as "invoice_reminder table"
+  participant Bus as "billing.events"
+  participant Mail as ReminderMailListener
+  Job->>+DB: selects due, unsent reminders
+  DB-->>-Job: reminders
+  Job->>Bus: publishes InvoiceReminderDue
+  Bus->>+Mail: delivers via billing.invoice-reminder
+  alt mail server refuses
+    Mail-->>Bus: rejects, goes to billing.dlx
+  else sent
+    Mail->>-DB: marks the reminder sent
+  end

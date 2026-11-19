@@ -1,0 +1,379 @@
+{
+  "area": "shipments",
+  "checklist": [
+    {
+      "path": "shipments/src/main/kotlin/com/example/shipments/api/ShipmentController.kt",
+      "result": "covered"
+    },
+    {
+      "path": "shipments/src/main/kotlin/com/example/shipments/customer/CustomerClient.kt",
+      "result": "covered"
+    },
+    {
+      "path": "shipments/src/main/kotlin/com/example/shipments/billing/InvoiceView.kt",
+      "result": "no contract change"
+    }
+  ],
+  "contracts": {
+    "tables": [
+      {
+        "name": "invoice",
+        "area": "shipments",
+        "status": "changed",
+        "source": "entity",
+        "ref": "shipments/src/main/kotlin/com/example/shipments/billing/InvoiceView.kt:8",
+        "columns": [
+          {
+            "name": "due_date",
+            "status": "added",
+            "type": "date",
+            "nullable": true
+          }
+        ],
+        "lead": "Shipments map the new `due_date` column read-only."
+      },
+      {
+        "name": "payment",
+        "area": "shipments",
+        "status": "accessed",
+        "source": "code",
+        "ref": "shipments/src/main/kotlin/com/example/shipments/ShipmentService.kt:77",
+        "accesses": [
+          {
+            "by": "ShipmentService.isPrepaid()",
+            "kind": "read",
+            "ref": "shipments/src/main/kotlin/com/example/shipments/ShipmentService.kt:77",
+            "what": "checks whether the order is prepaid"
+          }
+        ]
+      }
+    ],
+    "endpoints": [
+      {
+        "direction": "server",
+        "method": "POST",
+        "path": "/orders/{orderId}/shipments",
+        "area": "shipments",
+        "status": "changed",
+        "source": "code",
+        "ref": "shipments/src/main/kotlin/com/example/shipments/api/ShipmentController.kt:41",
+        "changes": [
+          "added the optional request property `deliveryWindow`",
+          "removed the request property `items/weightGrams`",
+          "`priority` became an enum",
+          "`items/quantity` became required"
+        ],
+        "request": {
+          "type": "ShipmentRequest",
+          "fields": [
+            {
+              "name": "carrier",
+              "status": "unchanged",
+              "type": "string",
+              "required": true
+            },
+            {
+              "name": "deliveryWindow",
+              "status": "added",
+              "type": "object",
+              "required": false,
+              "fields": [
+                {
+                  "name": "from",
+                  "status": "added",
+                  "type": "string(date-time)",
+                  "required": true
+                },
+                {
+                  "name": "to",
+                  "status": "added",
+                  "type": "string(date-time)",
+                  "required": true
+                }
+              ]
+            },
+            {
+              "name": "priority",
+              "status": "changed",
+              "type": "enum [STANDARD, EXPRESS]",
+              "was": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "items[]",
+              "status": "unchanged",
+              "type": "array<object>",
+              "fields": [
+                {
+                  "name": "sku",
+                  "status": "unchanged",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "name": "weightGrams",
+                  "status": "removed",
+                  "type": "integer"
+                },
+                {
+                  "name": "quantity",
+                  "status": "changed",
+                  "type": "integer",
+                  "required": true,
+                  "was": {
+                    "required": false
+                  }
+                }
+              ]
+            },
+            {
+              "name": "note",
+              "status": "unchanged",
+              "type": "string",
+              "required": false
+            }
+          ],
+          "unchanged_fields": 3
+        },
+        "responses": [
+          {
+            "status": "201",
+            "type": "ShipmentResponse",
+            "fields": [
+              {
+                "name": "trackingUrl",
+                "status": "added",
+                "type": "string",
+                "required": false
+              },
+              {
+                "name": "status",
+                "status": "semantics changed",
+                "type": "string",
+                "required": true,
+                "note": "`HELD` now also means a failed credit check, not only missing stock"
+              }
+            ],
+            "unchanged_fields": 5
+          }
+        ],
+        "cost": {
+          "labels": [
+            "other consumers must change"
+          ],
+          "text": "Two other services call this endpoint; removing a field again needs a new version of the path."
+        },
+        "rollout": {
+          "label": "breaks existing callers",
+          "text": "A caller that sends `priority` as free text or leaves out `quantity` gets a 400 after the deploy.",
+          "rollback": "Rolling back restores the old request; callers that already send `deliveryWindow` keep working, the field is ignored."
+        },
+        "lead": "The shipment request takes a delivery window and an enum priority and drops the item weight; callers that send free-text priority get a 400.",
+        "same_change_on": [
+          "PUT /orders/{orderId}/shipments/{shipmentId}"
+        ]
+      },
+      {
+        "direction": "client",
+        "method": "GET",
+        "path": "/v2/customers/{id}/credit-limit",
+        "area": "shipments",
+        "status": "added",
+        "source": "code",
+        "ref": "shipments/src/main/kotlin/com/example/shipments/customer/CustomerClient.kt:17",
+        "target": {
+          "service": "customer-service",
+          "config_key": "clients.customer.base-url"
+        },
+        "responses": [
+          {
+            "status": "200",
+            "type": "CreditLimit",
+            "fields": [
+              {
+                "name": "amount",
+                "status": "added",
+                "type": "number",
+                "required": true
+              },
+              {
+                "name": "currency",
+                "status": "added",
+                "type": "string",
+                "required": true
+              }
+            ]
+          }
+        ],
+        "cost": {
+          "labels": [
+            "code change only"
+          ]
+        },
+        "rollout": {
+          "label": "needs deploy order",
+          "text": "The `/v2` path must be live in customer-service before this version starts."
+        },
+        "lead": "Shipments now call customer-service for the credit limit before a release; the `/v2` path must be live first.",
+        "note": "customer-service serves the path from `CreditLimitController`; read from its local clone, see the note at the top of this section."
+      }
+    ],
+    "boundaries": [
+      {
+        "kind": "config",
+        "name": "clients.customer.base-url",
+        "area": "shipments",
+        "status": "added",
+        "source": "config",
+        "ref": "shipments/src/main/resources/application.yml:31",
+        "value": "http://customer-service:8080",
+        "cost": {
+          "labels": [
+            "code change only"
+          ]
+        },
+        "rollout": {
+          "label": "backward compatible"
+        },
+        "lead": "A new setting points the client at customer-service."
+      }
+    ]
+  },
+  "packages": [
+    {
+      "name": "com.example.shipments.api",
+      "area": "shipments",
+      "status": "changed",
+      "layer": "web",
+      "new_classes": 1,
+      "changed_classes": 3,
+      "interface_classes": [
+        {
+          "name": "ShipmentController",
+          "role": "controller",
+          "status": "changed",
+          "target": {
+            "kind": "endpoint",
+            "name": "server POST /orders/{orderId}/shipments"
+          },
+          "ref": "shipments/src/main/kotlin/com/example/shipments/api/ShipmentController.kt:41"
+        }
+      ]
+    },
+    {
+      "name": "com.example.shipments.customer",
+      "area": "shipments",
+      "status": "added",
+      "layer": "integration",
+      "new_classes": 4,
+      "placement": "The first outbound HTTP client of the service; it follows the client layout the other services share.",
+      "interface_classes": [
+        {
+          "name": "CustomerClient",
+          "role": "client",
+          "status": "added",
+          "target": {
+            "kind": "endpoint",
+            "name": "client GET /v2/customers/{id}/credit-limit"
+          },
+          "ref": "shipments/src/main/kotlin/com/example/shipments/customer/CustomerClient.kt:17"
+        }
+      ]
+    }
+  ],
+  "notes": {
+    "summary": "A shipment is released only when the customer's credit limit covers the order.",
+    "crossings": [
+      "The first direct call from `shipments` to `customer-service`."
+    ],
+    "dependencies": [
+      "`customer-service` `/v2` API"
+    ]
+  },
+  "diagrams": [],
+  "services": [
+    {
+      "name": "shipments",
+      "status": "changed"
+    },
+    {
+      "name": "billing",
+      "status": "changed"
+    },
+    {
+      "name": "customer-service",
+      "status": "unchanged"
+    }
+  ],
+  "service_links": [
+    {
+      "from": "shipments",
+      "to": "customer-service",
+      "via": "HTTP GET /v2/customers/{id}/credit-limit",
+      "status": "added",
+      "target": {
+        "kind": "endpoint",
+        "name": "client GET /v2/customers/{id}/credit-limit"
+      }
+    },
+    {
+      "from": "shipments",
+      "to": "billing",
+      "via": "shared table invoice",
+      "status": "changed",
+      "target": {
+        "kind": "table",
+        "name": "invoice"
+      }
+    }
+  ],
+  "entry_points": [
+    {
+      "kind": "endpoint",
+      "name": "POST /orders/{orderId}/shipments",
+      "area": "shipments",
+      "status": "changed",
+      "ref": "shipments/src/main/kotlin/com/example/shipments/api/ShipmentController.kt:41",
+      "target": {
+        "kind": "endpoint",
+        "name": "server POST /orders/{orderId}/shipments"
+      },
+      "actions": [
+        {
+          "verb": "reads",
+          "target": {
+            "kind": "table",
+            "name": "payment"
+          },
+          "status": "unchanged"
+        },
+        {
+          "verb": "reads",
+          "target": {
+            "kind": "table",
+            "name": "invoice"
+          },
+          "status": "added"
+        },
+        {
+          "verb": "calls",
+          "target": {
+            "kind": "endpoint",
+            "name": "client GET /v2/customers/{id}/credit-limit"
+          },
+          "status": "added"
+        }
+      ]
+    }
+  ],
+  "far_side_reads": [
+    {
+      "service": "customer-service",
+      "clone": "/home/dev/src/acme/customer-service",
+      "commit": "3333333333333333333333333333333333333333",
+      "what": "the server side of `GET /v2/customers/{id}/credit-limit`: its controller and response type",
+      "area": "shipments"
+    }
+  ]
+}

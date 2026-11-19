@@ -1,0 +1,1807 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts.schema.json",
+  "title": "explain subdomain fragments and the merged contracts.json",
+  "$defs": {
+    "fragment": {
+      "type": "object",
+      "properties": {
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checklist": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/checklist_entry"
+          }
+        },
+        "contracts": {
+          "$ref": "#/$defs/contracts"
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/package"
+          }
+        },
+        "notes": {
+          "$ref": "#/$defs/notes"
+        },
+        "diagrams": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/service"
+          }
+        },
+        "service_links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/service_link"
+          }
+        },
+        "entry_points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entry_point"
+          }
+        },
+        "far_side_reads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/far_side_read"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "area",
+        "checklist"
+      ]
+    },
+    "merged": {
+      "type": "object",
+      "properties": {
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/table"
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/route"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          }
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/endpoint"
+          }
+        },
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/boundary"
+          }
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/package"
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "minLength": 1
+              },
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "areas": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "differs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "key",
+              "areas",
+              "differs"
+            ]
+          }
+        },
+        "checklist_gaps": {
+          "type": "array",
+          "description": "Contract files from the surface scan that no fragment covered, or that a fragment left unknown.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "area": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "path",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/service"
+          }
+        },
+        "service_links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/service_link"
+          }
+        },
+        "entry_points": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entry_point"
+          }
+        },
+        "far_side_reads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/far_side_read"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "areas"
+      ]
+    },
+    "contracts": {
+      "type": "object",
+      "properties": {
+        "tables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/table"
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/route"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/message"
+          }
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/endpoint"
+          }
+        },
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/boundary"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "table": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "source": {
+          "enum": [
+            "migration",
+            "entity",
+            "schema dump",
+            "spec",
+            "declaration",
+            "code",
+            "config",
+            "source text",
+            "inferred"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "cost": {
+          "$ref": "#/$defs/cost"
+        },
+        "rollout": {
+          "$ref": "#/$defs/rollout"
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/column"
+          }
+        },
+        "indexes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/index"
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "added",
+                  "removed",
+                  "changed",
+                  "unchanged",
+                  "accessed",
+                  "semantics changed"
+                ]
+              },
+              "proposed": {
+                "type": "boolean"
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "text",
+              "status"
+            ]
+          }
+        },
+        "unchanged_columns": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "accesses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/access"
+          }
+        },
+        "lead": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One sentence a reader can decide on before any detail: what changed and what it means for rollout or the callers. A fact, not a verdict. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "dialect": {
+          "enum": [
+            "postgresql",
+            "mysql",
+            "mariadb",
+            "sqlite",
+            "sqlserver",
+            "oracle",
+            "other"
+          ],
+          "description": "The SQL dialect of the service's database; the page prints the CREATE TABLE statement in it."
+        },
+        "data_changes": {
+          "type": "array",
+          "description": "Statements a data migration runs on existing rows (UPDATE, INSERT, a backfill), shown under the CREATE TABLE diff.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sql": {
+                "type": "string",
+                "minLength": 1
+              },
+              "summary": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+              },
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false,
+            "anyOf": [
+              {
+                "required": [
+                  "sql"
+                ]
+              },
+              {
+                "required": [
+                  "summary"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "area",
+        "status",
+        "source",
+        "ref"
+      ]
+    },
+    "cost": {
+      "type": "object",
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "code change only",
+              "data migration",
+              "multi-step change",
+              "downtime or failover",
+              "other consumers must change",
+              "drops data"
+            ]
+          }
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "labels"
+      ]
+    },
+    "rollout": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "enum": [
+            "backward compatible",
+            "needs deploy order",
+            "breaks existing callers",
+            "unknown"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "rollback": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What rolling the deploy back does to this object: harmless, needs a down migration, loses data. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "label"
+      ]
+    },
+    "column": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "default": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "references": {
+          "type": "string",
+          "minLength": 1
+        },
+        "was": {
+          "$ref": "#/$defs/was"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "foreign_key": {
+          "type": "boolean",
+          "description": "false when `references` names a logical reference with no foreign key constraint; the page says so and draws the edge dashed."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status"
+      ]
+    },
+    "was": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "definition": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "index": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "definition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unique": {
+          "type": "boolean"
+        },
+        "was": {
+          "$ref": "#/$defs/was"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "proposed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status"
+      ]
+    },
+    "access": {
+      "type": "object",
+      "properties": {
+        "by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "read",
+            "write",
+            "read and write"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "what": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the access does, in a few words: `selects unpaid invoices of one customer`. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "by",
+        "kind"
+      ]
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "exchange": {
+          "$ref": "#/$defs/element"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "queue": {
+          "$ref": "#/$defs/queue"
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "source": {
+          "enum": [
+            "migration",
+            "entity",
+            "schema dump",
+            "spec",
+            "declaration",
+            "code",
+            "config",
+            "source text",
+            "inferred"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "cost": {
+          "$ref": "#/$defs/cost"
+        },
+        "rollout": {
+          "$ref": "#/$defs/rollout"
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "producer": {
+          "$ref": "#/$defs/element"
+        },
+        "consumer": {
+          "$ref": "#/$defs/element"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lead": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One sentence a reader can decide on before any detail: what changed and what it means for rollout or the callers. A fact, not a verdict. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "exchange",
+        "key",
+        "queue",
+        "area",
+        "status",
+        "source",
+        "ref"
+      ]
+    },
+    "element": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status"
+      ]
+    },
+    "queue": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/argument"
+          }
+        },
+        "proposed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status"
+      ]
+    },
+    "argument": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "was": {
+          "$ref": "#/$defs/was"
+        },
+        "proposed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value",
+        "status"
+      ]
+    },
+    "message": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "source": {
+          "enum": [
+            "migration",
+            "entity",
+            "schema dump",
+            "spec",
+            "declaration",
+            "code",
+            "config",
+            "source text",
+            "inferred"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "cost": {
+          "$ref": "#/$defs/cost"
+        },
+        "rollout": {
+          "$ref": "#/$defs/rollout"
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "format": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "unchanged_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lead": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One sentence a reader can decide on before any detail: what changed and what it means for rollout or the callers. A fact, not a verdict. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "area",
+        "status",
+        "source",
+        "ref"
+      ]
+    },
+    "field": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "was": {
+          "$ref": "#/$defs/was"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "unchanged_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status"
+      ]
+    },
+    "endpoint": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "enum": [
+            "server",
+            "client"
+          ]
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "source": {
+          "enum": [
+            "migration",
+            "entity",
+            "schema dump",
+            "spec",
+            "declaration",
+            "code",
+            "config",
+            "source text",
+            "inferred"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "cost": {
+          "$ref": "#/$defs/cost"
+        },
+        "rollout": {
+          "$ref": "#/$defs/rollout"
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "target": {
+          "type": "object",
+          "properties": {
+            "service": {
+              "type": "string",
+              "minLength": 1
+            },
+            "config_key": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "service"
+          ]
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        },
+        "request": {
+          "$ref": "#/$defs/body"
+        },
+        "responses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/response"
+          }
+        },
+        "lead": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One sentence a reader can decide on before any detail: what changed and what it means for rollout or the callers. A fact, not a verdict. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "same_change_on": {
+          "type": "array",
+          "description": "Other endpoints with exactly the same change, shown on this card instead of as cards of their own, e.g. `GET /orders/{id}`.",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "direction",
+        "method",
+        "path",
+        "lead",
+        "area",
+        "status",
+        "source",
+        "ref"
+      ]
+    },
+    "body": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "unchanged_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false
+    },
+    "response": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "unchanged_fields": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "change": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ]
+    },
+    "boundary": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "config",
+            "env",
+            "feature flag",
+            "scheduled job",
+            "file",
+            "cache",
+            "event",
+            "other"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "source": {
+          "enum": [
+            "migration",
+            "entity",
+            "schema dump",
+            "spec",
+            "declaration",
+            "code",
+            "config",
+            "source text",
+            "inferred"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "cost": {
+          "$ref": "#/$defs/cost"
+        },
+        "rollout": {
+          "$ref": "#/$defs/rollout"
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "was": {
+          "$ref": "#/$defs/was"
+        },
+        "used_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lead": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One sentence a reader can decide on before any detail: what changed and what it means for rollout or the callers. A fact, not a verdict. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "name",
+        "area",
+        "status",
+        "source",
+        "ref"
+      ]
+    },
+    "package": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "layer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "new_classes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "changed_classes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "removed_classes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "interface_classes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/interface_class"
+          }
+        },
+        "placement": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "proposed": {
+          "type": "boolean"
+        },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "area",
+        "status"
+      ]
+    },
+    "interface_class": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "entity",
+            "migration",
+            "listener",
+            "publisher",
+            "declaration",
+            "controller",
+            "client",
+            "spec"
+          ]
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "role",
+        "status"
+      ]
+    },
+    "notes": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "crossings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        },
+        "calls": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          }
+        },
+        "unknowns": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "code": {
+          "$ref": "#/$defs/code"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ]
+    },
+    "code": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lang": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ]
+    },
+    "contract_file": {
+      "type": "object",
+      "description": "One contract file from the surface scan: a file that declares or uses a cross-system interface.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "migration",
+            "entity",
+            "schema dump",
+            "query",
+            "queue declaration",
+            "listener",
+            "publisher",
+            "controller",
+            "http client",
+            "api spec",
+            "config",
+            "scheduled job",
+            "other"
+          ]
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "path",
+        "kind",
+        "area"
+      ],
+      "additionalProperties": false
+    },
+    "contract_files": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/contract_file"
+      }
+    },
+    "checklist_entry": {
+      "type": "object",
+      "description": "What the deep dive found in one contract file of its checklist.",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "result": {
+          "enum": [
+            "covered",
+            "no contract change",
+            "unknown"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Required for unknown: what could not be settled and why."
+        }
+      },
+      "required": [
+        "path",
+        "result"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "result": {
+            "const": "unknown"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "path",
+          "result",
+          "note"
+        ]
+      }
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "table",
+            "route",
+            "message",
+            "endpoint",
+            "boundary"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "name"
+      ]
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "proposed": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status"
+      ]
+    },
+    "service_link": {
+      "type": "object",
+      "description": "An interface between two services, an edge of the services diagram.",
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "via": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The edge label: `HTTP GET /v2/customers/{id}`, `billing.events`, `shared table invoice`."
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "via",
+        "status"
+      ]
+    },
+    "entry_point": {
+      "type": "object",
+      "description": "Where a flow starts: a served endpoint, a consumer, a scheduled job. The change-flow diagram draws one per entry point.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "endpoint",
+            "consumer",
+            "scheduled job",
+            "command",
+            "other"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "$ref": "#/$defs/target",
+          "description": "The card of the entry point itself, when it has one: the endpoint, the route a consumer listens on, the scheduled-job boundary."
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/action"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "name",
+        "area",
+        "status",
+        "actions"
+      ]
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "verb": {
+          "enum": [
+            "reads",
+            "writes",
+            "reads and writes",
+            "publishes",
+            "consumes",
+            "calls"
+          ]
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "status": {
+          "enum": [
+            "added",
+            "removed",
+            "changed",
+            "unchanged",
+            "accessed",
+            "semantics changed"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "verb",
+        "target",
+        "status"
+      ]
+    },
+    "far_side_read": {
+      "type": "object",
+      "description": "Another service's local clone a deep dive read for the far side of an interface. The page names it and marks it possibly stale.",
+      "properties": {
+        "service": {
+          "type": "string",
+          "minLength": 1
+        },
+        "clone": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Absolute path of the clone."
+        },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$",
+          "description": "`git -C <clone> rev-parse HEAD` at the time of the read."
+        },
+        "what": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What was read there: `the consumer of InvoiceReminderDue and its queue declaration`. Markdown subset: `code`, **bold** and [text](https://...). Everything else is shown as text."
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "clone",
+        "commit",
+        "what"
+      ]
+    }
+  }
+}

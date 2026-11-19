@@ -166,6 +166,18 @@
       "source": "./plugins/diagrams",
       "category": "productivity",
       "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/diagrams"
+    },
+    {
+      "name": "explain",
+      "description": "Explains a change to a software service as one HTML page — from a merge request, pull request, ticket, document or chat thread: the database, messaging, HTTP and other contracts it changes or would change, shown as diffs with what each costs to change later and to roll out, then the modules it touches and where new parts sit in the service",
+      "version": "0.1.0",
+      "author": {
+        "name": "Filip Procházka",
+        "url": "https://github.com/fprochazka"
+      },
+      "source": "./plugins/explain",
+      "category": "productivity",
+      "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/explain"
     }
   ]
 }

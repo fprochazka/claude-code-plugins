@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "explain",
+  "version": "0.1.0",
+  "description": "Explains a change to a software service as one HTML page — from a merge request, pull request, ticket, document or chat thread: the database, messaging, HTTP and other contracts it changes or would change, shown as diffs with what each costs to change later and to roll out, then the modules it touches and where new parts sit in the service",
+  "author": {
+    "name": "Filip Procházka",
+    "url": "https://github.com/fprochazka"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/fprochazka/claude-code-plugins/tree/master/plugins/explain",
+  "keywords": [
+    "merge-request",
+    "pull-request",
+    "ticket",
+    "explain",
+    "html",
+    "diagrams"
+  ],
+  "dependencies": [
+    "prose",
+    "diagrams"
+  ]
+}

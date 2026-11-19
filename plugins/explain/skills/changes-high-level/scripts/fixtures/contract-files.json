@@ -1,0 +1,12 @@
+[
+  {"path": "billing/src/main/resources/db/migration/V42__invoice_due_date.sql", "kind": "migration", "area": "invoicing"},
+  {"path": "billing/src/main/resources/db/migration/V43__invoice_reminder.sql", "kind": "migration", "area": "invoicing"},
+  {"path": "billing/src/main/kotlin/com/example/billing/reminder/InvoiceReminder.kt", "kind": "entity", "area": "invoicing"},
+  {"path": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMessagingConfig.kt", "kind": "queue declaration", "area": "invoicing"},
+  {"path": "billing/src/main/kotlin/com/example/billing/indexing/IndexerMessagingConfig.kt", "kind": "queue declaration", "area": "invoicing"},
+  {"path": "billing/src/main/kotlin/com/example/billing/reminder/ReminderMailListener.kt", "kind": "listener", "area": "invoicing"},
+  {"path": "shipments/src/main/kotlin/com/example/shipments/api/ShipmentController.kt", "kind": "controller", "area": "shipments"},
+  {"path": "shipments/src/main/kotlin/com/example/shipments/customer/CustomerClient.kt", "kind": "http client", "area": "shipments"},
+  {"path": "shipments/src/main/kotlin/com/example/shipments/billing/InvoiceView.kt", "kind": "entity", "area": "shipments"},
+  {"path": "shipments/src/main/resources/openapi/shipments.yaml", "kind": "api spec", "area": "shipments"}
+]

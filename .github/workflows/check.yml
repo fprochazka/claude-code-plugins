@@ -21,7 +21,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y jq shellcheck
-          pip install pyyaml || sudo apt-get install -y python3-yaml
+          pip install pyyaml jsonschema || sudo apt-get install -y python3-yaml python3-jsonschema
           npm install -g @anthropic-ai/claude-code@2.1.284
 
       - run: mkdir -p "$CLAUDE_CONFIG_DIR"
